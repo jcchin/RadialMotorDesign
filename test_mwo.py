@@ -2,7 +2,7 @@ import unittest
 from openmdao.api import Problem, Group, IndepVarComp, ExecComp, ScipyOptimizeDriver
 from openmdao.utils.assert_utils import assert_rel_error, assert_check_partials
 
-from motor_weight_optimization import rotor_outer_radius, rotor_yoke_width, stator_yoke_width, tooth_width, torque, stator_mass, rotor_mass
+from motor_weight_optimization import motor_size, torque, motor_mass #,rotor_outer_radius,
 
 class TestMWO(unittest.TestCase):
 
@@ -28,17 +28,13 @@ class TestMWO(unittest.TestCase):
         ind.add_output('l_st', val=0.038, units='m')            # Stack Length
         ind.add_output('rho', val=8110.2, units='kg/m**3')      # Density of Hiperco-50
 
-
-        model.add_subsystem('rotor_yw', rotor_yoke_width(), promotes_inputs=['rot_or','b_g','k','b_ry','n_m'], promotes_outputs=['w_ry'])
-        model.add_subsystem('stator_yoke_width', stator_yoke_width(), promotes_inputs=['rot_or','b_g','k','b_sy','n_m'], promotes_outputs=['w_sy'])
+        model.add_subsystem('size', motor_size(), promotes_inputs=['rot_or','b_g','k','b_ry','n_m','b_sy','b_t','n_s'], promotes_outputs=['w_ry', 'w_sy', 'w_t'])
         model.add_subsystem('slot_depth', ExecComp('s_d = .0765-rot_or-0.001 - w_sy',w_sy={'units':'m'}, s_d={'units':'m'},rot_or={'units':'m'}), promotes_inputs=['rot_or','w_sy'], promotes_outputs=['s_d'])
         model.add_subsystem('motor_radius', ExecComp('r_m = rot_or + .001 + s_d + w_sy',w_sy={'units':'m'},r_m={'units':'m'}, rot_or={'units':'m'}, s_d={'units':'m'}), promotes_inputs=['rot_or','s_d','w_sy'], promotes_outputs=['r_m'])
         model.add_subsystem('rotor_in_radius', ExecComp('rot_ir = rot_or - w_ry - .005',rot_or={'units':'m'}, rot_ir={'units':'m'}, w_ry={'units':'m'}), promotes_inputs=['rot_or', 'w_ry'], promotes_outputs=['rot_ir'])
         model.add_subsystem('stator_in_radius', ExecComp('sta_ir = rot_or + .001', rot_or={'units':'m'},sta_ir={'units':'m'}), promotes_inputs=['rot_or'], promotes_outputs=['sta_ir'])
-        model.add_subsystem('tooth_width', tooth_width(), promotes_inputs=['rot_or','b_t','k','n_s','b_g'], promotes_outputs=['w_t'])
-        model.add_subsystem('torque', torque(), promotes_inputs=['rot_or','b_g', 'i','n_m','n','l_st'], promotes_outputs=['tq'])
-        model.add_subsystem('stator_mass', stator_mass(), promotes_inputs=['rho','r_m','n_s','sta_ir','w_t','l_st','s_d'], promotes_outputs=['sta_mass'])
-        model.add_subsystem('rotor_mass', rotor_mass(), promotes_inputs=['rho','rot_or','rot_ir','l_st'], promotes_outputs=['rot_mass'])
+        model.add_subsystem('torque', torque(), promotes_inputs=['rot_or','b_g','i','n_m','n','l_st'], promotes_outputs=['tq'])
+        model.add_subsystem('mass', motor_mass(), promotes_inputs=['rho','r_m','n_s','sta_ir','w_t','l_st','s_d','rot_or','rot_ir'], promotes_outputs=['sta_mass','rot_mass'])
 
         # model.add_subsystem('motor_radius_prime', ExecComp('r_m_p = rot_or + .005 + .001 + s_d + w_sy',r_m_p={'units':'m'}, rot_or={'units':'m'}, s_d={'units':'m'}, w_sy={'units':'m'}), promotes_inputs=['rot_or','s_d','w_sy'], promotes_outputs=['r_m_p'])
         # model.add_subsystem('mass_stator', mass_stator(), promotes_inputs=['rho','r_m','n_s','sta_ir','w_t','l_st'], promotes_outputs=['weight']
