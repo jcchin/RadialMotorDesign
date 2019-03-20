@@ -3,18 +3,13 @@ import numpy as np
 import math
 from openmdao.api import Problem, IndepVarComp, ExplicitComponent, ExecComp
 from openmdao.api import NewtonSolver, Group, DirectSolver, NonlinearRunOnce, LinearRunOnce, view_model
-#from openmdao.components.meta_model_structured_comp import MetaModelStructuredComp
 
 class motor_size(ExplicitComponent):
 
     def setup(self):
         # rotor_outer_radius
-        # self.add_input('r_m', 0.25, units='m', desc='outer radius of motor')
-        # self.add_input('s_d', 0.015, units='m', desc='slot depth')
-        # self.add_input('w_sy', 0.005, units='m', desc='stator yoke width')
-        # self.add_input('gap', 0.001, units='m', desc='air gap')
-        # self.add_output('rot_or', .05, units='m', desc='rotor outer radius')
-        # self.declare_partials('rot_or', ['r_m','s_d','w_sy','w_ry'])
+        self.add_input('r_m', 0.0765, units='m', desc='outer radius of motor')
+        self.add_input('gap', 0.001, units='m', desc='air gap')
 
         # rotor_yoke_width
         self.add_input('rot_or', .05, units='m', desc='rotor outer radius')
@@ -36,30 +31,37 @@ class motor_size(ExplicitComponent):
         self.add_output('w_t', 0.010, units='m', desc='width of tooth')
         self.declare_partials('w_t', ['rot_or','b_g','n_s','k','b_t'])
 
+        # slot_depth
+        self.add_output('s_d', units='m', desc='slot depth')
+        self.add_output('rot_ir', units='m', desc='rotor inner radius')
+        self.add_output('sta_ir', units='m', desc='stator inner radius')
+
     def compute(self,inputs,outputs):
-
+        # rotor_outer_radius
         rot_or = inputs['rot_or']
-        # r_m = inputs['r_m']  # .0765
-        # s_d = inputs['s_d']
-        # w_sy = inputs['w_sy']
-        # gap = inputs['gap']
-
-        # outputs['rot_or'] = r_m - w_sy - s_d - gap         # rotor_outer_radius
-        # rot_or = outputs['rot_or']
-
+        r_m = inputs['r_m']  # .0765
+        gap = inputs['gap']
+        # rotor_yoke_width
         b_g= inputs['b_g']
         n_m= inputs['n_m']
         k = inputs['k']
         b_ry= inputs['b_ry']
-
-        outputs['w_ry'] = (math.pi*rot_or*b_g)/(n_m*k*b_ry)  # rotor_yoke_width
-        
+        outputs['w_ry'] = (math.pi*rot_or*b_g)/(n_m*k*b_ry)  
+        # stator_yoke_width
         b_sy= inputs['b_sy']
-        outputs['w_sy'] = (math.pi*rot_or*b_g)/(n_m*k*b_sy) # stator_yoke_width
-        
+        outputs['w_sy'] = (math.pi*rot_or*b_g)/(n_m*k*b_sy) 
+        # tooth_width
         n_s = inputs['n_s']
         b_t = inputs['b_t']
-        outputs['w_t'] = (2*math.pi*rot_or*b_g) / (n_s*k*b_t) # tooth_width
+        outputs['w_t'] = (2*math.pi*rot_or*b_g) / (n_s*k*b_t) 
+        # Exec Comps
+        print(r_m-rot_or-gap-outputs['w_sy'])
+        outputs['s_d'] = r_m-rot_or-gap - outputs['w_sy']
+        print(outputs['s_d'])
+        #outputs['r_m'] = rot_or + gap + s_d + outputs['w_sy']
+        outputs['rot_ir'] = rot_or - outputs['w_ry'] - .005
+        outputs['sta_ir'] = rot_or + gap
+
 
     def compute_partials(self, inputs, J):
 
@@ -67,7 +69,6 @@ class motor_size(ExplicitComponent):
         r_m = inputs['r_m']
         s_d = inputs['s_d']
         w_sy = inputs['w_sy']
-
         J['rot_or', 'r_m'] = 1-w_sy-s_d-gap
         J['rot_or', 's_d'] = r_m - w_sy - 1 - gap
         J['rot_or', 'w_sy'] = r_m - 1 - s_d - gap
@@ -78,7 +79,6 @@ class motor_size(ExplicitComponent):
         n_m= inputs['n_m']
         k = inputs['k']
         b_ry= inputs['b_ry']
-
         J['w_ry', 'rot_or'] = (math.pi*b_g)/(n_m*k*b_ry)
         J['w_ry', 'b_g'] = (math.pi*rot_or)/(n_m*k*b_ry)
         J['w_ry', 'n_m'] = -(math.pi*rot_or*b_g)/(n_m**3*k*b_ry)
@@ -87,7 +87,6 @@ class motor_size(ExplicitComponent):
 
         # stator_yoke_width
         b_sy= inputs['b_sy']
-
         J['w_sy', 'rot_or'] = (math.pi*b_g)/(n_m*k*b_sy)
         J['w_sy', 'b_g'] = (math.pi*rot_or)/(n_m*k*b_sy)
         J['w_sy', 'n_m'] = -(math.pi*rot_or*b_g)/(n_m**3*k*b_sy)
@@ -97,7 +96,6 @@ class motor_size(ExplicitComponent):
         # tooth_width
         n_s = inputs['n_s']
         b_t = inputs['b_t']
-        
         J['w_t', 'rot_or'] = (2*math.pi*b_g)/(n_s*k*b_t)
         J['w_t', 'b_g'] = (2*math.pi*rot_or)/(n_s*k*b_t)
         J['w_t', 'n_s'] = -(2*math.pi*rot_or*b_g)/(n_s**2*k*b_t)
@@ -207,6 +205,7 @@ if __name__ == "__main__":
     ind.add_output('k', val=0.97)							# Stacking factor
     ind.add_output('n', val=16)								# Number of wire turns		
     ind.add_output('i', val=30, units='A')					# RMS Current
+    ind.add_output('r_m', val=0.0765, units='m')
 
     ind.add_output('b_g', val = 1, units='T')				# Air gap flux Density    !! Flux values may represent 100% slot fill !!
     ind.add_output('b_ry', val=4, units='T')				# Rotor yoke flux density
@@ -219,14 +218,9 @@ if __name__ == "__main__":
     ind.add_output('l_st', val=0.038, units='m')			# Stack Length
     ind.add_output('rho', val=8110.2, units='kg/m**3')		# Density of Hiperco-50
 
-    model.add_subsystem('size', motor_size(), promotes_inputs=['rot_or','b_g','k','b_ry','n_m','b_sy','b_t','n_s'], promotes_outputs=['w_ry', 'w_sy', 'w_t'])
-    model.add_subsystem('slot_depth', ExecComp('s_d = .0765-rot_or-0.001 - w_sy',w_sy={'units':'m'}, s_d={'units':'m'},rot_or={'units':'m'}), promotes_inputs=['rot_or','w_sy'], promotes_outputs=['s_d'])
-    model.add_subsystem('motor_radius', ExecComp('r_m = rot_or + .001 + s_d + w_sy',w_sy={'units':'m'},r_m={'units':'m'}, rot_or={'units':'m'}, s_d={'units':'m'}), promotes_inputs=['rot_or','s_d','w_sy'], promotes_outputs=['r_m'])
-    model.add_subsystem('rotor_in_radius', ExecComp('rot_ir = rot_or - w_ry - .005',rot_or={'units':'m'}, rot_ir={'units':'m'}, w_ry={'units':'m'}), promotes_inputs=['rot_or', 'w_ry'], promotes_outputs=['rot_ir'])
-    model.add_subsystem('stator_in_radius', ExecComp('sta_ir = rot_or + .001', rot_or={'units':'m'},sta_ir={'units':'m'}), promotes_inputs=['rot_or'], promotes_outputs=['sta_ir'])
+    model.add_subsystem('size', motor_size(), promotes_inputs=['rot_or','b_g','k','b_ry','n_m','b_sy','b_t','n_s'], promotes_outputs=['w_ry', 'w_sy', 'w_t','s_d','rot_ir','sta_ir'])
     model.add_subsystem('torque', torque(), promotes_inputs=['rot_or','b_g','i','n_m','n','l_st'], promotes_outputs=['tq'])
     model.add_subsystem('mass', motor_mass(), promotes_inputs=['rho','r_m','n_s','sta_ir','w_t','l_st','s_d','rot_or','rot_ir'], promotes_outputs=['sta_mass','rot_mass'])
-
     # model.add_subsystem('motor_radius_prime', ExecComp('r_m_p = rot_or + .005 + .001 + s_d + w_sy',r_m_p={'units':'m'}, rot_or={'units':'m'}, s_d={'units':'m'}, w_sy={'units':'m'}), promotes_inputs=['rot_or','s_d','w_sy'], promotes_outputs=['r_m_p'])
     # model.add_subsystem('mass_stator', mass_stator(), promotes_inputs=['rho','r_m','n_s','sta_ir','w_t','l_st'], promotes_outputs=['weight']
     # model.add_subsystem('stmass', ExecComp('mass = l_st * ((math.pi * r_m**2)-(math.pi * sta_ir**2)+(n_s*(w_t*1.2)))', l_st={'units':'m'},r_m={'units':'m'},sta_ir={'units':'m'},w_t={'units':'m'}), promotes_inputs=['l_st','r_m','sta_ir','n_s','w_t'], promotes_outputs=['mass']
@@ -237,7 +231,7 @@ if __name__ == "__main__":
     print('Rotor Inner Radius................',  p.get_val('rot_ir', units='mm'))
 
     print('Stator Inner Radius...............',  p.get_val('sta_ir', units='mm'))
-    print('Motor Outer Radius................',  p.get_val('motor_radius.r_m', units='mm'))
+    print('Motor Outer Radius................',  p.get_val('mass.r_m', units='mm'))
 
     print('Rotor Yoke Thickness..............',  p.get_val('w_ry', units='mm'))
     print('Slot Depth........................',  p.get_val('s_d', units='mm'))
