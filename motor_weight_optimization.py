@@ -76,11 +76,7 @@ class motor_size(ExplicitComponent):
         outputs['rot_ir'] = rot_or - outputs['w_ry'] - t_mag
         outputs['sta_ir'] = rot_or + gap
         area = pi*(r_m-outputs['w_sy'])**2 - pi*(r_m-outputs['w_sy']-outputs['s_d'])**2 #outputs['sta_ir']
-        print('area', area)
-        # print(n*i*(k_wb/n_s*(area-n_s*1.25*(outputs['w_t']*outputs['s_d'])))**-1)
-        print(n,i,k_wb,n_s,r_m, outputs['w_sy'], outputs['sta_ir'], outputs['w_t'],outputs['s_d'])
         outputs['J'] = 2*n*i*(2.**0.5)/(k_wb/n_s*(area-n_s*1.25*(outputs['w_t']*outputs['s_d']))*1E6)
-        print('J: ', outputs['J'])
 
 
     # def compute_partials(self, inputs, J):
@@ -229,25 +225,25 @@ if __name__ == "__main__":
     ind.add_output('k_wb', val=0.55)                        # copper fill factor
     ind.add_output('gap', val=0.001, units='m')                        # Stacking factor
     ind.add_output('n', val=16)                    # Number of wire turns     
-    ind.add_output('i', val=30, units='A')            # RMS Current
-    ind.add_output('r_m', val=0.0765, units='m')
+    ind.add_output('i', val=33, units='A')            # RMS Current
+    ind.add_output('r_m', val=0.0795, units='m')
 
     ind.add_output('b_g', val = 1, units='T')          # Air gap flux Density    !! Flux values may represent 100% slot fill !!
     ind.add_output('b_ry', val=4, units='T')          # Rotor yoke flux density
     ind.add_output('b_sy', val=4, units='T')          # Stator yoke flux density
     ind.add_output('b_t', val=4, units='T')              # Tooth Flux Density
 
-    ind.add_output('n_s', val=15)                # Number of Slots
-    ind.add_output('n_m', val=16)                # Number of poles
+    ind.add_output('n_s', val=21)                # Number of Slots
+    ind.add_output('n_m', val=20)                # Number of poles
 
-    ind.add_output('l_st', val=0.038, units='m')         # Stack Length
+    ind.add_output('l_st', val=0.033, units='m')         # Stack Length
     ind.add_output('rho', val=8110.2, units='kg/m**3')   # Density of Hiperco-50
 
     bal = BalanceComp()
 
     bal.add_balance('rot_or', val=0.06, units='m', use_mult=False)
 
-    tgt = IndepVarComp(name='J', val=12.4, units='A/mm**2')
+    tgt = IndepVarComp(name='J', val=14.1, units='A/mm**2')
 
     model.add_subsystem(name='target', subsys=tgt, promotes_outputs=['J'])
     
