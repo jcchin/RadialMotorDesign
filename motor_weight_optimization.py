@@ -79,7 +79,7 @@ class motor_size(ExplicitComponent):
         print('area', area)
         # print(n*i*(k_wb/n_s*(area-n_s*1.25*(outputs['w_t']*outputs['s_d'])))**-1)
         print(n,i,k_wb,n_s,r_m, outputs['w_sy'], outputs['sta_ir'], outputs['w_t'],outputs['s_d'])
-        outputs['J'] = n*i/(k_wb/n_s*(area-n_s*1.25*(outputs['w_t']*outputs['s_d']))*1E6)
+        outputs['J'] = 2*n*i*(2.**0.5)/(k_wb/n_s*(area-n_s*1.25*(outputs['w_t']*outputs['s_d']))*1E6)
         print('J: ', outputs['J'])
 
 
@@ -226,7 +226,7 @@ if __name__ == "__main__":
 
     #ind.add_output('rot_or', val=0.0615, units='m')         # Outer radius of rotor, including 5mm magnet thickness
     ind.add_output('k', val=0.97)                # Stacking factor
-    ind.add_output('k_wb', val=0.65)                        # copper fill factor
+    ind.add_output('k_wb', val=0.55)                        # copper fill factor
     ind.add_output('gap', val=0.001, units='m')                        # Stacking factor
     ind.add_output('n', val=16)                    # Number of wire turns     
     ind.add_output('i', val=30, units='A')            # RMS Current
