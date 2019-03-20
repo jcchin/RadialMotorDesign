@@ -17,6 +17,7 @@ class motor_size(ExplicitComponent):
         self.add_input('k', 0.95, desc='stacking factor')
         self.add_input('b_ry', 2.4, units='T', desc='flux density of stator yoke')
         self.add_input('n_m', 16, desc='number of poles')
+        self.add_input('t_mag', 0.005, desc='magnet thickness')
         self.add_output('w_ry', 1.0, units='m', desc='width of stator yoke')
         #self.declare_partials('w_ry', ['rot_or', 'b_g', 'n_m', 'k', 'b_ry'])
 
@@ -50,10 +51,11 @@ class motor_size(ExplicitComponent):
         r_m = inputs['r_m']  # .0765
         gap = inputs['gap']
         # rotor_yoke_width
-        b_g= inputs['b_g']
-        n_m= inputs['n_m']
+        b_g = inputs['b_g']
+        n_m = inputs['n_m']
         k = inputs['k']
-        b_ry= inputs['b_ry']
+        b_ry = inputs['b_ry']
+        t_mag = inputs['t_mag']
 
         n = inputs['n']
         i = inputs['i']
@@ -71,9 +73,9 @@ class motor_size(ExplicitComponent):
         # print(r_m - rot_or - gap - outputs['w_sy'])
         outputs['s_d'] = r_m - rot_or - gap - outputs['w_sy']
         #outputs['r_m'] = rot_or + gap + s_d + outputs['w_sy']
-        outputs['rot_ir'] = rot_or - outputs['w_ry'] - .005
+        outputs['rot_ir'] = rot_or - outputs['w_ry'] - t_mag
         outputs['sta_ir'] = rot_or + gap
-        area = pi*(r_m-outputs['w_sy'])**2 - pi*(outputs['sta_ir'])**2
+        area = pi*(r_m-outputs['w_sy'])**2 - pi*(r_m-outputs['w_sy']-outputs['s_d'])**2 #outputs['sta_ir']
         print('area', area)
         # print(n*i*(k_wb/n_s*(area-n_s*1.25*(outputs['w_t']*outputs['s_d'])))**-1)
         print(n,i,k_wb,n_s,r_m, outputs['w_sy'], outputs['sta_ir'], outputs['w_t'],outputs['s_d'])
