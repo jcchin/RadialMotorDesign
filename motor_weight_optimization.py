@@ -18,7 +18,7 @@ class motor_size(ExplicitComponent):
         self.add_input('b_ry', 2.4, units='T', desc='flux density of stator yoke')
         self.add_input('n_m', 16, desc='number of poles')
         self.add_input('t_mag', 0.005, desc='magnet thickness')
-        self.add_output('w_ry', 1.0, units='m', desc='width of stator yoke')
+        self.add_output('w_ry', 1.0, units='m', desc='width of rotor yoke')
         #self.declare_partials('w_ry', ['rot_or', 'b_g', 'n_m', 'k', 'b_ry'])
 
         # stator_yoke_width
@@ -273,6 +273,7 @@ if __name__ == "__main__":
     #view_model(p)
     p.run_model()
 
+    print('Rotor Outer Radius................',  p.get_val('balance.rot_or', units='mm'))
     print('Rotor Inner Radius................',  p.get_val('rot_ir', units='mm'))
 
     print('Stator Inner Radius...............',  p.get_val('sta_ir', units='mm'))
@@ -288,4 +289,29 @@ if __name__ == "__main__":
     print('Mass of Stator....................',  p.get_val('sta_mass', units='kg'))
     print('Mass of Rotor.....................',  p.get_val('rot_mass', units='kg'))
     print('Current Density...................',  p.get_val('size.J'))
+
+
+    from solid import *
+    from solid.utils import *
+
+    r_m = float(p.get_val('mass.r_m', units='mm'))
+    l_st = float(p.get_val('mass.l_st', units='mm'))
+    sta_ir = float(p.get_val('sta_ir', units='mm'))
+    w_sy = float(p.get_val('w_sy', units='mm'))
+    w_ry = float(p.get_val('w_ry', units='mm'))
+    w_t = float(p.get_val('w_t', units='mm'))
+    s_d = float(p.get_val('s_d', units='mm'))
+    n_s = float(p.get_val('n_s'))
+    n_m = float(p.get_val('n_m') )
+    fa = 1
+    fs = 0.05
+
+    rot_ir = float(p.get_val('rot_ir', units='mm'))
+    rot_or = float(p.get_val('balance.rot_or', units='mm'))
+
+    stator_yolk = cylinder(r=r_m, h=l_st, center=True) - cylinder(r=r_m-w_sy, h=l_st+1, center=True)
+    slot = cube([s_d, w_t, l_st], center=True)
+    rotor = cylinder(r=rot_or, h=l_st, center=True) - cylinder(r=rot_ir, h=l_st+1, center=True)
+
+    print(scad_render(stator_yolk+slot+rotor, file_header='$fa = %s, $fs = %s;' % (fa, fs)))
 
