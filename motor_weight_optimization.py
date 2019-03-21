@@ -73,7 +73,7 @@ class motor_size(ExplicitComponent):
         # print(r_m - rot_or - gap - outputs['w_sy'])
         outputs['s_d'] = r_m - rot_or - gap - outputs['w_sy']
         #outputs['r_m'] = rot_or + gap + s_d + outputs['w_sy']
-        outputs['rot_ir'] = rot_or - outputs['w_ry'] - t_mag
+        outputs['rot_ir'] = (rot_or- t_mag) - outputs['w_ry'] 
         outputs['sta_ir'] = rot_or + gap
         area = pi*(r_m-outputs['w_sy'])**2 - pi*(r_m-outputs['w_sy']-outputs['s_d'])**2 #outputs['sta_ir']
         outputs['J'] = 2*n*i*(2.**0.5)/(k_wb/n_s*(area-n_s*1.25*(outputs['w_t']*outputs['s_d']))*1E6)
@@ -173,7 +173,11 @@ class motor_mass(ExplicitComponent):
         # rotor
         self.add_input('rot_or', 0.0615, units='m', desc='rotor outer radius')
         self.add_input('rot_ir', 0.0515, units='m', desc='rotor inner radius')
+        self.add_input('t_mag', .005, units='m', desc='magnet thickness')
         self.add_output('rot_mass', 1.0, units='kg', desc='weight of rotor')
+        #magnets
+        self.add_input('rho_mag', 7500, units='kg/m**3', desc='density of magnet')
+        self.add_output('mag_mass', 0.5, units='kg', desc='mass of magnets')
         
         #self.declare_partials('rot_mass',['rho','rot_or','rot_ir'], method='fd')
         self.declare_partials('*','*', method='fd')
@@ -194,8 +198,16 @@ class motor_mass(ExplicitComponent):
         rot_ir=inputs['rot_ir']
         rot_or=inputs['rot_or']
         l_st=inputs['l_st']
+        t_mag=inputs['t_mag']
         print('rot_or: ',rot_or)
-        outputs['rot_mass'] = (pi*rot_or**2 - pi*rot_ir**2) * rho * l_st
+        outputs['rot_mass'] = (pi*(rot_or - t_mag)**2 - pi*rot_ir**2) * rho * l_st
+
+        # magnets
+        rho_mag=inputs['rho_mag']
+        outputs['mag_mass'] = (((pi*rot_or**2) - (pi*(rot_or-t_mag)**2))) * rho_mag * l_st
+
+        #
+
 
     # def compute_partials(self,inputs,J):
 
@@ -221,23 +233,25 @@ if __name__ == "__main__":
     ind = model.add_subsystem('indeps', IndepVarComp(), promotes=['*'])
 
     #ind.add_output('rot_or', val=0.0615, units='m')         # Outer radius of rotor, including 5mm magnet thickness
-    ind.add_output('k', val=0.97)                # Stacking factor
-    ind.add_output('k_wb', val=0.55)                        # copper fill factor
-    ind.add_output('gap', val=0.001, units='m')                        # Stacking factor
-    ind.add_output('n', val=16)                    # Number of wire turns     
-    ind.add_output('i', val=33, units='A')            # RMS Current
-    ind.add_output('r_m', val=0.0795, units='m')
+    ind.add_output('k', val=0.97)                   # Stacking factor
+    ind.add_output('k_wb', val=0.55)                # copper fill factor
+    ind.add_output('gap', val=0.001, units='m')     # Stacking factor
+    ind.add_output('n', val=16)                     # Number of wire turns     
+    ind.add_output('i', val=33, units='A')          # RMS Current
+    ind.add_output('r_m', val=0.0795, units='m')    # Motor outer radius
+    ind.add_output('t_mag', val=.005, units='m')    # Magnet thickness
 
-    ind.add_output('b_g', val = 1, units='T')          # Air gap flux Density    !! Flux values may represent 100% slot fill !!
+    ind.add_output('b_g', val = 1, units='T')         # Air gap flux Density    !! Flux values may represent 100% slot fill !!
     ind.add_output('b_ry', val=4, units='T')          # Rotor yoke flux density
     ind.add_output('b_sy', val=4, units='T')          # Stator yoke flux density
-    ind.add_output('b_t', val=4, units='T')              # Tooth Flux Density
+    ind.add_output('b_t', val=4, units='T')           # Tooth Flux Density
 
     ind.add_output('n_s', val=21)                # Number of Slots
     ind.add_output('n_m', val=20)                # Number of poles
 
     ind.add_output('l_st', val=0.033, units='m')         # Stack Length
     ind.add_output('rho', val=8110.2, units='kg/m**3')   # Density of Hiperco-50
+    ind.add_output('rho_mag', val=7500, units='kg/m**3')    # Density of Magnets
 
     bal = BalanceComp()
 
@@ -252,7 +266,7 @@ if __name__ == "__main__":
     # model.add_subsystem('mass_stator', mass_stator(), promotes_inputs=['rho','r_m','n_s','sta_ir','w_t','l_st'], promotes_outputs=['weight']
     # model.add_subsystem('stmass', ExecComp('mass = l_st * ((pi * r_m**2)-(pi * sta_ir**2)+(n_s*(w_t*1.2)))', l_st={'units':'m'},r_m={'units':'m'},sta_ir={'units':'m'},w_t={'units':'m'}), promotes_inputs=['l_st','r_m','sta_ir','n_s','w_t'], promotes_outputs=['mass']
     model.add_subsystem(name='balance', subsys=bal)
-    model.add_subsystem('mass', motor_mass(), promotes_inputs=['rho','r_m','n_s','sta_ir','w_t','l_st','s_d','rot_or','rot_ir'], promotes_outputs=['sta_mass','rot_mass'])
+    model.add_subsystem('mass', motor_mass(), promotes_inputs=['t_mag','rho_mag','rho','r_m','n_s','sta_ir','w_t','l_st','s_d','rot_or','rot_ir'], promotes_outputs=['sta_mass','rot_mass','mag_mass'])
     model.add_subsystem('torque', torque(), promotes_inputs=['rot_or','b_g','i','n_m','n','l_st'], promotes_outputs=['tq'])
 
     model.connect('J', 'balance.rhs:rot_or')
@@ -275,6 +289,7 @@ if __name__ == "__main__":
 
     print('Rotor Outer Radius................',  p.get_val('balance.rot_or', units='mm'))
     print('Rotor Inner Radius................',  p.get_val('rot_ir', units='mm'))
+    # print('Rotor Outer Radius................',  p.get_val('rot_or', units='mm'))
 
     print('Stator Inner Radius...............',  p.get_val('sta_ir', units='mm'))
     print('Motor Outer Radius................',  p.get_val('mass.r_m', units='mm'))
@@ -283,11 +298,13 @@ if __name__ == "__main__":
     print('Slot Depth........................',  p.get_val('s_d', units='mm'))
     print('Stator Yoke Thickness.............',  p.get_val('w_sy', units='mm'))
     print('Tooth Width.......................',  p.get_val('w_t', units='mm'))
+    print('Magnet Thickness..................',  p.get_val('t_mag', units='mm'))
 
     print('Torque............................',  p['tq'])
 
     print('Mass of Stator....................',  p.get_val('sta_mass', units='kg'))
     print('Mass of Rotor.....................',  p.get_val('rot_mass', units='kg'))
+    print('Mass of Magnets...................',  p.get_val('mag_mass', units='kg'))    
     print('Current Density...................',  p.get_val('size.J'))
 
 
