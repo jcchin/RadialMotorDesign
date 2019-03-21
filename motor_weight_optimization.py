@@ -348,31 +348,23 @@ union() {
     }
 }
 
-module slot(){
-   cube(center = true, size = [12.8219178010, 4.8675869762, 33.0000000000]); 
-}
-
-difference() {
-    for (i=[0:30:360]) rotate(i) translate([71,0,0]) slot();
-    cylinder(center = true, h = 34.0000000000, r = 65.9445168375);
-}
 
 module slot2(){
     Stator_IR = 64;
     Tooth_angle = 20;
     Stator_slots = 16;
-    Tooth_width = 5;
-    Tooth_tip = 4;
+    Tooth_width = 4.86;
+    Tooth_tip = 3;
     Tooth_angle = 20;
-    Stator_OR = 79.5;
+    Stator_OR = 73.;
     Stator_yoke = 5;
-    Tooth_point_angle = 60;
+    Tooth_point_angle = 45;
 
     points = [
     [Stator_IR*cos(Tooth_angle/2),             -Stator_IR*sin(Tooth_angle/2)],
     [(Stator_IR+Tooth_tip)*cos(Tooth_angle/2), -(Stator_IR+Tooth_tip)*sin(Tooth_angle/2)],
     [-tan(Tooth_point_angle+180/Stator_slots)*(Tooth_width/2-(Stator_IR+Tooth_tip)*sin(Tooth_angle/2))+(Stator_IR+Tooth_tip)*cos(Tooth_angle/2),  -Tooth_width/2],
-    [Stator_OR-Stator_yoke,                    -Tooth_width/2],
+    [Stator_OR-Stator_yoke,                    -Tooth_width/2], 
     [Stator_OR-Stator_yoke,                    Tooth_width/2],
     [-tan(Tooth_point_angle+180/Stator_slots)*(Tooth_width/2-(Stator_IR+Tooth_tip)*sin(Tooth_angle/2))+(Stator_IR+Tooth_tip)*cos(Tooth_angle/2),  Tooth_width/2],
     [(Stator_IR+Tooth_tip)*cos(Tooth_angle/2),    (Stator_IR+Tooth_tip)*sin(Tooth_angle/2)],
@@ -380,12 +372,13 @@ module slot2(){
     ];
 
     linear_extrude(height = 20, center = true, convexity = 10, twist = 0)
-    polygon(points = points, paths = [[0,1,2,3,4,5,6,7]], convexity = 5);
+    polygon(points = points, paths = [[5,4,6,7,0,1,3,2]], convexity = 4);
 }
 
 difference() {
     for (i=[0:30:360]) rotate(i) slot2();
     cylinder(center = true, h = 34.0000000000, r = 65.9445168375);
 }
+
 
 '''
