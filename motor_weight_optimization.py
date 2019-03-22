@@ -236,7 +236,7 @@ if __name__ == "__main__":
     ind.add_output('k', val=0.97)                   # Stacking factor
     ind.add_output('k_wb', val=0.55)                # copper fill factor
     ind.add_output('gap', val=0.001, units='m')     # Stacking factor
-    ind.add_output('n', val=16)                     # Number of wire turns     
+    ind.add_output('n', val=24)                     # Number of wire turns     
     ind.add_output('i', val=33, units='A')          # RMS Current
     ind.add_output('r_m', val=0.0795, units='m')    # Motor outer radius
     ind.add_output('t_mag', val=.005, units='m')    # Magnet thickness
@@ -249,18 +249,15 @@ if __name__ == "__main__":
     ind.add_output('n_s', val=21)                # Number of Slots
     ind.add_output('n_m', val=20)                # Number of poles
 
-    ind.add_output('l_st', val=0.033, units='m')         # Stack Length
+    #ind.add_output('l_st', val=0.033, units='m')         # Stack Length
     ind.add_output('rho', val=8110.2, units='kg/m**3')   # Density of Hiperco-50
     ind.add_output('rho_mag', val=7500, units='kg/m**3')    # Density of Magnets
 
     bal = BalanceComp()
 
-    bal.add_balance('rot_or', val=0.06, units='m', use_mult=False)
+    bal.add_balance('rot_or', val=0.06, units='m', use_mult=False, rhs_val = 13.)
+    bal.add_balance('l_st', val=0.02, units='m', use_mult=False, rhs_val = 24.)
 
-    tgt = IndepVarComp(name='J', val=14.1, units='A/mm**2')
-
-    model.add_subsystem(name='target', subsys=tgt, promotes_outputs=['J'])
-    
     model.add_subsystem('size', motor_size(), promotes_inputs=['n','i','k_wb','r_m','gap','rot_or','b_g','k','b_ry','n_m','b_sy','b_t','n_s'], promotes_outputs=['w_ry', 'w_sy', 'w_t','s_d','rot_ir','sta_ir'])
     # model.add_subsystem('motor_radius_prime', ExecComp('r_m_p = rot_or + .005 + .001 + s_d + w_sy',r_m_p={'units':'m'}, rot_or={'units':'m'}, s_d={'units':'m'}, w_sy={'units':'m'}), promotes_inputs=['rot_or','s_d','w_sy'], promotes_outputs=['r_m_p'])
     # model.add_subsystem('mass_stator', mass_stator(), promotes_inputs=['rho','r_m','n_s','sta_ir','w_t','l_st'], promotes_outputs=['weight']
@@ -269,9 +266,11 @@ if __name__ == "__main__":
     model.add_subsystem('mass', motor_mass(), promotes_inputs=['t_mag','rho_mag','rho','r_m','n_s','sta_ir','w_t','l_st','s_d','rot_or','rot_ir'], promotes_outputs=['sta_mass','rot_mass','mag_mass'])
     model.add_subsystem('torque', torque(), promotes_inputs=['rot_or','b_g','i','n_m','n','l_st'], promotes_outputs=['tq'])
 
-    model.connect('J', 'balance.rhs:rot_or')
     model.connect('balance.rot_or', 'rot_or')
     model.connect('size.J', 'balance.lhs:rot_or')
+
+    model.connect('balance.l_st', 'l_st')
+    model.connect('tq', 'balance.lhs:l_st')
 
     model.linear_solver = DirectSolver()
 
@@ -306,7 +305,7 @@ if __name__ == "__main__":
     print('Mass of Rotor.....................',  p.get_val('rot_mass', units='kg'))
     print('Mass of Magnets...................',  p.get_val('mag_mass', units='kg'))    
     print('Current Density...................',  p.get_val('size.J'))
-
+    print('Stack Length......................',  p.get_val('mass.l_st', units='mm'))
 
     from solid import *
     from solid.utils import *
