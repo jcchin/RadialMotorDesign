@@ -16,7 +16,7 @@ class motor_size(ExplicitComponent):
         self.add_input('b_g', 1.0, units='T', desc='air gap flux density')
         self.add_input('k', 0.95, desc='stacking factor')
         self.add_input('b_ry', 2.4, units='T', desc='flux density of stator yoke')
-        self.add_input('n_m', 16, desc='number of poles')
+        self.add_input('n_m', 20, desc='number of poles')
         self.add_input('t_mag', 0.005, desc='magnet thickness')
         self.add_output('w_ry', 1.0, units='m', desc='width of rotor yoke')
         #self.declare_partials('w_ry', ['rot_or', 'b_g', 'n_m', 'k', 'b_ry'])
@@ -28,7 +28,7 @@ class motor_size(ExplicitComponent):
 
         # tooth_width
         self.add_input('b_t', 2.4, units='T', desc='flux density of tooth')
-        self.add_input('n_s', 15, desc='Number of slots')
+        self.add_input('n_s', 24, desc='Number of slots')
         self.add_output('w_t', 0.010, units='m', desc='width of tooth')
         #self.declare_partials('w_t', ['rot_or','b_g','n_s','k','b_t'])
 
@@ -328,7 +328,7 @@ if __name__ == "__main__":
 
     stator_yolk = cylinder(r=r_m, h=l_st, center=True) - cylinder(r=r_m-w_sy, h=l_st+1, center=True)
     slot = cube([s_d, w_t, l_st], center=True)
-    rotor = color(Blue)cylinder(r=rot_or, h=l_st, center=True) - cylinder(r=rot_ir, h=l_st+1, center=True)
+    rotor = color("Blue");cylinder(r=rot_or, h=l_st, center=True) - cylinder(r=rot_ir, h=l_st+1, center=True)
 
     print(scad_render(stator_yolk+slot+rotor, file_header='$fa = %s; $fs = %s;' % (fa, fs)))
 
