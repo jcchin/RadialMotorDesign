@@ -73,50 +73,53 @@ class motor_size(ExplicitComponent):
         # print(r_m - rot_or - gap - outputs['w_sy'])
         outputs['s_d'] = r_m - rot_or - gap - outputs['w_sy']
         #outputs['r_m'] = rot_or + gap + s_d + outputs['w_sy']
-        outputs['rot_ir'] = (rot_or- t_mag) - outputs['w_ry'] 
+        outputs['rot_ir'] = (rot_or - t_mag) - outputs['w_ry'] 
         outputs['sta_ir'] = rot_or + gap
         area = pi*(r_m-outputs['w_sy'])**2 - pi*(r_m-outputs['w_sy']-outputs['s_d'])**2 #outputs['sta_ir']
         outputs['J'] = 2*n*i*(2.**0.5)/(k_wb/n_s*(area-n_s*1.25*(outputs['w_t']*outputs['s_d']))*1E6)
 
 
-    # def compute_partials(self, inputs, J):
+    # TODO: Get this partial working:
+    # Use: check_partials function to check:
+    def compute_partials(self, inputs, J):
+        gap = inputs['gap'] # Air Gap
 
-    #     # rotor_outer_radius
-    #     # r_m = inputs['r_m']
-    #     # s_d = inputs['s_d']
-    #     # w_sy = inputs['w_sy']
-    #     # J['rot_or', 'r_m'] = 1-w_sy-s_d-gap
-    #     # J['rot_or', 's_d'] = r_m - w_sy - 1 - gap
-    #     # J['rot_or', 'w_sy'] = r_m - 1 - s_d - gap
+        # rotor_outer_radius
+        r_m = inputs['r_m']
+        s_d = inputs['s_d']
+        w_sy = inputs['w_sy']
+        J['rot_or', 'r_m'] = 1-w_sy-s_d-gap
+        J['rot_or', 's_d'] = r_m - w_sy - 1 - gap
+        J['rot_or', 'w_sy'] = r_m - 1 - s_d - gap
 
-    #     # rotor_yoke_width
-    #     rot_or = inputs['rot_or']
-    #     b_g= inputs['b_g']
-    #     n_m= inputs['n_m']
-    #     k = inputs['k']
-    #     b_ry= inputs['b_ry']
-    #     J['w_ry', 'rot_or'] = (pi*b_g)/(n_m*k*b_ry)
-    #     J['w_ry', 'b_g'] = (pi*rot_or)/(n_m*k*b_ry)
-    #     J['w_ry', 'n_m'] = -(pi*rot_or*b_g)/(n_m**3*k*b_ry)
-    #     J['w_ry', 'k']   = -(pi*rot_or*b_g)/(n_m*k**2*b_ry)
-    #     J['w_ry', 'b_ry'] = -(pi*rot_or*b_g)/(n_m*k*b_ry**2)
+        # rotor_yoke_width
+        rot_or = inputs['rot_or']
+        b_g= inputs['b_g']
+        n_m= inputs['n_m']
+        k = inputs['k']
+        b_ry= inputs['b_ry']
+        J['w_ry', 'rot_or'] = (pi*b_g)/(n_m*k*b_ry)
+        J['w_ry', 'b_g'] = (pi*rot_or)/(n_m*k*b_ry)
+        J['w_ry', 'n_m'] = -(pi*rot_or*b_g)/(n_m**3*k*b_ry)
+        J['w_ry', 'k']   = -(pi*rot_or*b_g)/(n_m*k**2*b_ry)
+        J['w_ry', 'b_ry'] = -(pi*rot_or*b_g)/(n_m*k*b_ry**2)
 
-    #     # stator_yoke_width
-    #     b_sy= inputs['b_sy']
-    #     J['w_sy', 'rot_or'] = (pi*b_g)/(n_m*k*b_sy)
-    #     J['w_sy', 'b_g'] = (pi*rot_or)/(n_m*k*b_sy)
-    #     J['w_sy', 'n_m'] = -(pi*rot_or*b_g)/(n_m**3*k*b_sy)
-    #     J['w_sy', 'k']   = -(pi*rot_or*b_g)/(n_m*k**2*b_sy)
-    #     J['w_sy', 'b_sy'] = -(pi*rot_or*b_g)/(n_m*k*b_sy**2)
+        # stator_yoke_width
+        b_sy= inputs['b_sy']
+        J['w_sy', 'rot_or'] = (pi*b_g)/(n_m*k*b_sy)
+        J['w_sy', 'b_g'] = (pi*rot_or)/(n_m*k*b_sy)
+        J['w_sy', 'n_m'] = -(pi*rot_or*b_g)/(n_m**3*k*b_sy)
+        J['w_sy', 'k']   = -(pi*rot_or*b_g)/(n_m*k**2*b_sy)
+        J['w_sy', 'b_sy'] = -(pi*rot_or*b_g)/(n_m*k*b_sy**2)
 
-    #     # tooth_width
-    #     n_s = inputs['n_s']
-    #     b_t = inputs['b_t']
-    #     J['w_t', 'rot_or'] = (2*pi*b_g)/(n_s*k*b_t)
-    #     J['w_t', 'b_g'] = (2*pi*rot_or)/(n_s*k*b_t)
-    #     J['w_t', 'n_s'] = -(2*pi*rot_or*b_g)/(n_s**2*k*b_t)
-    #     J['w_t', 'k']   = -(2*pi*rot_or*b_g)/(n_s*k**2*b_t)
-    #     J['w_t', 'b_t'] = -(2*pi*rot_or*b_g)/(n_s*k*b_t**2)
+        # tooth_width
+        n_s = inputs['n_s']
+        b_t = inputs['b_t']
+        J['w_t', 'rot_or'] = (2*pi*b_g)/(n_s*k*b_t)
+        J['w_t', 'b_g'] = (2*pi*rot_or)/(n_s*k*b_t)
+        J['w_t', 'n_s'] = -(2*pi*rot_or*b_g)/(n_s**2*k*b_t)
+        J['w_t', 'k']   = -(2*pi*rot_or*b_g)/(n_s*k**2*b_t)
+        J['w_t', 'b_t'] = -(2*pi*rot_or*b_g)/(n_s*k*b_t**2)
 
 
 class torque(ExplicitComponent):
@@ -238,7 +241,7 @@ if __name__ == "__main__":
     ind.add_output('gap', val=0.001, units='m')     # Stacking factor
     ind.add_output('n', val=24)                     # Number of wire turns     
     ind.add_output('i', val=33, units='A')          # RMS Current
-    ind.add_output('r_m', val=0.0795, units='m')    # Motor outer radius
+    ind.add_output('r_m', val=0.08, units='m')    # Motor outer radius
     ind.add_output('t_mag', val=.005, units='m')    # Magnet thickness
 
     ind.add_output('b_g', val = 1, units='T')         # Air gap flux Density    !! Flux values may represent 100% slot fill !!
