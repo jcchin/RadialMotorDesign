@@ -218,13 +218,37 @@ class motor_mass(ExplicitComponent):
     #   sta_ir=inputs['sta_ir']
     #   w_t=inputs['w_t']
     #   l_st=inputs['l_st']
+    #   s_d=inputs['s_d']
 
-    #   J['sta_mass', 'rho'] = 
-    #   J['sta_mass', 'r_m'] = 
-    #   J['sta_mass', 'n_s'] = 
-    #   J['sta_mass', 'sta_ir'] = 
-    #   J['sta_mass', 'w_t'] = 
-    #   J['sta_mass', 'l_st'] = 
+    #   J['sta_mass', 'rho'] = l_st * ((pi * r_m**2)-(pi * (sta_ir+s_d)**2)+(n_s*(w_t*s_d*1.5)))
+    #   J['sta_mass', 'r_m'] = 2 * rho * l_st * (pi * r_m)
+    #   J['sta_mass', 'n_s'] = rho * l_st * (w_t*s_d*1.5)
+    #   J['sta_mass', 'sta_ir'] = 2 * rho * l_st * -(pi * (sta_ir+s_d))
+    #   J['sta_mass', 'w_t'] = rho * l_st * (n_s*(s_d*1.5))
+    #   J['sta_mass', 'l_st'] = rho * ((pi * r_m**2)-(pi * (sta_ir+s_d)**2)+(n_s*(w_t*s_d*1.5)))
+    #   J['sta_mass', 's_d'] = 2 * rho * l_st * -(pi * (sta_ir+s_d))
+    
+        # rotor
+    #   rot_ir=inputs['rot_ir']
+    #   rot_or=inputs['rot_or']
+    #   l_st=inputs['l_st']
+    #   t_mag=inputs['t_mag']    
+    
+    #   J['rot_mass', 'rot_ir'] = -(2 * pi * rot_ir) * rho * l_st
+    #   J['rot_mass', 'rot_or'] = (2 * pi * (rot_or - t_mag)) * rho * l_st
+    #   J['rot_mass', 'l_st'] = (pi*(rot_or - t_mag)**2 - pi*rot_ir**2) * rho
+    #   J['rot_mass', 't_mag'] = (2 * pi * (rot_or - t_mag)) * rho * l_st
+    #   J['rot_mass', 'rho'] = (pi*(rot_or - t_mag)**2 - pi*rot_ir**2) * l_st
+    
+        # magnets
+    #   rho_mag=inputs['rho_mag']
+    
+    #   J['mag_mass', 'rot_or'] = ((2*pi*rot_or) - (2*pi*(rot_or-t_mag))) * rho_mag * l_st
+    #   J['mag_mass', 't_mag'] = - (2*pi*(rot_or-t_mag)) * rho_mag * l_st
+    #   J['mag_mass', 'rho_mag'] = (((pi*rot_or**2) - (pi*(rot_or-t_mag)**2))) * l_st
+    #   J['mag_mass', 'l_st'] = (((pi*rot_or**2) - (pi*(rot_or-t_mag)**2))) * rho_mag
+    
+    
 
 if __name__ == "__main__":
     p = Problem()
