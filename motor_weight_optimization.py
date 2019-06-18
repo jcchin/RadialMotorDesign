@@ -150,12 +150,12 @@ class torque(ExplicitComponent):
     #    rot_or = inputs['rot_or']
     #    i = inputs['i']
 
-    #    J['tq','n_m'] = 2*n*b_g*l_st*rot_or*i
-    #    J['tq', 'n'] = 2*n_m*b_g*l_st*rot_or*i
-    #    J['tq', 'b_g'] = 2*n_m*n*l_st*rot_or*i
-    #    J['tq', 'l_st'] = 2*n_m*n*b_g*rot_or*i
-    #    J['tq', 'rot_or'] = 2*n_m*n*b_g*l_st*i
-    #    J['tq', 'i'] = 2*n_m*n*b_g*l_st*rot_or
+    #    J['tq','n_m'] = 2*n*b_g*l_st*rot_or*i*.68
+    #    J['tq', 'n'] = 2*n_m*b_g*l_st*rot_or*i*.68
+    #    J['tq', 'b_g'] = 2*n_m*n*l_st*rot_or*i*.68
+    #    J['tq', 'l_st'] = 2*n_m*n*b_g*rot_or*i*.68
+    #    J['tq', 'rot_or'] = 2*n_m*n*b_g*l_st*i*.68
+    #    J['tq', 'i'] = 2*n_m*n*b_g*l_st*rot_or*.68
 
 class motor_mass(ExplicitComponent):
 
