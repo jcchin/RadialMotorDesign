@@ -41,7 +41,7 @@ class motor_size(ExplicitComponent):
         self.add_input('n', 16, desc='number of wire turns')
         self.add_input('i', 30, units='A', desc='RMS current')
         self.add_input('k_wb', 0.65, desc='bare wire slot fill factor')
-        self.add_output('J', units='A/mm**2', desc='Current density')
+        self.add_output('j', units='A/mm**2', desc='Current density')
 
         self.declare_partials('*','*', method='fd')
 
@@ -76,21 +76,12 @@ class motor_size(ExplicitComponent):
         outputs['rot_ir'] = (rot_or - t_mag) - outputs['w_ry'] 
         outputs['sta_ir'] = rot_or + gap
         area = pi*(mot_or-outputs['w_sy'])**2 - pi*(mot_or-outputs['w_sy']-outputs['s_d'])**2 #outputs['sta_ir']
-        outputs['J'] = 2*n*i*(2.**0.5)/(k_wb/n_s*(area-n_s*1.25*(outputs['w_t']*outputs['s_d']))*1E6)
+        outputs['j'] = 2*n*i*(2.**0.5)/(k_wb/n_s*(area-n_s*1.25*(outputs['w_t']*outputs['s_d']))*1E6)
+        # TODO:  Better name for current density???
 
-"""
     # TODO: Get this partial working:
     # Use: check_partials function to check:
     def compute_partials(self, inputs, J):
-        gap = inputs['gap'] # Air Gap
-
-        # rotor_outer_radius
-        mot_or = inputs['mot_or']
-        s_d = inputs['s_d']
-        w_sy = inputs['w_sy']
-        J['rot_or', 'mot_or'] = 1-w_sy-s_d-gap
-        J['rot_or', 's_d'] = mot_or - w_sy - 1 - gap
-        J['rot_or', 'w_sy'] = mot_or - 1 - s_d - gap
 
         # rotor_yoke_width
         rot_or = inputs['rot_or']
@@ -120,7 +111,6 @@ class motor_size(ExplicitComponent):
         J['w_t', 'n_s'] = -(2*pi*rot_or*b_g)/(n_s**2*k*b_t)
         J['w_t', 'k']   = -(2*pi*rot_or*b_g)/(n_s*k**2*b_t)
         J['w_t', 'b_t'] = -(2*pi*rot_or*b_g)/(n_s*k*b_t**2)
-"""
 
 class torque(ExplicitComponent):
 
