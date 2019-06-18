@@ -1,0 +1,29 @@
+Motor Sizing Program
+--------------------
+Using OpenMDAO to optimize motor geometry based on given parameters and constraints.
+
+Main Goal:
+Create more accurate motor sizing code and then cross-check the results with an optimized motor design.
+
+Create different branches in git for different features.
+i.e.
+- Torque Calculation
+- Losses Calculation
+-etc
+
+--------------------
+
+Known Issues:
+- Flux Density calculation is incorrect
+	- Research and fix
+
+- Torque calculation is incorrect
+	- Research and fix
+
+
+Wanted Features:
+- Torque vs Speed curve plot
+
+- Efficiency Table (Using Interpolation)
+	- Create Table / .csv of motor efficiencies (from Motor-CAD or Python code???)
+	- Feedback into motor-sizing program

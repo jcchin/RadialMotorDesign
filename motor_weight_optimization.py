@@ -8,7 +8,7 @@ class motor_size(ExplicitComponent):
 
     def setup(self):
         # rotor_outer_radius
-        self.add_input('r_m', 0.0765, units='m', desc='outer radius of motor')
+        self.add_input('mot_or', 0.0765, units='m', desc='motor outer radius')
         self.add_input('gap', 0.001, units='m', desc='air gap')
 
         # rotor_yoke_width
@@ -41,14 +41,14 @@ class motor_size(ExplicitComponent):
         self.add_input('n', 16, desc='number of wire turns')
         self.add_input('i', 30, units='A', desc='RMS current')
         self.add_input('k_wb', 0.65, desc='bare wire slot fill factor')
-        self.add_output('J', units='A/mm**2', desc='Current density')
+        self.add_output('j', units='A/mm**2', desc='Current density')
 
         self.declare_partials('*','*', method='fd')
 
     def compute(self,inputs,outputs):
         # rotor_outer_radius
         rot_or = inputs['rot_or']
-        r_m = inputs['r_m']  # .0765
+        mot_or = inputs['mot_or']  # .0765
         gap = inputs['gap']
         # rotor_yoke_width
         b_g = inputs['b_g']
@@ -69,55 +69,48 @@ class motor_size(ExplicitComponent):
         b_t = inputs['b_t']
         outputs['w_t'] = (2*pi*rot_or*b_g) / (n_s*k*b_t) 
         # Exec Comps
-        # print(r_m ,rot_or , gap , outputs['w_sy'])
-        # print(r_m - rot_or - gap - outputs['w_sy'])
-        outputs['s_d'] = r_m - rot_or - gap - outputs['w_sy']
-        #outputs['r_m'] = rot_or + gap + s_d + outputs['w_sy']
-        outputs['rot_ir'] = (rot_or- t_mag) - outputs['w_ry'] 
+        # print(mot_or ,rot_or , gap , outputs['w_sy'])
+        # print(mot_or - rot_or - gap - outputs['w_sy'])
+        outputs['s_d'] = mot_or - rot_or - gap - outputs['w_sy']
+        #outputs['mot_or'] = rot_or + gap + s_d + outputs['w_sy']
+        outputs['rot_ir'] = (rot_or - t_mag) - outputs['w_ry'] 
         outputs['sta_ir'] = rot_or + gap
-        area = pi*(r_m-outputs['w_sy'])**2 - pi*(r_m-outputs['w_sy']-outputs['s_d'])**2 #outputs['sta_ir']
-        outputs['J'] = 2*n*i*(2.**0.5)/(k_wb/n_s*(area-n_s*1.25*(outputs['w_t']*outputs['s_d']))*1E6)
+        area = pi*(mot_or-outputs['w_sy'])**2 - pi*(mot_or-outputs['w_sy']-outputs['s_d'])**2 #outputs['sta_ir']
+        outputs['j'] = 2*n*i*(2.**0.5)/(k_wb/n_s*(area-n_s*1.25*(outputs['w_t']*outputs['s_d']))*1E6)
+        # TODO:  Better name for current density???
 
+    # TODO: Get this partial working:
+    # Use: check_partials function to check:
+    def compute_partials(self, inputs, J):
 
-    # def compute_partials(self, inputs, J):
+        # rotor_yoke_width
+        rot_or = inputs['rot_or']
+        b_g= inputs['b_g']
+        n_m= inputs['n_m']
+        k = inputs['k']
+        b_ry= inputs['b_ry']
+        J['w_ry', 'rot_or'] = (pi*b_g)/(n_m*k*b_ry)
+        J['w_ry', 'b_g'] = (pi*rot_or)/(n_m*k*b_ry)
+        J['w_ry', 'n_m'] = -(pi*rot_or*b_g)/(n_m**3*k*b_ry)
+        J['w_ry', 'k']   = -(pi*rot_or*b_g)/(n_m*k**2*b_ry)
+        J['w_ry', 'b_ry'] = -(pi*rot_or*b_g)/(n_m*k*b_ry**2)
 
-    #     # rotor_outer_radius
-    #     # r_m = inputs['r_m']
-    #     # s_d = inputs['s_d']
-    #     # w_sy = inputs['w_sy']
-    #     # J['rot_or', 'r_m'] = 1-w_sy-s_d-gap
-    #     # J['rot_or', 's_d'] = r_m - w_sy - 1 - gap
-    #     # J['rot_or', 'w_sy'] = r_m - 1 - s_d - gap
+        # stator_yoke_width
+        b_sy= inputs['b_sy']
+        J['w_sy', 'rot_or'] = (pi*b_g)/(n_m*k*b_sy)
+        J['w_sy', 'b_g'] = (pi*rot_or)/(n_m*k*b_sy)
+        J['w_sy', 'n_m'] = -(pi*rot_or*b_g)/(n_m**3*k*b_sy)
+        J['w_sy', 'k']   = -(pi*rot_or*b_g)/(n_m*k**2*b_sy)
+        J['w_sy', 'b_sy'] = -(pi*rot_or*b_g)/(n_m*k*b_sy**2)
 
-    #     # rotor_yoke_width
-    #     rot_or = inputs['rot_or']
-    #     b_g= inputs['b_g']
-    #     n_m= inputs['n_m']
-    #     k = inputs['k']
-    #     b_ry= inputs['b_ry']
-    #     J['w_ry', 'rot_or'] = (pi*b_g)/(n_m*k*b_ry)
-    #     J['w_ry', 'b_g'] = (pi*rot_or)/(n_m*k*b_ry)
-    #     J['w_ry', 'n_m'] = -(pi*rot_or*b_g)/(n_m**3*k*b_ry)
-    #     J['w_ry', 'k']   = -(pi*rot_or*b_g)/(n_m*k**2*b_ry)
-    #     J['w_ry', 'b_ry'] = -(pi*rot_or*b_g)/(n_m*k*b_ry**2)
-
-    #     # stator_yoke_width
-    #     b_sy= inputs['b_sy']
-    #     J['w_sy', 'rot_or'] = (pi*b_g)/(n_m*k*b_sy)
-    #     J['w_sy', 'b_g'] = (pi*rot_or)/(n_m*k*b_sy)
-    #     J['w_sy', 'n_m'] = -(pi*rot_or*b_g)/(n_m**3*k*b_sy)
-    #     J['w_sy', 'k']   = -(pi*rot_or*b_g)/(n_m*k**2*b_sy)
-    #     J['w_sy', 'b_sy'] = -(pi*rot_or*b_g)/(n_m*k*b_sy**2)
-
-    #     # tooth_width
-    #     n_s = inputs['n_s']
-    #     b_t = inputs['b_t']
-    #     J['w_t', 'rot_or'] = (2*pi*b_g)/(n_s*k*b_t)
-    #     J['w_t', 'b_g'] = (2*pi*rot_or)/(n_s*k*b_t)
-    #     J['w_t', 'n_s'] = -(2*pi*rot_or*b_g)/(n_s**2*k*b_t)
-    #     J['w_t', 'k']   = -(2*pi*rot_or*b_g)/(n_s*k**2*b_t)
-    #     J['w_t', 'b_t'] = -(2*pi*rot_or*b_g)/(n_s*k*b_t**2)
-
+        # tooth_width
+        n_s = inputs['n_s']
+        b_t = inputs['b_t']
+        J['w_t', 'rot_or'] = (2*pi*b_g)/(n_s*k*b_t)
+        J['w_t', 'b_g'] = (2*pi*rot_or)/(n_s*k*b_t)
+        J['w_t', 'n_s'] = -(2*pi*rot_or*b_g)/(n_s**2*k*b_t)
+        J['w_t', 'k']   = -(2*pi*rot_or*b_g)/(n_s*k**2*b_t)
+        J['w_t', 'b_t'] = -(2*pi*rot_or*b_g)/(n_s*k*b_t**2)
 
 class torque(ExplicitComponent):
 
@@ -162,14 +155,14 @@ class motor_mass(ExplicitComponent):
     def setup(self):
         # stator
         self.add_input('rho', 8110.2, units='kg/m**3', desc='density of hiperco-50')
-        self.add_input('r_m', .075, units='m', desc='motor outer radius')           
+        self.add_input('mot_or', .075, units='m', desc='motor outer radius')           
         self.add_input('n_s', 15, desc='number of slots')                           
         self.add_input('sta_ir', .050, units='m', desc='stator inner radius')       
         self.add_input('w_t', units='m', desc='tooth width')                        
         self.add_input('l_st', units='m', desc='length of stack')  
         self.add_input('s_d', units='m', desc='slot depth')                 
         self.add_output('sta_mass', 25, units='kg', desc='mass of stator')
-        #self.declare_partials('sta_mass', ['rho','r_m','n_s','sta_ir','w_t','l_st','s_d'], method='fd')
+        #self.declare_partials('sta_mass', ['rho','mot_or','n_s','sta_ir','w_t','l_st','s_d'], method='fd')
         # rotor
         self.add_input('rot_or', 0.0615, units='m', desc='rotor outer radius')
         self.add_input('rot_ir', 0.0515, units='m', desc='rotor inner radius')
@@ -185,14 +178,14 @@ class motor_mass(ExplicitComponent):
     def compute(self,inputs,outputs):
         # stator
         rho=inputs['rho']
-        r_m=inputs['r_m']
+        mot_or=inputs['mot_or']
         n_s=inputs['n_s']
         sta_ir=inputs['sta_ir']
         w_t=inputs['w_t']
         l_st=inputs['l_st']
         s_d=inputs['s_d']
 
-        outputs['sta_mass'] = rho * l_st * ((pi * r_m**2)-(pi * (sta_ir+s_d)**2)+(n_s*(w_t*s_d*1.5)))
+        outputs['sta_mass'] = rho * l_st * ((pi * mot_or**2)-(pi * (sta_ir+s_d)**2)+(n_s*(w_t*s_d*1.5)))
         
         # rotor
         rot_ir=inputs['rot_ir']
@@ -213,19 +206,19 @@ class motor_mass(ExplicitComponent):
 
         # stator
     #   rho=inputs['rho']
-    #   r_m=inputs['r_m']
+    #   mot_or=inputs['mot_or']
     #   n_s=inputs['n_s']
     #   sta_ir=inputs['sta_ir']
     #   w_t=inputs['w_t']
     #   l_st=inputs['l_st']
     #   s_d=inputs['s_d']
 
-    #   J['sta_mass', 'rho'] = l_st * ((pi * r_m**2)-(pi * (sta_ir+s_d)**2)+(n_s*(w_t*s_d*1.5)))
-    #   J['sta_mass', 'r_m'] = 2 * rho * l_st * (pi * r_m)
+    #   J['sta_mass', 'rho'] = l_st * ((pi * mot_or**2)-(pi * (sta_ir+s_d)**2)+(n_s*(w_t*s_d*1.5)))
+    #   J['sta_mass', 'mot_or'] = 2 * rho * l_st * (pi * mot_or)
     #   J['sta_mass', 'n_s'] = rho * l_st * (w_t*s_d*1.5)
     #   J['sta_mass', 'sta_ir'] = 2 * rho * l_st * -(pi * (sta_ir+s_d))
     #   J['sta_mass', 'w_t'] = rho * l_st * (n_s*(s_d*1.5))
-    #   J['sta_mass', 'l_st'] = rho * ((pi * r_m**2)-(pi * (sta_ir+s_d)**2)+(n_s*(w_t*s_d*1.5)))
+    #   J['sta_mass', 'l_st'] = rho * ((pi * mot_or**2)-(pi * (sta_ir+s_d)**2)+(n_s*(w_t*s_d*1.5)))
     #   J['sta_mass', 's_d'] = 2 * rho * l_st * -(pi * (sta_ir+s_d))
     
         # rotor
@@ -262,7 +255,7 @@ if __name__ == "__main__":
     ind.add_output('gap', val=0.001, units='m')     # Stacking factor
     ind.add_output('n', val=24)                     # Number of wire turns     
     ind.add_output('i', val=33, units='A')          # RMS Current
-    ind.add_output('r_m', val=0.0795, units='m')    # Motor outer radius
+    ind.add_output('mot_or', val=0.08, units='m')    # Motor outer radius
     ind.add_output('t_mag', val=.005, units='m')    # Magnet thickness
 
     ind.add_output('b_g', val = 1, units='T')         # Air gap flux Density    !! Flux values may represent 100% slot fill !!
@@ -282,12 +275,12 @@ if __name__ == "__main__":
     bal.add_balance('rot_or', val=0.06, units='m', use_mult=False, rhs_val = 13.)
     bal.add_balance('l_st', val=0.02, units='m', use_mult=False, rhs_val = 24.)
 
-    model.add_subsystem('size', motor_size(), promotes_inputs=['n','i','k_wb','r_m','gap','rot_or','b_g','k','b_ry','n_m','b_sy','b_t','n_s'], promotes_outputs=['w_ry', 'w_sy', 'w_t','s_d','rot_ir','sta_ir'])
+    model.add_subsystem('size', motor_size(), promotes_inputs=['n','i','k_wb','mot_or','gap','rot_or','b_g','k','b_ry','n_m','b_sy','b_t','n_s'], promotes_outputs=['w_ry', 'w_sy', 'w_t','s_d','rot_ir','sta_ir'])
     # model.add_subsystem('motor_radius_prime', ExecComp('r_m_p = rot_or + .005 + .001 + s_d + w_sy',r_m_p={'units':'m'}, rot_or={'units':'m'}, s_d={'units':'m'}, w_sy={'units':'m'}), promotes_inputs=['rot_or','s_d','w_sy'], promotes_outputs=['r_m_p'])
-    # model.add_subsystem('mass_stator', mass_stator(), promotes_inputs=['rho','r_m','n_s','sta_ir','w_t','l_st'], promotes_outputs=['weight']
-    # model.add_subsystem('stmass', ExecComp('mass = l_st * ((pi * r_m**2)-(pi * sta_ir**2)+(n_s*(w_t*1.2)))', l_st={'units':'m'},r_m={'units':'m'},sta_ir={'units':'m'},w_t={'units':'m'}), promotes_inputs=['l_st','r_m','sta_ir','n_s','w_t'], promotes_outputs=['mass']
+    # model.add_subsystem('mass_stator', mass_stator(), promotes_inputs=['rho','mot_or','n_s','sta_ir','w_t','l_st'], promotes_outputs=['weight']
+    # model.add_subsystem('stmass', ExecComp('mass = l_st * ((pi * mot_or**2)-(pi * sta_ir**2)+(n_s*(w_t*1.2)))', l_st={'units':'m'},mot_or={'units':'m'},sta_ir={'units':'m'},w_t={'units':'m'}), promotes_inputs=['l_st','mot_or','sta_ir','n_s','w_t'], promotes_outputs=['mass']
     model.add_subsystem(name='balance', subsys=bal)
-    model.add_subsystem('mass', motor_mass(), promotes_inputs=['t_mag','rho_mag','rho','r_m','n_s','sta_ir','w_t','l_st','s_d','rot_or','rot_ir'], promotes_outputs=['sta_mass','rot_mass','mag_mass'])
+    model.add_subsystem('mass', motor_mass(), promotes_inputs=['t_mag','rho_mag','rho','mot_or','n_s','sta_ir','w_t','l_st','s_d','rot_or','rot_ir'], promotes_outputs=['sta_mass','rot_mass','mag_mass'])
     model.add_subsystem('torque', torque(), promotes_inputs=['rot_or','b_g','i','n_m','n','l_st'], promotes_outputs=['tq'])
 
     model.connect('balance.rot_or', 'rot_or')
@@ -315,7 +308,7 @@ if __name__ == "__main__":
     # print('Rotor Outer Radius................',  p.get_val('rot_or', units='mm'))
 
     print('Stator Inner Radius...............',  p.get_val('sta_ir', units='mm'))
-    print('Motor Outer Radius................',  p.get_val('mass.r_m', units='mm'))
+    print('Motor Outer Radius................',  p.get_val('mass.mot_or', units='mm'))
 
     print('Rotor Yoke Thickness..............',  p.get_val('w_ry', units='mm'))
     print('Slot Depth........................',  p.get_val('s_d', units='mm'))
@@ -334,7 +327,7 @@ if __name__ == "__main__":
     from solid import *
     from solid.utils import *
 
-    r_m = float(p.get_val('mass.r_m', units='mm'))
+    mot_or = float(p.get_val('mass.mot_or', units='mm'))
     l_st = float(p.get_val('mass.l_st', units='mm'))
     sta_ir = float(p.get_val('sta_ir', units='mm'))
     w_sy = float(p.get_val('w_sy', units='mm'))
@@ -349,7 +342,7 @@ if __name__ == "__main__":
     rot_ir = float(p.get_val('rot_ir', units='mm'))
     rot_or = float(p.get_val('balance.rot_or', units='mm'))
 
-    stator_yolk = cylinder(r=r_m, h=l_st, center=True) - cylinder(r=r_m-w_sy, h=l_st+1, center=True)
+    stator_yolk = cylinder(r=mot_or, h=l_st, center=True) - cylinder(r=mot_or-w_sy, h=l_st+1, center=True)
     slot = cube([s_d, w_t, l_st], center=True)
     rotor = color("Blue");cylinder(r=rot_or, h=l_st, center=True) - cylinder(r=rot_ir, h=l_st+1, center=True)
 
