@@ -125,12 +125,12 @@ class motor_size(ExplicitComponent):
         
         # rotor_inner_radius
         t_mag = inputs['t_mag']
-        J['rot_ir', 'rot_or'] = 
-        J['rot_ir', 't_mag'] = 
-        J['rot_ir', 'b_g'] = 
-        J['rot_ir', 'n_m'] = 
-        J['rot_ir', 'k'] = 
-        J['rot_ir', 'b_ry'] = 
+        J['rot_ir', 'rot_or'] = 1 - J['w_ry', 'rot_or']
+        J['rot_ir', 't_mag'] = -1 - J['w_ry', 't_mag']
+        J['rot_ir', 'b_g'] = - J['w_ry', 'b_g']
+        J['rot_ir', 'n_m'] = - J['w_ry', 'n_m']
+        J['rot_ir', 'k'] = - J['w_ry', 'k']
+        J['rot_ir', 'b_ry'] =  - J['w_ry', 'b_ry']
         
         # stator_inner_radius
         J['sta_ir', 'rot_or'] = 1
