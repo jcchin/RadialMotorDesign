@@ -91,7 +91,7 @@ class motor_size(ExplicitComponent):
         b_ry= inputs['b_ry']
         J['w_ry', 'rot_or'] = (pi*b_g)/(n_m*k*b_ry)
         J['w_ry', 'b_g'] = (pi*rot_or)/(n_m*k*b_ry)
-        J['w_ry', 'n_m'] = -(pi*rot_or*b_g)/(n_m**3*k*b_ry)
+        J['w_ry', 'n_m'] = -(pi*rot_or*b_g)/(n_m**2*k*b_ry)
         J['w_ry', 'k']   = -(pi*rot_or*b_g)/(n_m*k**2*b_ry)
         J['w_ry', 'b_ry'] = -(pi*rot_or*b_g)/(n_m*k*b_ry**2)
 
@@ -99,7 +99,7 @@ class motor_size(ExplicitComponent):
         b_sy= inputs['b_sy']
         J['w_sy', 'rot_or'] = (pi*b_g)/(n_m*k*b_sy)
         J['w_sy', 'b_g'] = (pi*rot_or)/(n_m*k*b_sy)
-        J['w_sy', 'n_m'] = -(pi*rot_or*b_g)/(n_m**3*k*b_sy)
+        J['w_sy', 'n_m'] = -(pi*rot_or*b_g)/(n_m**2*k*b_sy)
         J['w_sy', 'k']   = -(pi*rot_or*b_g)/(n_m*k**2*b_sy)
         J['w_sy', 'b_sy'] = -(pi*rot_or*b_g)/(n_m*k*b_sy**2)
 
@@ -111,6 +111,46 @@ class motor_size(ExplicitComponent):
         J['w_t', 'n_s'] = -(2*pi*rot_or*b_g)/(n_s**2*k*b_t)
         J['w_t', 'k']   = -(2*pi*rot_or*b_g)/(n_s*k**2*b_t)
         J['w_t', 'b_t'] = -(2*pi*rot_or*b_g)/(n_s*k*b_t**2)
+        
+        # slot_depth
+        mot_or = inputs['mot_or']
+        gap = inputs['gap']
+        J['s_d', 'mot_or'] = 1
+        J['s_d', 'rot_or'] = -1 - J['w_sy', 'rot_or']
+        J['s_d', 'gap'] = -1
+        J['s_d', 'b_g'] = -J['w_sy', 'b_g']
+        J['s_d', 'n_m'] = -J['w_sy', 'n_m']
+        J['s_d', 'k'] = -J['w_sy', 'k']
+        J['s_d', 'b_sy'] = -J['w_sy', 'b_sy']
+        
+        # rotor_inner_radius
+        t_mag = inputs['t_mag']
+        J['rot_ir', 'rot_or'] = 
+        J['rot_ir', 't_mag'] = 
+        J['rot_ir', 'b_g'] = 
+        J['rot_ir', 'n_m'] = 
+        J['rot_ir', 'k'] = 
+        J['rot_ir', 'b_ry'] = 
+        
+        # stator_inner_radius
+        J['sta_ir', 'rot_or'] = 1
+        J['sta_ir', 'gap'] = 1
+        
+        # current_density
+        n = inputs['n']
+        i = inputs['i']
+        k_wb = inputs['k_wb']
+        n_s = inputs['n_s']
+        J['j', ''] = 
+        J['j', ''] = 
+        J['j', ''] = 
+        J['j', ''] = 
+        J['j', ''] = 
+        J['j', ''] = 
+        J['j', ''] = 
+        J['j', ''] = 
+        J['j', ''] = 
+        J['j', ''] = 
 
 class torque(ExplicitComponent):
 
