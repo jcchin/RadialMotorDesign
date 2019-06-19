@@ -78,7 +78,7 @@ class motor_size(ExplicitComponent):
         area = pi*(mot_or-outputs['w_sy'])**2 - pi*(mot_or-outputs['w_sy']-outputs['s_d'])**2 #outputs['sta_ir']
         outputs['j'] = 2*n*i*(2.**0.5)/(k_wb/n_s*(area-n_s*1.25*(outputs['w_t']*outputs['s_d']))*1E6)
         # TODO:  Better name for current density???
-'''
+
     # TODO: Get this partial working:
     # Use: check_partials function to check:
     def compute_partials(self, inputs, J):
@@ -151,7 +151,7 @@ class motor_size(ExplicitComponent):
         J['j', ''] = 
         J['j', ''] = 
         J['j', ''] = 
-'''
+
 class torque(ExplicitComponent):
 
     def setup(self):
