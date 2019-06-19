@@ -78,7 +78,7 @@ class motor_size(ExplicitComponent):
         area = pi*(mot_or-outputs['w_sy'])**2 - pi*(mot_or-outputs['w_sy']-outputs['s_d'])**2 #outputs['sta_ir']
         outputs['j'] = 2*n*i*(2.**0.5)/(k_wb/n_s*(area-n_s*1.25*(outputs['w_t']*outputs['s_d']))*1E6)
         # TODO:  Better name for current density???
-
+'''
     # TODO: Get this partial working:
     # Use: check_partials function to check:
     def compute_partials(self, inputs, J):
@@ -151,7 +151,7 @@ class motor_size(ExplicitComponent):
         J['j', ''] = 
         J['j', ''] = 
         J['j', ''] = 
-
+'''
 class torque(ExplicitComponent):
 
     def setup(self):
@@ -324,7 +324,7 @@ if __name__ == "__main__":
     model.add_subsystem('torque', torque(), promotes_inputs=['rot_or','b_g','i','n_m','n','l_st'], promotes_outputs=['tq'])
 
     model.connect('balance.rot_or', 'rot_or')
-    model.connect('size.J', 'balance.lhs:rot_or')
+    model.connect('size.j', 'balance.lhs:rot_or')
 
     model.connect('balance.l_st', 'l_st')
     model.connect('tq', 'balance.lhs:l_st')
@@ -361,7 +361,7 @@ if __name__ == "__main__":
     print('Mass of Stator....................',  p.get_val('sta_mass', units='kg'))
     print('Mass of Rotor.....................',  p.get_val('rot_mass', units='kg'))
     print('Mass of Magnets...................',  p.get_val('mag_mass', units='kg'))    
-    print('Current Density...................',  p.get_val('size.J'))
+    print('Current Density...................',  p.get_val('size.j'))  # NOTE: Changed "J" for current density to "j"
     print('Stack Length......................',  p.get_val('mass.l_st', units='mm'))
 
     from solid import *
