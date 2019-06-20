@@ -43,7 +43,7 @@ class motor_size(ExplicitComponent):
         self.add_input('k_wb', 0.65, desc='bare wire slot fill factor')
         self.add_output('j', units='A/mm**2', desc='Current density')
 
-        self.declare_partials('*','*', method='fd')
+        self.declare_partials('*','*')#, method='fd')
 
     def compute(self,inputs,outputs):
         # rotor_outer_radius
@@ -81,93 +81,93 @@ class motor_size(ExplicitComponent):
 
     # TODO: Get this partial working:
     # Use: check_partials function to check:
-    # def compute_partials(self, inputs, J):
-    # 
-    #     # rotor_yoke_width
-    #     rot_or = inputs['rot_or']
-    #     b_g= inputs['b_g']
-    #     n_m= inputs['n_m']
-    #     k = inputs['k']
-    #     b_ry= inputs['b_ry']
-    #     J['w_ry', 'rot_or'] = (pi*b_g)/(n_m*k*b_ry)
-    #     J['w_ry', 'b_g'] = (pi*rot_or)/(n_m*k*b_ry)
-    #     J['w_ry', 'n_m'] = -(pi*rot_or*b_g)/(n_m**2*k*b_ry)
-    #     J['w_ry', 'k']   = -(pi*rot_or*b_g)/(n_m*k**2*b_ry)
-    #     J['w_ry', 'b_ry'] = -(pi*rot_or*b_g)/(n_m*k*b_ry**2)
-    # 
-    #     # stator_yoke_width
-    #     b_sy= inputs['b_sy']
-    #     J['w_sy', 'rot_or'] = (pi*b_g)/(n_m*k*b_sy)
-    #     J['w_sy', 'b_g'] = (pi*rot_or)/(n_m*k*b_sy)
-    #     J['w_sy', 'n_m'] = -(pi*rot_or*b_g)/(n_m**2*k*b_sy)
-    #     J['w_sy', 'k']   = -(pi*rot_or*b_g)/(n_m*k**2*b_sy)
-    #     J['w_sy', 'b_sy'] = -(pi*rot_or*b_g)/(n_m*k*b_sy**2)
-    # 
-    #     # tooth_width
-    #     n_s = inputs['n_s']
-    #     b_t = inputs['b_t']
-    #     J['w_t', 'rot_or'] = (2*pi*b_g)/(n_s*k*b_t)
-    #     J['w_t', 'b_g'] = (2*pi*rot_or)/(n_s*k*b_t)
-    #     J['w_t', 'n_s'] = -(2*pi*rot_or*b_g)/(n_s**2*k*b_t)
-    #     J['w_t', 'k']   = -(2*pi*rot_or*b_g)/(n_s*k**2*b_t)
-    #     J['w_t', 'b_t'] = -(2*pi*rot_or*b_g)/(n_s*k*b_t**2)
-    # 
-    #     # slot_depth
-    #     mot_or = inputs['mot_or']
-    #     gap = inputs['gap']
-    #     J['s_d', 'mot_or'] = 1
-    #     J['s_d', 'rot_or'] = -1 - J['w_sy', 'rot_or']
-    #     J['s_d', 'gap'] = -1
-    #     J['s_d', 'b_g'] = -J['w_sy', 'b_g']
-    #     J['s_d', 'n_m'] = -J['w_sy', 'n_m']
-    #     J['s_d', 'k'] = -J['w_sy', 'k']
-    #     J['s_d', 'b_sy'] = -J['w_sy', 'b_sy']
-    # 
-    #     # rotor_inner_radius
-    #     t_mag = inputs['t_mag']
-    #     J['rot_ir', 'rot_or'] = 1 - J['w_ry', 'rot_or']
-    #     J['rot_ir', 't_mag'] = -1
-    #     J['rot_ir', 'b_g'] = - J['w_ry', 'b_g']
-    #     J['rot_ir', 'n_m'] = - J['w_ry', 'n_m']
-    #     J['rot_ir', 'k'] = - J['w_ry', 'k']
-    #     J['rot_ir', 'b_ry'] = - J['w_ry', 'b_ry']
-    # 
-    #     # stator_inner_radius
-    #     J['sta_ir', 'rot_or'] = 1
-    #     J['sta_ir', 'gap'] = 1
-    # 
-    #     # current_density
-    #     n = inputs['n']
-    #     i = inputs['i']
-    #     k_wb = inputs['k_wb']
-    #     n_s = inputs['n_s']
-    #     w_sy = (pi*rot_or*b_g)/(n_m*k*b_sy)
-    #     s_d = mot_or - rot_or - gap - w_sy
-    #     w_t = (2*pi*rot_or*b_g) / (n_s*k*b_t) 
-    #     area = pi*(mot_or-w_sy)**2 - pi*(mot_or-w_sy-s_d)**2
-    # 
-    #     djdarea = -2*n*i*(2.**0.5)/(k_wb/n_s*((area-n_s*1.25*(w_t*s_d))**2)*1E6)
-    #     djds_d = djdarea*(-n_s*1.25*w_t)
-    #     djdw_t = djdarea*(-n_s*1.25*s_d)
-    #     djdn_s = 2*n*i*(2.**0.5)*area/(k_wb*((area-n_s*1.25*(w_t*s_d))**2)*1E6)
-    # 
-    #     dads_d = 2*pi*(mot_or-w_sy-s_d)
-    #     dadmot_or = 2*pi*s_d
-    #     dadw_sy = -2*pi*s_d
-    # 
-    # 
-    #     J['j', 'n'] = 2*i*(2.**0.5)/(k_wb/n_s*(area-n_s*1.25*(w_t*s_d))*1E6)
-    #     J['j', 'i'] = 2*n*(2.**0.5)/(k_wb/n_s*(area-n_s*1.25*(w_t*s_d))*1E6)
-    #     J['j', 'k_wb'] = - 2*n*(2.**0.5)/((k_wb**2)/n_s*(area-n_s*1.25*(w_t*s_d))*1E6)
-    #     J['j', 'mot_or'] = djdarea*(dads_d*J['s_d', 'mot_or'] + dadmot_or) + djds_d*J['s_d', 'mot_or'] 
-    #     J['j', 'rot_or'] = djdarea*(dadw_sy*J['w_sy', 'rot_or'] + dads_d*J['s_d','rot_or']) + djdw_t*J['w_t','rot_or'] + djds_d*J['s_d','rot_or']
-    #     J['j', 'gap'] = (djdarea*dads_d + djds_d)*J['s_d','gap']
-    #     J['j', 'b_g'] = djdarea*(dadw_sy*J['w_sy','b_g']+dads_d*J['s_d','b_g']) + djdw_t*J['w_t','b_g'] + djds_d*J['s_d','b_g']
-    #     J['j', 'n_m'] = djdarea*(dadw_sy*J['w_sy','n_m']+dads_d*J['s_d','n_m']) + djds_d*J['s_d','n_m']
-    #     J['j', 'n_s'] = djdn_s + djdw_t*J['w_t','n_s']
-    #     J['j', 'k'] = djdarea*(dadw_sy*J['w_sy','k'] + dads_d*J['s_d','k']) + djdw_t*J['w_t','k'] + djds_d*J['s_d','k']
-    #     J['j', 'b_sy'] = djdarea*(dadw_sy*J['w_sy','b_sy'] + dads_d*J['s_d','b_sy']) + djds_d*J['s_d','b_sy']
-    #     J['j', 'b_t'] = djdw_t*J['w_t','b_t']
+    def compute_partials(self, inputs, J):
+    
+        # rotor_yoke_width
+        rot_or = inputs['rot_or']
+        b_g= inputs['b_g']
+        n_m= inputs['n_m']
+        k = inputs['k']
+        b_ry= inputs['b_ry']
+        J['w_ry', 'rot_or'] = (pi*b_g)/(n_m*k*b_ry)
+        J['w_ry', 'b_g'] = (pi*rot_or)/(n_m*k*b_ry)
+        J['w_ry', 'n_m'] = -(pi*rot_or*b_g)/(n_m**2*k*b_ry)
+        J['w_ry', 'k']   = -(pi*rot_or*b_g)/(n_m*k**2*b_ry)
+        J['w_ry', 'b_ry'] = -(pi*rot_or*b_g)/(n_m*k*b_ry**2)
+    
+        # stator_yoke_width
+        b_sy= inputs['b_sy']
+        J['w_sy', 'rot_or'] = (pi*b_g)/(n_m*k*b_sy)
+        J['w_sy', 'b_g'] = (pi*rot_or)/(n_m*k*b_sy)
+        J['w_sy', 'n_m'] = -(pi*rot_or*b_g)/(n_m**2*k*b_sy)
+        J['w_sy', 'k']   = -(pi*rot_or*b_g)/(n_m*k**2*b_sy)
+        J['w_sy', 'b_sy'] = -(pi*rot_or*b_g)/(n_m*k*b_sy**2)
+    
+        # tooth_width
+        n_s = inputs['n_s']
+        b_t = inputs['b_t']
+        J['w_t', 'rot_or'] = (2*pi*b_g)/(n_s*k*b_t)
+        J['w_t', 'b_g'] = (2*pi*rot_or)/(n_s*k*b_t)
+        J['w_t', 'n_s'] = -(2*pi*rot_or*b_g)/(n_s**2*k*b_t)
+        J['w_t', 'k']   = -(2*pi*rot_or*b_g)/(n_s*k**2*b_t)
+        J['w_t', 'b_t'] = -(2*pi*rot_or*b_g)/(n_s*k*b_t**2)
+    
+        # slot_depth
+        mot_or = inputs['mot_or']
+        gap = inputs['gap']
+        J['s_d', 'mot_or'] = 1
+        J['s_d', 'rot_or'] = -1 - J['w_sy', 'rot_or']
+        J['s_d', 'gap'] = -1
+        J['s_d', 'b_g'] = -J['w_sy', 'b_g']
+        J['s_d', 'n_m'] = -J['w_sy', 'n_m']
+        J['s_d', 'k'] = -J['w_sy', 'k']
+        J['s_d', 'b_sy'] = -J['w_sy', 'b_sy']
+    
+        # rotor_inner_radius
+        t_mag = inputs['t_mag']
+        J['rot_ir', 'rot_or'] = 1 - J['w_ry', 'rot_or']
+        J['rot_ir', 't_mag'] = -1
+        J['rot_ir', 'b_g'] = - J['w_ry', 'b_g']
+        J['rot_ir', 'n_m'] = - J['w_ry', 'n_m']
+        J['rot_ir', 'k'] = - J['w_ry', 'k']
+        J['rot_ir', 'b_ry'] = - J['w_ry', 'b_ry']
+    
+        # stator_inner_radius
+        J['sta_ir', 'rot_or'] = 1
+        J['sta_ir', 'gap'] = 1
+    
+        # current_density
+        n = inputs['n']
+        i = inputs['i']
+        k_wb = inputs['k_wb']
+        n_s = inputs['n_s']
+        w_sy = (pi*rot_or*b_g)/(n_m*k*b_sy)
+        s_d = mot_or - rot_or - gap - w_sy
+        w_t = (2*pi*rot_or*b_g) / (n_s*k*b_t) 
+        area = pi*(mot_or-w_sy)**2 - pi*(mot_or-w_sy-s_d)**2
+    
+        djdarea = -2*n*i*(2.**0.5)/(k_wb/n_s*((area-n_s*1.25*(w_t*s_d))**2)*1E6)
+        djds_d = djdarea*(-n_s*1.25*w_t)
+        djdw_t = djdarea*(-n_s*1.25*s_d)
+        djdn_s = 2*n*i*(2.**0.5)*area/(k_wb*((area-n_s*1.25*(w_t*s_d))**2)*1E6)
+    
+        dads_d = 2*pi*(mot_or-w_sy-s_d)
+        dadmot_or = 2*pi*s_d
+        dadw_sy = -2*pi*s_d
+    
+    
+        J['j', 'n'] = 2*i*(2.**0.5)/(k_wb/n_s*(area-n_s*1.25*(w_t*s_d))*1E6)
+        J['j', 'i'] = 2*n*(2.**0.5)/(k_wb/n_s*(area-n_s*1.25*(w_t*s_d))*1E6)
+        J['j', 'k_wb'] = - 2*n*i*(2.**0.5)/((k_wb**2)/n_s*(area-n_s*1.25*(w_t*s_d))*1E6)
+        J['j', 'mot_or'] = djdarea*(dads_d*J['s_d', 'mot_or'] + dadmot_or) + djds_d*J['s_d', 'mot_or'] 
+        J['j', 'rot_or'] = djdarea*(dadw_sy*J['w_sy', 'rot_or'] + dads_d*J['s_d','rot_or']) + djdw_t*J['w_t','rot_or'] + djds_d*J['s_d','rot_or']
+        J['j', 'gap'] = (djdarea*dads_d + djds_d)*J['s_d','gap']
+        J['j', 'b_g'] = djdarea*(dadw_sy*J['w_sy','b_g']+dads_d*J['s_d','b_g']) + djdw_t*J['w_t','b_g'] + djds_d*J['s_d','b_g']
+        J['j', 'n_m'] = djdarea*(dadw_sy*J['w_sy','n_m']+dads_d*J['s_d','n_m']) + djds_d*J['s_d','n_m']
+        J['j', 'n_s'] = djdn_s + djdw_t*J['w_t','n_s']
+        J['j', 'k'] = djdarea*(dadw_sy*J['w_sy','k'] + dads_d*J['s_d','k']) + djdw_t*J['w_t','k'] + djds_d*J['s_d','k']
+        J['j', 'b_sy'] = djdarea*(dadw_sy*J['w_sy','b_sy'] + dads_d*J['s_d','b_sy']) + djds_d*J['s_d','b_sy']
+        J['j', 'b_t'] = djdw_t*J['w_t','b_t']
 
 class torque(ExplicitComponent):
 
@@ -180,7 +180,7 @@ class torque(ExplicitComponent):
        self.add_input('rot_or', .025, units='m', desc='rotor outer radius')
        self.add_output('tq', 25, units='N*m', desc='torque')
        #self.declare_partials('tq', ['n_m','n','b_g','l_st','rot_or','i'])
-       self.declare_partials('*','*', method='fd')
+       self.declare_partials('*','*')#, method='fd')
 
     def compute(self,inputs,outputs):
        n_m=inputs['n_m']
@@ -192,20 +192,20 @@ class torque(ExplicitComponent):
 
        outputs['tq'] = 2*n_m*n*b_g*l_st*rot_or*i*.68
 
-    # def compute_partials(self,inputs,J):
-    #    n_m=inputs['n_m']
-    #    n= inputs['n']
-    #    b_g= inputs['b_g']
-    #    l_st= inputs['l_st']
-    #    rot_or = inputs['rot_or']
-    #    i = inputs['i']
-    # 
-    #    J['tq', 'n_m'] = 2*n*b_g*l_st*rot_or*i*.68
-    #    J['tq', 'n'] = 2*n_m*b_g*l_st*rot_or*i*.68
-    #    J['tq', 'b_g'] = 2*n_m*n*l_st*rot_or*i*.68
-    #    J['tq', 'l_st'] = 2*n_m*n*b_g*rot_or*i*.68
-    #    J['tq', 'rot_or'] = 2*n_m*n*b_g*l_st*i*.68
-    #    J['tq', 'i'] = 2*n_m*n*b_g*l_st*rot_or*.68
+    def compute_partials(self,inputs,J):
+       n_m=inputs['n_m']
+       n= inputs['n']
+       b_g= inputs['b_g']
+       l_st= inputs['l_st']
+       rot_or = inputs['rot_or']
+       i = inputs['i']
+    
+       J['tq', 'n_m'] = 2*n*b_g*l_st*rot_or*i*.68
+       J['tq', 'n'] = 2*n_m*b_g*l_st*rot_or*i*.68
+       J['tq', 'b_g'] = 2*n_m*n*l_st*rot_or*i*.68
+       J['tq', 'l_st'] = 2*n_m*n*b_g*rot_or*i*.68
+       J['tq', 'rot_or'] = 2*n_m*n*b_g*l_st*i*.68
+       J['tq', 'i'] = 2*n_m*n*b_g*l_st*rot_or*.68
 
 class motor_mass(ExplicitComponent):
 
@@ -230,7 +230,7 @@ class motor_mass(ExplicitComponent):
         self.add_output('mag_mass', 0.5, units='kg', desc='mass of magnets')
         
         #self.declare_partials('rot_mass',['rho','rot_or','rot_ir'], method='fd')
-        self.declare_partials('*','*', method='fd')
+        self.declare_partials('*','*')#, method='fd')
 
     def compute(self,inputs,outputs):
         # stator
@@ -259,44 +259,44 @@ class motor_mass(ExplicitComponent):
         #
 
 
-    # def compute_partials(self,inputs,J):
-    # 
-    #     #stator
-    #     rho=inputs['rho']
-    #     mot_or=inputs['mot_or']
-    #     n_s=inputs['n_s']
-    #     sta_ir=inputs['sta_ir']
-    #     w_t=inputs['w_t']
-    #     l_st=inputs['l_st']
-    #     s_d=inputs['s_d']
-    # 
-    #     J['sta_mass', 'rho'] = l_st * ((pi * mot_or**2)-(pi * (sta_ir+s_d)**2)+(n_s*(w_t*s_d*1.5)))
-    #     J['sta_mass', 'mot_or'] = 2 * rho * l_st * (pi * mot_or)
-    #     J['sta_mass', 'n_s'] = rho * l_st * (w_t*s_d*1.5)
-    #     J['sta_mass', 'sta_ir'] = 2 * rho * l_st * -(pi * (sta_ir+s_d))
-    #     J['sta_mass', 'w_t'] = rho * l_st * (n_s*(s_d*1.5))
-    #     J['sta_mass', 'l_st'] = rho * ((pi * mot_or**2)-(pi * (sta_ir+s_d)**2)+(n_s*(w_t*s_d*1.5)))
-    #     J['sta_mass', 's_d'] = 2 * rho * l_st * -(pi * (sta_ir+s_d))
-    # 
-    #     #rotor
-    #     rot_ir=inputs['rot_ir']
-    #     rot_or=inputs['rot_or']
-    #     l_st=inputs['l_st']
-    #     t_mag=inputs['t_mag']    
-    # 
-    #     J['rot_mass', 'rot_ir'] = -(2 * pi * rot_ir) * rho * l_st
-    #     J['rot_mass', 'rot_or'] = (2 * pi * (rot_or - t_mag)) * rho * l_st
-    #     J['rot_mass', 'l_st'] = (pi*(rot_or - t_mag)**2 - pi*rot_ir**2) * rho
-    #     J['rot_mass', 't_mag'] = (2 * pi * (rot_or - t_mag)) * rho * l_st
-    #     J['rot_mass', 'rho'] = (pi*(rot_or - t_mag)**2 - pi*rot_ir**2) * l_st
-    # 
-    #     #magnets
-    #     rho_mag=inputs['rho_mag']
-    # 
-    #     J['mag_mass', 'rot_or'] = ((2*pi*rot_or) - (2*pi*(rot_or-t_mag))) * rho_mag * l_st
-    #     J['mag_mass', 't_mag'] = - (2*pi*(rot_or-t_mag)) * rho_mag * l_st
-    #     J['mag_mass', 'rho_mag'] = (((pi*rot_or**2) - (pi*(rot_or-t_mag)**2))) * l_st
-    #     J['mag_mass', 'l_st'] = (((pi*rot_or**2) - (pi*(rot_or-t_mag)**2))) * rho_mag
+    def compute_partials(self,inputs,J):
+    
+        #stator
+        rho=inputs['rho']
+        mot_or=inputs['mot_or']
+        n_s=inputs['n_s']
+        sta_ir=inputs['sta_ir']
+        w_t=inputs['w_t']
+        l_st=inputs['l_st']
+        s_d=inputs['s_d']
+    
+        J['sta_mass', 'rho'] = l_st * ((pi * mot_or**2)-(pi * (sta_ir+s_d)**2)+(n_s*(w_t*s_d*1.5)))
+        J['sta_mass', 'mot_or'] = 2 * rho * l_st * (pi * mot_or)
+        J['sta_mass', 'n_s'] = rho * l_st * (w_t*s_d*1.5)
+        J['sta_mass', 'sta_ir'] = 2 * rho * l_st * -(pi * (sta_ir+s_d))
+        J['sta_mass', 'w_t'] = rho * l_st * (n_s*(s_d*1.5))
+        J['sta_mass', 'l_st'] = rho * ((pi * mot_or**2)-(pi * (sta_ir+s_d)**2)+(n_s*(w_t*s_d*1.5)))
+        J['sta_mass', 's_d'] = rho * l_st * (-(2 * pi * (sta_ir+s_d)) + (n_s*w_t*1.5))
+    
+        #rotor
+        rot_ir=inputs['rot_ir']
+        rot_or=inputs['rot_or']
+        l_st=inputs['l_st']
+        t_mag=inputs['t_mag']    
+    
+        J['rot_mass', 'rot_ir'] = -(2 * pi * rot_ir) * rho * l_st
+        J['rot_mass', 'rot_or'] = (2 * pi * (rot_or - t_mag)) * rho * l_st
+        J['rot_mass', 'l_st'] = (pi*(rot_or - t_mag)**2 - pi*rot_ir**2) * rho
+        J['rot_mass', 't_mag'] = (2 * pi * (rot_or - t_mag)) * rho * l_st
+        J['rot_mass', 'rho'] = (pi*(rot_or - t_mag)**2 - pi*rot_ir**2) * l_st
+    
+        #magnets
+        rho_mag=inputs['rho_mag']
+    
+        J['mag_mass', 'rot_or'] = ((2*pi*rot_or) - (2*pi*(rot_or-t_mag))) * rho_mag * l_st
+        J['mag_mass', 't_mag'] = - (2*pi*(rot_or-t_mag)) * rho_mag * l_st
+        J['mag_mass', 'rho_mag'] = (((pi*rot_or**2) - (pi*(rot_or-t_mag)**2))) * l_st
+        J['mag_mass', 'l_st'] = (((pi*rot_or**2) - (pi*(rot_or-t_mag)**2))) * rho_mag
     
     
 
