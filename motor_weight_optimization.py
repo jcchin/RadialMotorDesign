@@ -4,8 +4,32 @@ from math import pi
 from openmdao.api import Problem, IndepVarComp, ExplicitComponent, ExecComp
 from openmdao.api import NewtonSolver, Group, DirectSolver, NonlinearRunOnce, LinearRunOnce, view_model, BalanceComp
 
-class motor_size(ExplicitComponent):
+class efficiency(ExplicitComponent):
 
+    def setup(self):
+        self.add_input('i', 30, units='A', desc='RMS current')
+        self.add_input('tq', 25, units='N*m', desc='torque')
+        self.add_input('v', 385, units='V', desc='RMS voltage')
+        self.add_input('rm', 3800, units='rpm', desc='motor speed')
+
+        self.add_output('P_in', units='W', desc='input power')
+        self.add_output('P_out', units='W', desc='output power')
+        self.add_output('nu', desc='efficiency')
+        
+        self.declare_partials('*','*',method='fd')
+
+    def compute(self, inputs, outputs):
+        i = inputs['i']
+        tq = inputs['tq']
+        v = inputs['v']
+        rm = inputs['rm']
+        
+        outputs['P_in'] = v*i
+        outputs['P_out'] = tq*rm*(2*pi/60)
+        outputs['nu'] = outputs['P_out']/outputs['P_in']
+
+class motor_size(ExplicitComponent):
+    
     def setup(self):
         # rotor_outer_radius
         self.add_input('mot_or', 0.0765, units='m', desc='motor outer radius')
