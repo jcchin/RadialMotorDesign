@@ -353,10 +353,10 @@ if __name__ == "__main__":
     model.nonlinear_solver.options['iprint'] = 0
     p.setup()
     p.final_setup()
-    p.check_partials(compact_print=True)
+    #p.check_partials(compact_print=True)
     p.model.list_outputs(implicit=True)
     p.set_solver_print(2)
-    #view_model(p)
+    view_model(p)
     p.run_model()
 
     print('Rotor Outer Radius................',  p.get_val('balance.rot_or', units='mm'))
