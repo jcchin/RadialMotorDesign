@@ -2,21 +2,21 @@ from __future__ import absolute_import
 import numpy as np
 from math import pi
 from openmdao.api import Problem, IndepVarComp, ExplicitComponent, ExecComp
-from openmdao.api import NewtonSolver, Group, DirectSolver, NonlinearRunOnce, LinearRunOnce, view_model, BalanceComp
+from openmdao.api import NewtonSolver, Group, DirectSolver, NonlinearRunOnce, LinearRunOnce, view_model, BalanceComp, ScipyOptimizeDriver
 
 class efficiency(ExplicitComponent):
 
     def setup(self):
         self.add_input('i', 30, units='A', desc='RMS current')
         self.add_input('tq', 25, units='N*m', desc='torque')
-        self.add_input('v', 385, units='V', desc='RMS voltage')
-        self.add_input('rm', 3800, units='rpm', desc='motor speed')
+        self.add_input('v', 500, units='V', desc='RMS voltage')
+        self.add_input('rm', 5400, units='rpm', desc='motor speed')
 
         self.add_output('P_in', units='W', desc='input power')
         self.add_output('P_out', units='W', desc='output power')
         self.add_output('nu', desc='efficiency')
         
-        self.declare_partials('*','*',method='fd')
+        self.declare_partials('*','*')
 
     def compute(self, inputs, outputs):
         i = inputs['i']
@@ -24,12 +24,34 @@ class efficiency(ExplicitComponent):
         v = inputs['v']
         rm = inputs['rm']
         
-        outputs['P_in'] = v*i
+        outputs['P_in'] = (3**.5)*v*i
         outputs['P_out'] = tq*rm*(2*pi/60)
         outputs['nu'] = outputs['P_out']/outputs['P_in']
+        
+    def compute_partials(self, inputs, J):
+        i = inputs['i']
+        tq = inputs['tq']
+        v = inputs['v']
+        rm = inputs['rm']
+        
+        P_in = (3**.5)*v*i
+        P_out = tq*rm*(2*pi/60)
+        
+        J['P_in','v'] = (3**.5)*i 
+        J['P_in','i'] = (3**.5)*v 
+        
+        J['P_out','tq'] = rm*(2*pi/60)
+        J['P_out','rm'] = tq*(2*pi/60)
+        
+        J['nu','v'] = -P_out/((3**.5)*i*(v**2))
+        J['nu','i'] = -P_out/((3**.5)*v*(i**2))
+        J['nu','tq'] = rm*(2*pi/60)/P_in
+        J['nu','rm'] = tq*(2*pi/60)/P_in
+        
+        
 
 class motor_size(ExplicitComponent):
-    
+        
     def setup(self):
         # rotor_outer_radius
         self.add_input('mot_or', 0.0765, units='m', desc='motor outer radius')
@@ -333,7 +355,7 @@ if __name__ == "__main__":
     #ind.add_output('rot_or', val=0.0615, units='m')         # Outer radius of rotor, including 5mm magnet thickness
     ind.add_output('k', val=0.97)                   # Stacking factor
     ind.add_output('k_wb', val=0.55)                # copper fill factor
-    ind.add_output('gap', val=0.001, units='m')     # Stacking factor
+    ind.add_output('gap', val=0.001, units='m')     # air gap
     ind.add_output('n', val=24)                     # Number of wire turns     
     ind.add_output('i', val=33, units='A')          # RMS Current
     ind.add_output('mot_or', val=0.08, units='m')    # Motor outer radius
@@ -351,39 +373,62 @@ if __name__ == "__main__":
     ind.add_output('rho', val=8110.2, units='kg/m**3')   # Density of Hiperco-50
     ind.add_output('rho_mag', val=7500, units='kg/m**3')    # Density of Magnets
 
-    bal = BalanceComp()
+    ind.add_output('rot_or', val = 0.06, units='m')
+    ind.add_output('l_st', val = 0.02, units='m')
 
-    bal.add_balance('rot_or', val=0.06, units='m', use_mult=False, rhs_val = 13.)
-    bal.add_balance('l_st', val=0.02, units='m', use_mult=False, rhs_val = 24.)
+    # bal = BalanceComp()
+    # 
+    # bal.add_balance('rot_or', val=0.06, units='m', use_mult=False, rhs_val = 13.)
+    # bal.add_balance('l_st', val=0.02, units='m', use_mult=False, rhs_val = 24.)
 
     model.add_subsystem('size', motor_size(), promotes_inputs=['n','i','k_wb','mot_or','gap','rot_or','b_g','k','b_ry','n_m','b_sy','b_t','n_s'], promotes_outputs=['w_ry', 'w_sy', 'w_t','s_d','rot_ir','sta_ir'])
     # model.add_subsystem('motor_radius_prime', ExecComp('r_m_p = rot_or + .005 + .001 + s_d + w_sy',r_m_p={'units':'m'}, rot_or={'units':'m'}, s_d={'units':'m'}, w_sy={'units':'m'}), promotes_inputs=['rot_or','s_d','w_sy'], promotes_outputs=['r_m_p'])
     # model.add_subsystem('mass_stator', mass_stator(), promotes_inputs=['rho','mot_or','n_s','sta_ir','w_t','l_st'], promotes_outputs=['weight']
     # model.add_subsystem('stmass', ExecComp('mass = l_st * ((pi * mot_or**2)-(pi * sta_ir**2)+(n_s*(w_t*1.2)))', l_st={'units':'m'},mot_or={'units':'m'},sta_ir={'units':'m'},w_t={'units':'m'}), promotes_inputs=['l_st','mot_or','sta_ir','n_s','w_t'], promotes_outputs=['mass']
-    model.add_subsystem(name='balance', subsys=bal)
+    # model.add_subsystem(name='balance', subsys=bal)
     model.add_subsystem('mass', motor_mass(), promotes_inputs=['t_mag','rho_mag','rho','mot_or','n_s','sta_ir','w_t','l_st','s_d','rot_or','rot_ir'], promotes_outputs=['sta_mass','rot_mass','mag_mass'])
     model.add_subsystem('torque', torque(), promotes_inputs=['rot_or','b_g','i','n_m','n','l_st'], promotes_outputs=['tq'])
+    model.add_subsystem('efficiency', efficiency(), promotes_inputs=['tq','i'], promotes_outputs=['nu'])
 
-    model.connect('balance.rot_or', 'rot_or')
-    model.connect('size.j', 'balance.lhs:rot_or')
+    # model.connect('balance.rot_or', 'rot_or')
+    # model.connect('size.j', 'balance.lhs:rot_or')
+    # 
+    # model.connect('balance.l_st', 'l_st')
+    # model.connect('tq', 'balance.lhs:l_st')
 
-    model.connect('balance.l_st', 'l_st')
-    model.connect('tq', 'balance.lhs:l_st')
-
-    model.linear_solver = DirectSolver()
+    #model.linear_solver = DirectSolver()
 
     model.nonlinear_solver = NewtonSolver()
     model.nonlinear_solver.options['maxiter'] = 100
     model.nonlinear_solver.options['iprint'] = 0
+    
+    #optimization setup
+    model.driver = ScipyOptimizeDriver()
+    model.driver.options['optimizer'] = 'SLSQP'
+    model.add_objective('nu', ref=-1)
+    model.add_design_var('gap', lower=.001, upper=.003)
+    model.add_design_var('mot_or', lower=.07, upper=.10)
+    model.add_design_var('rot_or', lower = .05, upper=.068)
+    model.add_design_var('l_st', lower = .0004, upper = .0006)
+    model.add_constraint('tq', lower=24, scaler=1)
+    model.add_constraint('size.j', upper=13, scaler=1)
+    
     p.setup()
+    
+    p['gap'] = 0.001
+    p['mot_or'] = 0.09
+    p['rot_or'] = 0.06
+    p['l_st'] = 0.01
+    
     p.final_setup()
     #p.check_partials(compact_print=True)
     p.model.list_outputs(implicit=True)
-    p.set_solver_print(2)
-    view_model(p)
-    p.run_model()
-
-    print('Rotor Outer Radius................',  p.get_val('balance.rot_or', units='mm'))
+    p.set_solver_print()
+    #view_model(p)
+    #p.run_model()
+    p.run_driver()
+    
+    print('Rotor Outer Radius................',  p.get_val('rot_or', units='mm'))
     print('Rotor Inner Radius................',  p.get_val('rot_ir', units='mm'))
     # print('Rotor Outer Radius................',  p.get_val('rot_or', units='mm'))
 
@@ -403,6 +448,8 @@ if __name__ == "__main__":
     print('Mass of Magnets...................',  p.get_val('mag_mass', units='kg'))    
     print('Current Density...................',  p.get_val('size.j'))
     print('Stack Length......................',  p.get_val('mass.l_st', units='mm'))
+    
+    print('Efficiency........................',  p.get_val('nu'))
 
     from solid import *
     from solid.utils import *
@@ -420,7 +467,7 @@ if __name__ == "__main__":
     fs = 0.05
 
     rot_ir = float(p.get_val('rot_ir', units='mm'))
-    rot_or = float(p.get_val('balance.rot_or', units='mm'))
+    rot_or = float(p.get_val('rot_or', units='mm'))
 
     stator_yolk = cylinder(r=mot_or, h=l_st, center=True) - cylinder(r=mot_or-w_sy, h=l_st+1, center=True)
     slot = cube([s_d, w_t, l_st], center=True)
