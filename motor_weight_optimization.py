@@ -411,16 +411,16 @@ if __name__ == "__main__":
     model.add_design_var('gap', lower=.001, upper=.004)
     model.add_design_var('mot_or', lower=.075, upper=.10)
     model.add_design_var('rot_or', lower = .04, upper=.07)
-    model.add_design_var('l_st', lower = .0004, upper = .003)
-    model.add_constraint('tq', lower=12, scaler=1)
-    model.add_constraint('size.j', upper=15, scaler=1)
+    model.add_design_var('l_st', lower = .004, upper = .03)
+    model.add_constraint('tq', lower=24, scaler=1)
+    model.add_constraint('size.j', upper=13, scaler=1)
     
     p.setup()
     
     p['gap'] = 0.002
     p['mot_or'] = 0.08
     p['rot_or'] = 0.06
-    p['l_st'] = 0.0009
+    p['l_st'] = 0.008
     # 
     p.final_setup()
     #p.check_partials(compact_print=True)
@@ -450,9 +450,7 @@ if __name__ == "__main__":
     print('Mass of Magnets...................',  p.get_val('mag_mass', units='kg'))    
     print('Current Density...................',  p.get_val('size.j'))
     print('Stack Length......................',  p.get_val('mass.l_st', units='mm'))
-    print('Power In..........................',  p.get_val('efficiency.P_in', units='W'))
-    print('Power Out..........................',  p.get_val('efficiency.P_out', units='W'))
-    
+    print('Motor Speed.......................',  p.get_val('efficiency.rm', units='rpm'))
     print('Efficiency........................',  p.get_val('nu'))
 
     from solid import *
