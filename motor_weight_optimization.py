@@ -123,6 +123,7 @@ class motor_size(ExplicitComponent):
         outputs['sta_ir'] = rot_or + gap
         area = pi*(mot_or-outputs['w_sy'])**2 - pi*(mot_or-outputs['w_sy']-outputs['s_d'])**2 #outputs['sta_ir']
         outputs['j'] = 2*n*i*(2.**0.5)/(k_wb/n_s*(area-n_s*1.25*(outputs['w_t']*outputs['s_d']))*1E6)
+        print(outputs['j'])
         # TODO:  Better name for current density???
 
     # TODO: Get this partial working:
@@ -398,39 +399,40 @@ if __name__ == "__main__":
 
     #model.linear_solver = DirectSolver()
 
-    model.nonlinear_solver = NewtonSolver()
-    model.nonlinear_solver.options['maxiter'] = 100
-    model.nonlinear_solver.options['iprint'] = 0
+    #model.nonlinear_solver = NewtonSolver()
+    #model.nonlinear_solver.options['maxiter'] = 100
+    #model.nonlinear_solver.options['iprint'] = 2
     
     #optimization setup
-    model.driver = ScipyOptimizeDriver()
-    model.driver.options['optimizer'] = 'SLSQP'
+    p.driver = ScipyOptimizeDriver()
+    p.driver.options['optimizer'] = 'SLSQP'
+    p.driver.options['debug_print'] = ['desvars', 'objs']
     model.add_objective('nu', ref=-1)
     model.add_design_var('gap', lower=.001, upper=.003)
     model.add_design_var('mot_or', lower=.07, upper=.10)
     model.add_design_var('rot_or', lower = .05, upper=.068)
-    model.add_design_var('l_st', lower = .0004, upper = .0006)
-    model.add_constraint('tq', lower=24, scaler=1)
-    model.add_constraint('size.j', upper=13, scaler=1)
+    model.add_design_var('l_st', lower = .0004, upper = .003)
+    model.add_constraint('tq', lower=20, scaler=1)
+    model.add_constraint('size.j', upper=15, scaler=1)
     
     p.setup()
     
-    p['gap'] = 0.001
-    p['mot_or'] = 0.09
+    p['gap'] = 0.002
+    p['mot_or'] = 0.08
     p['rot_or'] = 0.06
-    p['l_st'] = 0.01
+    p['l_st'] = 0.0009
     
     p.final_setup()
     #p.check_partials(compact_print=True)
     p.model.list_outputs(implicit=True)
-    p.set_solver_print()
+    p.set_solver_print(level=2)
     #view_model(p)
     #p.run_model()
     p.run_driver()
     
-    print('Rotor Outer Radius................',  p.get_val('rot_or', units='mm'))
+    # print('Rotor Outer Radius................',  p.get_val('balance.rot_or', units='mm'))
     print('Rotor Inner Radius................',  p.get_val('rot_ir', units='mm'))
-    # print('Rotor Outer Radius................',  p.get_val('rot_or', units='mm'))
+    print('Rotor Outer Radius................',  p.get_val('rot_or', units='mm'))
 
     print('Stator Inner Radius...............',  p.get_val('sta_ir', units='mm'))
     print('Motor Outer Radius................',  p.get_val('mass.mot_or', units='mm'))
