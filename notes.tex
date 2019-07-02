@@ -1,0 +1,90 @@
+\documentclass[11pt]{article}
+\usepackage{graphicx}
+\usepackage{parskip}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{color}
+
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{mygray}{rgb}{0.5,0.5,0.5}
+\definecolor{mymauve}{rgb}{0.58,0,0.82}
+
+\lstset{ %
+  backgroundcolor=\color{black},   % choose the background color
+  basicstyle=\footnotesize,        % size of fonts used for the code
+  breaklines=true,                 % automatic line breaking only at whitespace
+  captionpos=b,                    % sets the caption-position to bottom
+  commentstyle=\color{mygreen},    % comment style
+  escapeinside={\%*}{*)},          % if you want to add LaTeX within your code
+  keywordstyle=\color{blue},       % keyword style
+  stringstyle=\color{mymauve},     % string literal style
+}
+
+\begin{document}
+
+\title{Progress Notes on Motor Design Code}
+\author{Garo Bedonian}
+
+\maketitle
+
+\section{NEXT STEP}
+
+Talk with Aaron about MotorCAD manual, talk about FEM with Justin, use total mass as objective
+
+\section{High-Level Notes}
+
+Goal: Make strides in unifying motor design process using OpenMDAO.
+
+Ideas/paths for making progress 
+\begin{itemize}
+	\item Implement the lowest-fidelity analyses possible (existing surrogate models, analytic stuff)
+	\item Focus on improving fidelity of one, two, analyses (EM, Thermal)
+	\item Focus on defining optimization goals (objectives, constraints, design space)
+  \item Menial tasks: analytic derivatives, clean up code, split across .py files
+\end{itemize}
+
+1. 
+Seems to be current focus.
+Going to look through MotorCAD manual to replicate their models with Aaron
+
+Communicating with Tucker, will send some material on EM when he can
+
+2.
+Build something in Empy?
+Or MFEM?
+
+Haven't started on this yet
+
+
+3.
+With losses modeled as they are (dependent only on electric frequency and representing a different motor), can't use them as objective.
+Want to try minimizing mass instead, see what optimizer does.
+
+Currently using design space bounds,
+
+Upper limit on current density 
+
+Lower limit on torque 
+
+Objective is losses, but don't make sense to use as they are
+
+4. 
+Do these to pass the time
+
+Especially need to clean up comments, remove deprecated lines
+
+
+
+
+\section{Notable Commits}
+
+
+
+91029b2 2019-07-02: The surrogate models for magnetic/wiring eddy and core losses work, as do the mechanical loss models. Optimization doesn't make sense as they are.
+
+\section{Specific Notes}
+
+
+
+\end{document}
