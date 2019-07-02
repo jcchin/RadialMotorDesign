@@ -1,17 +1,18 @@
-\documentclass[11pt]{article}
+\documentclass[10pt]{article}
 \usepackage{graphicx}
 \usepackage{parskip}
 \usepackage{amsmath}
 \usepackage{float}
 \usepackage{listings}
 \usepackage{color}
+\usepackage[margin = 1in]{geometry}
 
 \definecolor{mygreen}{rgb}{0,0.6,0}
 \definecolor{mygray}{rgb}{0.5,0.5,0.5}
 \definecolor{mymauve}{rgb}{0.58,0,0.82}
 
 \lstset{ %
-  backgroundcolor=\color{black},   % choose the background color
+  backgroundcolor=\color{white},   % choose the background color
   basicstyle=\footnotesize,        % size of fonts used for the code
   breaklines=true,                 % automatic line breaking only at whitespace
   captionpos=b,                    % sets the caption-position to bottom
@@ -24,7 +25,7 @@
 \begin{document}
 
 \title{Progress Notes on Motor Design Code}
-\author{Garo Bedonian}
+\author{Garo Bedonian, Aaron Grgurich}
 
 \maketitle
 
@@ -79,7 +80,7 @@ Especially need to clean up comments, remove deprecated lines
 
 \section{Notable Commits}
 
-
+ef18621 2019-07-02: Added this notes.tex file
 
 91029b2 2019-07-02: The surrogate models for magnetic/wiring eddy and core losses work, as do the mechanical loss models. Optimization doesn't make sense as they are.
 
