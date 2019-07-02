@@ -8,47 +8,50 @@ class core_loss(ExplicitComponent):
     
     def setup(self):
         self.add_input('rm', units='rpm', desc='motor speed')
-        self.add_input('alpha', 1.5, desc='core loss constant') 
+        self.add_input('alpha', 1.27, desc='core loss constant') 
+        self.add_input('n_m', desc='number of poles')
         
         self.add_output('L_core', units='W', desc='core loss')
         
-        self.declare_partials('*','*',method=fd)
+        self.declare_partials('*','*',method='fd')
     def compute(self, inputs, outputs):
         rm = inputs['rm']
+        n_m = inputs['n_m']
         alpha = inputs['alpha']
         
-        #need to translate motor speed to electric frequency
-        f = rm
+        f = n_m*rm/120
         outputs['L_core'] = .2157*(f**alpha)
         
 class mag_eddy_loss(ExplicitComponent):
     
     def setup(self):
         self.add_input('rm', units='rpm', desc='motor speed')
+        self.add_input('n_m', desc='number of poles')        
         
         self.add_output('L_emag', units='W', desc='magnetic eddy loss')
         
-        self.declare_partials('*','*',method=fd)
+        self.declare_partials('*','*',method='fd')
     def compute(self, inputs, outputs):
         rm = inputs['rm']
+        n_m = inputs['n_m']
         
-        #need to translate motor speed to electric frequency
-        f = rm
+        f = n_m*rm/120
         outputs['L_emag'] = .0010276*(f**2)
         
 class wire_eddy_loss(ExplicitComponent):
     
     def setup(self):
         self.add_input('rm', units='rpm', desc='motor speed')
+        self.add_input('n_m', desc='number of poles')
         
         self.add_output('L_ewir', units='W', desc='winding eddy loss')
         
-        self.declare_partials('*','*',method=fd)
+        self.declare_partials('*','*',method='fd')
     def compute(self, inputs, outputs):
         rm = inputs['rm']
+        n_m = inputs['n_m']
         
-        #need to translate motor speed to electric frequency
-        f = rm
+        f = n_m*rm/120
         outputs['L_ewir'] = .00040681*(f**2)
 
 class mech_loss(ExplicitComponent):
@@ -56,18 +59,18 @@ class mech_loss(ExplicitComponent):
     def setup(self):
         #windage parameters
         self.add_input('rm', 5400, units='rpm', desc='motor speed')
-        self.add_input('k', desc='windage constant k')
+        self.add_input('k', .003, desc='windage constant k')
         self.add_input('rho_a', 1.225, units='kg/m**3', desc='air density')
         self.add_input('rot_or', .05, units='m', desc='rotor outer radius')
         self.add_input('rot_ir', .02, units='m', desc='rotor inner radius')
         self.add_input('l_st', units='m', desc='length of stack')
         self.add_input('gap', units='m', desc='air gap') #aka delta
-        self.add_input('mu_a', units='(m**2)/s', desc='air dynamic viscosity')
+        self.add_input('mu_a', 1.81e-5, units='(m**2)/s', desc='air dynamic viscosity')
         
         #bearing parameters
-        self.add_input('muf_b', desc='bearing friction coefficient')
-        self.add_input('D_b', units='m', desc='bearing bore diameter')
-        self.add_input('F_b', units='N', desc='bearing load') #coupled with motor mass
+        self.add_input('muf_b', .3, desc='bearing friction coefficient')
+        self.add_input('D_b', .01, units='m', desc='bearing bore diameter')
+        self.add_input('F_b', 100, units='N', desc='bearing load') #coupled with motor mass
         
         self.add_output('L_airg', units='W', desc='air gap windage loss') #air gap
         self.add_output('L_airf', units='W', desc='axial face windage loss') #axial face
@@ -87,22 +90,23 @@ class mech_loss(ExplicitComponent):
         mu_a = inputs['mu_a']
         
         muf_b = inputs['muf_b']
-        D_b = inputs['rm']
+        D_b = inputs['D_b']
         F_b = inputs['F_b']
         
+        omega = rm*(2*pi/60)
         #air gap friction coefficient, Re number
-        Reg = rho_a*rm*rot_or*gap/mu_a
+        Reg = rho_a*omega*rot_or*gap/mu_a
         Cfg = .515*((gap**.3)/rot_or)/(Reg**.5) 
         
-        outputs['L_airg'] = k*Cfa*pi*rho_a*(rm**3)*(rot_or**4)*l_st
+        outputs['L_airg'] = k*Cfg*pi*rho_a*(omega**3)*(rot_or**4)*l_st
         
         #axial air friction coefficient, Re number
-        Rea = rho_a*rm*(rot_or**2)/mu_a
+        Rea = rho_a*omega*(rot_or**2)/mu_a
         Cfa = .146/(Rea**2)
         
-        outputs['L_airf'] = .5*Cfa*rho_a*(rm**3)*((rot_or**5)-(rot_ir**5))
+        outputs['L_airf'] = .5*Cfa*rho_a*(omega**3)*((rot_or**5)-(rot_ir**5))
         
-        outputs['L_bear'] = .5*muf_b*D_b*F_b*rm
+        outputs['L_bear'] = .5*muf_b*D_b*F_b*omega
         
     #def compute_partials(self, inputs, J):
 
@@ -122,8 +126,6 @@ class efficiency(ExplicitComponent):
         self.add_input('tq', 25, units='N*m', desc='torque')
         self.add_input('v', 385, units='V', desc='RMS voltage')
         self.add_input('rm', 5400, units='rpm', desc='motor speed')
-        self.add_input('L_', 5400, units='rpm', desc='motor speed')
-        self.add_input('rm', 5400, units='rpm', desc='motor speed')
         
         self.add_input('L_airg', units='W', desc='gap windage loss')
         self.add_input('L_airf', units='W', desc='face windage loss')
@@ -134,18 +136,26 @@ class efficiency(ExplicitComponent):
         self.add_input('L_res', 50, units='W', desc='resistive loss')
         
         self.add_output('P_in', units='W', desc='input power')
-        self.add_output('P_out', units='W', desc='output power')
-        self.add_output('L_total', units='W' desc='total loss'')
+        #self.add_output('P_out', units='W', desc='output power')
+        self.add_output('L_total', units='W', desc='total loss')
         
-        self.declare_partials('*','*',method=fd)
+        self.declare_partials('*','*',method='fd')
 
     def compute(self, inputs, outputs):
         i = inputs['i']
         tq = inputs['tq']
         v = inputs['v']
         rm = inputs['rm']
+        L_airg = inputs['L_airg']
+        L_airf = inputs['L_airf']
+        L_core = inputs['L_core']
+        L_bear = inputs['L_bear']
+        L_emag = inputs['L_emag']
+        L_ewir = inputs['L_ewir']
+        L_res = inputs['L_res']
+        
     
-        #outputs['P_in'] = (3**.5)*v*i
+        outputs['P_in'] = (3**.5)*v*i
         #outputs['P_out'] = tq*rm*(2*pi/60)
         #outputs['nu'] = outputs['P_out']/outputs['P_in']
         outputs['L_total'] = L_airg + L_airf + L_bear + L_emag + L_ewir + L_core + L_res
@@ -496,6 +506,8 @@ if __name__ == "__main__":
 
     ind.add_output('rot_or', val = 0.06, units='m')
     ind.add_output('l_st', val = 0.02, units='m')
+    
+    ind.add_output('rm', val = 5400, units='rpm')
 
     # bal = BalanceComp()
     # 
@@ -509,7 +521,17 @@ if __name__ == "__main__":
     # model.add_subsystem(name='balance', subsys=bal)
     model.add_subsystem('mass', motor_mass(), promotes_inputs=['t_mag','rho_mag','rho','mot_or','n_s','sta_ir','w_t','l_st','s_d','rot_or','rot_ir'], promotes_outputs=['sta_mass','rot_mass','mag_mass'])
     model.add_subsystem('torque', torque(), promotes_inputs=['rot_or','b_g','i','n_m','n','l_st'], promotes_outputs=['tq'])
-    model.add_subsystem('efficiency', efficiency(), promotes_inputs=['L_airg','L_airf','L_bear','L_emag','L_ewir','L_core','L_res'], promotes_outputs=['L_total'])
+    
+    model.add_subsystem('mech_loss', mech_loss(), promotes_inputs=['rm','rot_or','rot_ir','l_st','gap'], promotes_outputs=['L_airg','L_airf','L_bear'])
+    model.add_subsystem('mag_eddy_loss', mag_eddy_loss(), promotes_inputs=['rm','n_m'], promotes_outputs=['L_emag'])
+    model.add_subsystem('wire_eddy_loss', wire_eddy_loss(), promotes_inputs=['rm','n_m'], promotes_outputs=['L_ewir'])
+    model.add_subsystem('core_loss', core_loss(), promotes_inputs=['rm','n_m'], promotes_outputs=['L_core'])
+    
+    #total mass
+    #model.add_subsystem('total_mass', ExecComp('tm = s + r + m'))
+    #model.connect()
+    
+    model.add_subsystem('efficiency', efficiency(), promotes_inputs=['i','rm','L_airg','L_airf','L_bear','L_emag','L_ewir','L_core'], promotes_outputs=['L_total'])
 
     # model.connect('balance.rot_or', 'rot_or')
     # model.connect('size.j', 'balance.lhs:rot_or')
@@ -528,12 +550,12 @@ if __name__ == "__main__":
     p.driver.options['optimizer'] = 'SLSQP'
     p.driver.options['disp'] = True
     model.add_objective('L_total', ref=1)
-    model.add_design_var('gap', lower=.001, upper=.004)
-    model.add_design_var('mot_or', lower=.075, upper=.10)
-    model.add_design_var('rot_or', lower = .04, upper=.07)
+    model.add_design_var('gap', lower = .001, upper = .004)
+    model.add_design_var('mot_or', lower = .075, upper = .10)
+    model.add_design_var('rot_or', lower = .04, upper = .07)
     model.add_design_var('l_st', lower = .004, upper = .03)
-    model.add_constraint('tq', lower=24, scaler=1)
-    model.add_constraint('size.j', upper=13, scaler=1)
+    model.add_constraint('tq', lower = 24, scaler = 1)
+    model.add_constraint('size.j', upper = 13, scaler = 1)
     
     p.setup()
     
@@ -570,7 +592,15 @@ if __name__ == "__main__":
     print('Mass of Magnets...................',  p.get_val('mag_mass', units='kg'))    
     print('Current Density...................',  p.get_val('size.j'))
     print('Stack Length......................',  p.get_val('mass.l_st', units='mm'))
-    print('Motor Speed.......................',  p.get_val('efficiency.rm', units='rpm'))
+    print('Motor Speed.......................',  p.get_val('rm'))
+    
+    print('Input Power.......................',  p.get_val('efficiency.P_in'))
+    print('Gap Windage Loss..................',  p.get_val('L_airg'))
+    print('Axial Windage Loss................',  p.get_val('L_airf'))
+    print('Bearing Loss......................',  p.get_val('L_bear'))
+    print('Stator Core Loss..................',  p.get_val('L_core'))
+    print('Magnetic Eddy Loss................',  p.get_val('L_emag'))
+    print('Wiring Eddy Loss..................',  p.get_val('L_ewir'))
     print('Total Loss........................',  p.get_val('L_total'))
 
     from solid import *
