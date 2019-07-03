@@ -5,6 +5,7 @@
 \usepackage{float}
 \usepackage{listings}
 \usepackage{color}
+\usepackage{ulem}
 \usepackage[margin = 1in]{geometry}
 
 \definecolor{mygreen}{rgb}{0,0.6,0}
@@ -31,7 +32,9 @@
 
 \section{NEXT STEP}
 
-Talk with Aaron about MotorCAD manual, talk about FEM with Justin, use total mass as objective
+\sout{Talk with Aaron about MotorCAD manual, talk about FEM with Justin,} use total mass as objective
+
+Use Tucker's resources to figure out what to do to model loss
 
 \section{High-Level Notes}
 
@@ -51,8 +54,10 @@ Going to look through MotorCAD manual to replicate their models with Aaron
 
 Communicating with Tucker, will send some material on EM when he can
 
+Also need to consider thermal and rotordynamic analyses
+
 2.
-Build something in Empy?
+Build something in EMpy?
 Or MFEM?
 
 Haven't started on this yet
@@ -86,6 +91,17 @@ ef18621 2019-07-02: Added this notes.tex file
 
 \section{Specific Notes}
 
+May need to look at magnetic flux density/max flux calculations (assumed constant) See pg. 156 EMF book
+
+Model magnetic field as a function of the properties of the coils in the motor. See pg. 161 EMF book
+
+MATlab code modeling three phase rotating magnetic field. See pg. 168 EMF book
+
+Core loss reductions, high dependence on lamination thickness and resisitivity of material (find this out for Hiperco). See pg. 219 Hanselman
+
+Amazon links to good books:
+
+https://www.amazon.com/Electric-Machinery-Fundamentals-Chapman/dp/007108617X
 
 
 \end{document}

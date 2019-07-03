@@ -569,8 +569,8 @@ if __name__ == "__main__":
     p.model.list_outputs(implicit=True)
     p.set_solver_print(level=2)
     #view_model(p)
-    #p.run_model()
-    p.run_driver()
+    p.run_model()
+    #p.run_driver()
     
     # print('Rotor Outer Radius................',  p.get_val('balance.rot_or', units='mm'))
     print('Rotor Inner Radius................',  p.get_val('rot_ir', units='mm'))
