@@ -34,7 +34,9 @@
 
 \sout{Talk with Aaron about MotorCAD manual, talk about FEM with Justin,} use total mass as objective
 
-Use Tucker's resources to figure out what to do to model loss
+\sout{Use Tucker's resources to figure out what to do to model loss}
+
+Hanselman book will be the best resource for this, use it to define loss and other necessary parameters. See specific notes
 
 \section{High-Level Notes}
 
@@ -103,5 +105,34 @@ Amazon links to good books:
 
 https://www.amazon.com/Electric-Machinery-Fundamentals-Chapman/dp/007108617X
 
+Hysteresis Losses:
+
+\begin{equation}
+P_h = k_hfB_{pk}^n
+\end{equation}
+
+or 
+
+\begin{equation}
+P_h = k_hfB_{pk}^{n+mB_{pk}}
+\end{equation}
+
+$k_h$, $n$, $m$, are material constants. $B_{pk}$ is peak flux density,
+
+To be useful for optimization, we need to compute $B$ in general (steady state)
+
+For $B_{pk}$,
+
+\begin{equation}
+B(\theta) = \sum_{n=-\infty}^{\infty}B_ne^{jn\theta}
+\end{equation}
+
+And $B_o={pk}$ is maximum of $B(\theta)$. Check (7.23) and (7,24) for stator tooth, (7.32) and (7.33) for yoke. (pg. 158 Hanselman)
+
+\begin{equation}
+\phi_i(\alpha) = \sum_{n=-\infty}^{\infty}\bigg\{\frac{2L_{st}R_s}{N_m}B_{gn}\int_{-\theta_s/2}^{\theta_s/2}K_{sl}(\theta)e^{jn\theta}d\theta{}\bigg\}e^{jn\alpha}
+\end{equation}
+
+But I need to see if the magnetic field is sinusoidal.
 
 \end{document}
