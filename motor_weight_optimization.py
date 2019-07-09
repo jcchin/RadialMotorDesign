@@ -347,9 +347,6 @@ class motor_size(ExplicitComponent):
         J['j', 'b_t'] = djdw_t*J['w_t','b_t']
 
 class torque(ExplicitComponent):
-
-    # TODO: Calculate Power and Torque?
-
     def setup(self):
         self.add_input('m_1', 1, units=None, desc='number of phases')
         self.add_input('rm', 1, units='rpm', desc='motor speed')  # "n_s" in Gieras' book
@@ -362,28 +359,19 @@ class torque(ExplicitComponent):
         self.add_output('p_elm', 1, units='W', desc='Power - Electromagnetic')
         self.add_output('tq', 1, units='N*m', desc='Torque - Electromagnetic')
 
-        # OLD STUFF BELOW:
-        '''
-        self.add_input('b_g', 2.4, units='T', desc='air gap flux density')    
-        self.add_input('n_m', 16, desc='number of poles')
-        self.add_input('n', 16, desc='number of wire turns')
-        self.add_input('l_st', .045, units='m', desc='stack length')
-        self.add_input('i', 30, units='A', desc='RMS current')       
-        self.add_input('rot_or', .025, units='m', desc='rotor outer radius')
-        self.add_output('tq', 25, units='N*m', desc='torque')
-        #self.declare_partials('tq', ['n_m','n','b_g','l_st','rot_or','i'])
-        self.declare_partials('*','*')#, method='fd')
-        '''
-
     def compute(self,inputs,outputs):
-        n_m=inputs['n_m']
-        n= inputs['n']
-        b_g= inputs['b_g']
-        l_st= inputs['l_st']
-        rot_or = inputs['rot_or']
-        i = inputs['i']
+        m_1 = inputs['m_1']
+        rm = inputs['rm']
+        V_1 = inputs['V_1']
+        E_f = inputs['E_f']
+        X_sd = inputs['X_sd']
+        X_sq = inputs['X_sq']
+        delta = inputs['delta']
 
-        outputs['tq'] = 2*n_m*n*b_g*l_st*rot_or*i*.68
+        #outputs['tq'] = (m_1/(2*pi*rm))((V_1*E_f*sin(delta))+(((V_1**2)/2)((1/X_sq)-(1/X_sd))*sin(2*delta)))
+        outputs['p_elm'] = (m_1)((V_1*E_f*sin(delta))+(((V_1**2)/2)((1/X_sq)-(1/X_sd))*sin(2*delta)))
+        p_elm = outputs['p_elm']
+        outputs['tq'] = p_elm/(2*pi*rm)
 
     def compute_partials(self,inputs,J):
         n_m=inputs['n_m']
