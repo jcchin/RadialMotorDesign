@@ -348,41 +348,57 @@ class motor_size(ExplicitComponent):
 
 class torque(ExplicitComponent):
 
+    # TODO: Calculate Power and Torque?
+
     def setup(self):
-       self.add_input('b_g', 2.4, units='T', desc='air gap flux density')    
-       self.add_input('n_m', 16, desc='number of poles')
-       self.add_input('n', 16, desc='number of wire turns')
-       self.add_input('l_st', .045, units='m', desc='stack length')
-       self.add_input('i', 30, units='A', desc='RMS current')       
-       self.add_input('rot_or', .025, units='m', desc='rotor outer radius')
-       self.add_output('tq', 25, units='N*m', desc='torque')
-       #self.declare_partials('tq', ['n_m','n','b_g','l_st','rot_or','i'])
-       self.declare_partials('*','*')#, method='fd')
+        self.add_input('m_1', 1, units=None, desc='number of phases')
+        self.add_input('rm', 1, units='rpm', desc='motor speed')  # "n_s" in Gieras' book
+        self.add_input('V_1', 1, units='V', desc='stator voltage')
+        self.add_input('E_f', 1, units='V', desc='EMF - the no-load RMS Voltage induced in one phase of the stator winding')
+        self.add_input('X_sd', 1, units='ohm', desc='d-axis synchronous reactance')
+        self.add_input('X_sq', 1, units='ohm', desc='q-axis synchronous reactance')
+        self.add_input('delta', 1, units=None, desc='Power (Load) Angle - The angle between V-1 and E_f')
+        
+        self.add_output('p_elm', 1, units='W', desc='Power - Electromagnetic')
+        self.add_output('tq', 1, units='N*m', desc='Torque - Electromagnetic')
+
+        # OLD STUFF BELOW:
+        '''
+        self.add_input('b_g', 2.4, units='T', desc='air gap flux density')    
+        self.add_input('n_m', 16, desc='number of poles')
+        self.add_input('n', 16, desc='number of wire turns')
+        self.add_input('l_st', .045, units='m', desc='stack length')
+        self.add_input('i', 30, units='A', desc='RMS current')       
+        self.add_input('rot_or', .025, units='m', desc='rotor outer radius')
+        self.add_output('tq', 25, units='N*m', desc='torque')
+        #self.declare_partials('tq', ['n_m','n','b_g','l_st','rot_or','i'])
+        self.declare_partials('*','*')#, method='fd')
+        '''
 
     def compute(self,inputs,outputs):
-       n_m=inputs['n_m']
-       n= inputs['n']
-       b_g= inputs['b_g']
-       l_st= inputs['l_st']
-       rot_or = inputs['rot_or']
-       i = inputs['i']
+        n_m=inputs['n_m']
+        n= inputs['n']
+        b_g= inputs['b_g']
+        l_st= inputs['l_st']
+        rot_or = inputs['rot_or']
+        i = inputs['i']
 
-       outputs['tq'] = 2*n_m*n*b_g*l_st*rot_or*i*.68
+        outputs['tq'] = 2*n_m*n*b_g*l_st*rot_or*i*.68
 
     def compute_partials(self,inputs,J):
-       n_m=inputs['n_m']
-       n= inputs['n']
-       b_g= inputs['b_g']
-       l_st= inputs['l_st']
-       rot_or = inputs['rot_or']
-       i = inputs['i']
+        n_m=inputs['n_m']
+        n= inputs['n']
+        b_g= inputs['b_g']
+        l_st= inputs['l_st']
+        rot_or = inputs['rot_or']
+        i = inputs['i']
     
-       J['tq', 'n_m'] = 2*n*b_g*l_st*rot_or*i*.68
-       J['tq', 'n'] = 2*n_m*b_g*l_st*rot_or*i*.68
-       J['tq', 'b_g'] = 2*n_m*n*l_st*rot_or*i*.68
-       J['tq', 'l_st'] = 2*n_m*n*b_g*rot_or*i*.68
-       J['tq', 'rot_or'] = 2*n_m*n*b_g*l_st*i*.68
-       J['tq', 'i'] = 2*n_m*n*b_g*l_st*rot_or*.68
+        J['tq', 'n_m'] = 2*n*b_g*l_st*rot_or*i*.68
+        J['tq', 'n'] = 2*n_m*b_g*l_st*rot_or*i*.68
+        J['tq', 'b_g'] = 2*n_m*n*l_st*rot_or*i*.68
+        J['tq', 'l_st'] = 2*n_m*n*b_g*rot_or*i*.68
+        J['tq', 'rot_or'] = 2*n_m*n*b_g*l_st*i*.68
+        J['tq', 'i'] = 2*n_m*n*b_g*l_st*rot_or*.68
 
 class motor_mass(ExplicitComponent):
 
