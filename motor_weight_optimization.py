@@ -349,7 +349,7 @@ class motor_size(ExplicitComponent):
 class torque(ExplicitComponent):
     def setup(self):
         self.add_input('m_1', 1, units=None, desc='number of phases')
-        self.add_input('rm', 1, units='rpm', desc='motor speed')  # "n_s" in Gieras' book
+        self.add_input('rm', 1, units='rpm', desc='motor speed')  # "n_s" in Gieras's book
         self.add_input('V_1', 1, units='V', desc='stator voltage')
         self.add_input('E_f', 1, units='V', desc='EMF - the no-load RMS Voltage induced in one phase of the stator winding')
         self.add_input('X_sd', 1, units='ohm', desc='d-axis synchronous reactance')
