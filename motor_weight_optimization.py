@@ -346,6 +346,15 @@ class motor_size(ExplicitComponent):
         J['j', 'b_sy'] = djdarea*(dadw_sy*J['w_sy','b_sy'] + dads_d*J['s_d','b_sy']) + djds_d*J['s_d','b_sy']
         J['j', 'b_t'] = djdw_t*J['w_t','b_t']
 
+class E_f(ExplicitComponent):
+    def setup(self):
+        self.add_input('f', 1, units='Hz', desc='frequency')
+        self.add_input('N_1', 1, units=None, desc='Number of the stator turns per phase')
+        self.add_input('k_w1', 1, units=None, desc='the stator winding coefficient')  # TODO:  Units correct?
+        self.add_input('b_mag', 1, units='T', desc='Magnetic flux density')  #TODO: rename variable
+
+        self.add_output('E_f', 1, units='V', desc='EMF - the no-load RMS Voltage induced in one phase of the stator winding')
+
 class torque(ExplicitComponent):
     def setup(self):
         self.add_input('m_1', 1, units=None, desc='number of phases')
