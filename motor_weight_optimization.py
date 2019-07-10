@@ -346,6 +346,12 @@ class motor_size(ExplicitComponent):
         J['j', 'b_sy'] = djdarea*(dadw_sy*J['w_sy','b_sy'] + dads_d*J['s_d','b_sy']) + djds_d*J['s_d','b_sy']
         J['j', 'b_t'] = djdw_t*J['w_t','b_t']
 
+# Stator Winding Factor
+class K_w1(ExplicitComponent):
+    def setup(self):
+        x = None
+
+# EMF
 class E_f(ExplicitComponent):
     def setup(self):
         self.add_input('f', 1, units='Hz', desc='frequency')
@@ -354,6 +360,14 @@ class E_f(ExplicitComponent):
         self.add_input('b_mag', 1, units='T', desc='Magnetic flux density')  #TODO: rename variable
 
         self.add_output('E_f', 1, units='V', desc='EMF - the no-load RMS Voltage induced in one phase of the stator winding')
+
+    def compute(self, inputs, outputs):
+        f = inputs['f']
+        N_1 = inputs['N_1']
+        k_w1 = inputs['k_w1']
+        b_mag = inputs['b_mag']
+
+        outputs['E_f'] = pi*(2**0.5)*f*N_1*k_w1*b_mag
 
 class torque(ExplicitComponent):
     def setup(self):
@@ -368,7 +382,7 @@ class torque(ExplicitComponent):
         self.add_output('p_elm', 1, units='W', desc='Power - Electromagnetic')
         self.add_output('tq', 1, units='N*m', desc='Torque - Electromagnetic')
 
-    def compute(self,inputs,outputs):
+    def compute(self, inputs, outputs):
         m_1 = inputs['m_1']
         rm = inputs['rm']
         V_1 = inputs['V_1']
