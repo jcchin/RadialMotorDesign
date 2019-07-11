@@ -385,8 +385,8 @@ class E_f(ExplicitComponent):
     def setup(self):
         self.add_input('f', 1, units='Hz', desc='frequency')
         self.add_input('N_1', 1, units=None, desc='Number of the stator turns per phase')
-        self.add_input('k_w1', 1, units=None, desc='the stator winding coefficient')  # TODO:  Units correct?
-        self.add_input('b_mag', 1, units='T', desc='Magnetic flux density')  #TODO: rename variable
+        self.add_input('k_w1', 1, units=None, desc='the stator winding coefficient')  # Computed in the "k_w1" class TODO: Connect k_w1 output to here
+        self.add_input('b_mag', 1, units='T', desc='Magnetic flux density')
 
         self.add_output('E_f', 1, units='V', desc='EMF - the no-load RMS Voltage induced in one phase of the stator winding')
 
