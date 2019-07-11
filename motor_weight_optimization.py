@@ -347,9 +347,38 @@ class motor_size(ExplicitComponent):
         J['j', 'b_t'] = djdw_t*J['w_t','b_t']
 
 # Stator Winding Factor
-class K_w1(ExplicitComponent):
+class k_w1(ExplicitComponent):
     def setup(self):
-        x = None
+        self.add_input('w_sl', 1, units=None, desc='Coil span measured in number of slots')
+        self.add_input('m_1', 1, units=None, desc='Number of phases')
+        self.add_input('p', 1, units=None, desc='Number of poles')
+        self.add_input('s_1', 1, units=None, desc='Number of slots')
+
+        self.add_output('pps', 1, units='rad', desc='Poles Per Slot - Angular displacement between adjacent slots in electrical degrees')
+        self.add_output('q_1', 1, units=None, desc='Number of slots per pole per phase')
+        self.add_output('Q_1', 1, units=None, desc='Number of slots per pole')
+        self.add_output('k_d1', 1, units=None, desc='Distribution factor')
+        self.add_output('k_p1', 1, units=None, desc='Pitch Factor')
+        self.add_output('k_w1', 1, units=None, desc='Stator winding factor')
+
+    def compute(self, inputs, outputs):
+        w_sl = inputs['w_sl']
+        m_1 = inputs['m_1']
+        p = inputs['p']
+        s_1 = inputs['s_1']
+
+        outputs['pps'] = (pi*p)/s_1
+        outputs['q_1'] = s_1/(p*m_1)
+        outputs['Q_1'] = s_1/p
+
+        pps = outputs['pps']
+        q_1 = outputs['q_1']
+        Q_1 = outputs['Q_1']
+        outputs['k_d1'] = (sin(0.5*q_1*pps))/(q_1*sin(0.5*pps))
+        outputs['k_p1'] = sin(0.5*pi*w_sl/Q_1)
+        k_d1 = outputs['k_d1']
+        k_p1 = outputs['k_p1']
+        outputs['k_w1'] = k_d1*k_p1
 
 # EMF
 class E_f(ExplicitComponent):
@@ -369,6 +398,7 @@ class E_f(ExplicitComponent):
 
         outputs['E_f'] = pi*(2**0.5)*f*N_1*k_w1*b_mag
 
+# Torque
 class torque(ExplicitComponent):
     def setup(self):
         self.add_input('m_1', 1, units=None, desc='number of phases')
@@ -396,6 +426,7 @@ class torque(ExplicitComponent):
         p_elm = outputs['p_elm']
         outputs['tq'] = p_elm/(2*pi*rm)
 
+    '''
     def compute_partials(self,inputs,J):
         n_m=inputs['n_m']
         n= inputs['n']
@@ -410,6 +441,7 @@ class torque(ExplicitComponent):
         J['tq', 'l_st'] = 2*n_m*n*b_g*rot_or*i*.68
         J['tq', 'rot_or'] = 2*n_m*n*b_g*l_st*i*.68
         J['tq', 'i'] = 2*n_m*n*b_g*l_st*rot_or*.68
+        '''
 
 class motor_mass(ExplicitComponent):
 
