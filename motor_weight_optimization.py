@@ -346,10 +346,15 @@ class motor_size(ExplicitComponent):
         J['j', 'b_sy'] = djdarea*(dadw_sy*J['w_sy','b_sy'] + dads_d*J['s_d','b_sy']) + djds_d*J['s_d','b_sy']
         J['j', 'b_t'] = djdw_t*J['w_t','b_t']
 
+# Reactance:
+class Reactance(ExplicitComponent):
+    def setup(self):
+        self.add_input('')
+
 # Stator Winding Factor
 class k_w1(ExplicitComponent):
     def setup(self):
-        self.add_input('w_sl', 1, units=None, desc='Coil span measured in number of slots')
+        self.add_input('w_sl', 1, units=None, desc='Coil span measured in number of slots')  # Do we know how to measure? - Create picture showing how it is measured?
         self.add_input('m_1', 1, units=None, desc='Number of phases')
         self.add_input('n_m', 1, units=None, desc='Number of poles')  # 'p' in Gieras's book
         self.add_input('n_s', 1, units=None, desc='Number of slots')  # 's_1' in Gieras's book
@@ -380,21 +385,41 @@ class k_w1(ExplicitComponent):
         k_p1 = outputs['k_p1']
         outputs['k_w1'] = k_d1*k_p1
 
+# Frequency:
+class Frequency(ExplicitComponent):
+    def setup(self):
+        self.add_input('rm', 1, units='rpm', desc='motor speed')  # "n_s" in Gieras's book
+        self.add_input('p_p', 1, units=None, desc='Number of pole pairs')
+
+        self.add_output('f', 1, units='Hz', desc='frequency')
+
+    def compute(self, inputs, outputs):
+        rm = inputs['rm']
+        p_p = inputs['p_p']
+
+        outputs['f'] = rm*p_p
+
 # EMF
 class E_f(ExplicitComponent):
     def setup(self):
-        self.add_input('f', 1, units='Hz', desc='frequency')
+        self.add_input('rm', 1, units='rpm', desc='motor speed')  # "n_s" in Gieras's book
+        self.add_input('p_p', 1, units=None, desc='Number of pole pairs')
         self.add_input('N_1', 1, units=None, desc='Number of the stator turns per phase')  # How do we get this?
         self.add_input('k_w1', 1, units=None, desc='the stator winding coefficient')  # Computed in the "k_w1" class TODO: Connect k_w1 output to here
         self.add_input('b_mag', 2.4, units='T', desc='Magnetic flux density')  # Use max magnetic flux allowable from Hiperco 50
 
+        self.add_output('f', 1, units='Hz', desc='frequency')
         self.add_output('E_f', 1, units='V', desc='EMF - the no-load RMS Voltage induced in one phase of the stator winding')
 
     def compute(self, inputs, outputs):
-        f = inputs['f']
+        rm = inputs['rm']
+        p_p = inputs['p_p']
         N_1 = inputs['N_1']
         k_w1 = inputs['k_w1']
         b_mag = inputs['b_mag']
+
+        outputs['f'] = rm*p_p
+        f = outputs['f']
 
         outputs['E_f'] = pi*(2**0.5)*f*N_1*k_w1*b_mag
 
