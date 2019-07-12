@@ -351,8 +351,8 @@ class k_w1(ExplicitComponent):
     def setup(self):
         self.add_input('w_sl', 1, units=None, desc='Coil span measured in number of slots')
         self.add_input('m_1', 1, units=None, desc='Number of phases')
-        self.add_input('p', 1, units=None, desc='Number of poles')
-        self.add_input('s_1', 1, units=None, desc='Number of slots')
+        self.add_input('n_m', 1, units=None, desc='Number of poles')  # 'p' in Gieras's book
+        self.add_input('n_s', 1, units=None, desc='Number of slots')  # 's_1' in Gieras's book
 
         self.add_output('pps', 1, units='rad', desc='Poles Per Slot - Angular displacement between adjacent slots in electrical degrees')
         self.add_output('q_1', 1, units=None, desc='Number of slots per pole per phase')
@@ -364,12 +364,12 @@ class k_w1(ExplicitComponent):
     def compute(self, inputs, outputs):
         w_sl = inputs['w_sl']
         m_1 = inputs['m_1']
-        p = inputs['p']
-        s_1 = inputs['s_1']
+        n_m = inputs['n_m']
+        n_s = inputs['n_s']
 
-        outputs['pps'] = (pi*p)/s_1
-        outputs['q_1'] = s_1/(p*m_1)
-        outputs['Q_1'] = s_1/p
+        outputs['pps'] = (pi*n_m)/n_s
+        outputs['q_1'] = n_s/(n_m*m_1)
+        outputs['Q_1'] = n_s/n_m
 
         pps = outputs['pps']
         q_1 = outputs['q_1']
