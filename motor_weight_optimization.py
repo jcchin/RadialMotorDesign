@@ -412,7 +412,7 @@ class E_f(ExplicitComponent):
         self.add_input('p_p', 1, units=None, desc='Number of pole pairs')
         self.add_input('N_1', 1, units=None, desc='Number of the stator turns per phase')  # How do we get this?
         self.add_input('k_w1', 1, units=None, desc='the stator winding coefficient')  # Computed in the "k_w1" class TODO: Connect k_w1 output to here
-        self.add_input('b_mag', 1, units='V*s', desc='Magnetic flux')  # What value to use?  Or does it need to be calculated?
+        self.add_input('b_mag', 1, units='V*s', desc='Excitation Magnetic Flux')  # What value to use?  Or does it need to be calculated?
 
         self.add_output('f', 1, units='Hz', desc='frequency')
         self.add_output('E_f', 1, units='V', desc='EMF - the no-load RMS Voltage induced in one phase of the stator winding')
