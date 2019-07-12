@@ -17,6 +17,8 @@ Known Issues (TODO):
 
 
 TODO:
+- Make connections / promote variables to be used in other calculations
+
 - Comments for equations:
 	- Book the equation is from
 	- Equation Number
