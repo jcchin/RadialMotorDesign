@@ -384,9 +384,9 @@ class k_w1(ExplicitComponent):
 class E_f(ExplicitComponent):
     def setup(self):
         self.add_input('f', 1, units='Hz', desc='frequency')
-        self.add_input('N_1', 1, units=None, desc='Number of the stator turns per phase')
+        self.add_input('N_1', 1, units=None, desc='Number of the stator turns per phase')  # How do we get this?
         self.add_input('k_w1', 1, units=None, desc='the stator winding coefficient')  # Computed in the "k_w1" class TODO: Connect k_w1 output to here
-        self.add_input('b_mag', 1, units='T', desc='Magnetic flux density')
+        self.add_input('b_mag', 2.4, units='T', desc='Magnetic flux density')  # Use max magnetic flux allowable from Hiperco 50
 
         self.add_output('E_f', 1, units='V', desc='EMF - the no-load RMS Voltage induced in one phase of the stator winding')
 
@@ -403,11 +403,11 @@ class torque(ExplicitComponent):
     def setup(self):
         self.add_input('m_1', 1, units=None, desc='number of phases')
         self.add_input('rm', 1, units='rpm', desc='motor speed')  # "n_s" in Gieras's book
-        self.add_input('V_1', 1, units='V', desc='stator voltage')
+        self.add_input('V_1', 1, units='V', desc='stator voltage')  # Confirm that this is the same as the bus volage
         self.add_input('E_f', 1, units='V', desc='EMF - the no-load RMS Voltage induced in one phase of the stator winding')
         self.add_input('X_sd', 1, units='ohm', desc='d-axis synchronous reactance')
         self.add_input('X_sq', 1, units='ohm', desc='q-axis synchronous reactance')
-        self.add_input('delta', 1, units=None, desc='Power (Load) Angle - The angle between V-1 and E_f')
+        self.add_input('delta', 1, units='rad', desc='Power (Load) Angle - The angle between V-1 and E_f')  #TODO: Check units and calculation
         
         self.add_output('p_elm', 1, units='W', desc='Power - Electromagnetic')
         self.add_output('tq', 1, units='N*m', desc='Torque - Electromagnetic')
@@ -425,23 +425,6 @@ class torque(ExplicitComponent):
         outputs['p_elm'] = (m_1)((V_1*E_f*sin(delta))+(((V_1**2)/2)((1/X_sq)-(1/X_sd))*sin(2*delta)))
         p_elm = outputs['p_elm']
         outputs['tq'] = p_elm/(2*pi*rm)
-
-    '''
-    def compute_partials(self,inputs,J):
-        n_m=inputs['n_m']
-        n= inputs['n']
-        b_g= inputs['b_g']
-        l_st= inputs['l_st']
-        rot_or = inputs['rot_or']
-        i = inputs['i']
-    
-        J['tq', 'n_m'] = 2*n*b_g*l_st*rot_or*i*.68
-        J['tq', 'n'] = 2*n_m*b_g*l_st*rot_or*i*.68
-        J['tq', 'b_g'] = 2*n_m*n*l_st*rot_or*i*.68
-        J['tq', 'l_st'] = 2*n_m*n*b_g*rot_or*i*.68
-        J['tq', 'rot_or'] = 2*n_m*n*b_g*l_st*i*.68
-        J['tq', 'i'] = 2*n_m*n*b_g*l_st*rot_or*.68
-        '''
 
 class motor_mass(ExplicitComponent):
 

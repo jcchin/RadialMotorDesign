@@ -4,26 +4,29 @@ Using OpenMDAO to optimize motor geometry based on given parameters and constrai
 
 Main Goal:
 Create more accurate motor sizing code and then cross-check the results with an optimized motor design.
-
-Create different branches in git for different features.
-i.e.
-- Torque Calculation
-- Losses Calculation
--etc
-
 --------------------
 
-Known Issues:
+Known Issues (TODO):
 - Flux Density calculation is incorrect
 	- Research and fix
 
 - Torque calculation is incorrect
 	- Research and fix
 
+--------------------
 
-Wanted Features:
-- Torque vs Speed curve plot
 
-- Efficiency Table (Using Interpolation)
-	- Create Table / .csv of motor efficiencies (from Motor-CAD or Python code???)
-	- Feedback into motor-sizing program
+TODO:
+- Comments for equations:
+	- Book the equation is from
+	- Equation Number
+	- Page number?
+
+- V_1
+	- Stator Voltage - Same as bus voltage?
+
+- N_1
+	- Number of turns per phase - Make sure this is understood
+
+- Power (Electromagnetic)
+	- Is it power_in or power_out?  Or neither?
