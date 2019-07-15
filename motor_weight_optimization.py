@@ -352,7 +352,15 @@ class Reactance(ExplicitComponent):
         self.add_input('f', 1, units='Hz', desc='frequency')
         self.add_input('i', 1, units='A', desc='current')
         self.add_input('N_1', 1, units=None, desc='Number of the stator turns per phase')  # Confirm how this is measured
-        self.add_input('')
+        self.add_input('k_w1', 1, units=None, desc='Stator winding factor')
+        self.add_input('n_m', 1, units=None, desc='Number of poles')  # '2p' in Gieras's book
+        self.add_input('tau', 1, units=None, desc='Pole pitch')  # Gieras - (4.27) - pg.134
+        self.add_input('L_i', 1, units='m', desc='Armature stack effective length')
+        self.add_input('k_fd', 1, units=None, desc='Form Factor of the Armature Reaction')  # Gieras - pg. 192
+        self.add_input('k_fq', 1, units=None, desc='Form Factor of the Armature Reaction')  # Gieras - pg. 192
+        self.add_input('g_eq', 1, units='m', desc='Equivalent Air Gap') # Gieras - pg. 180
+        self.add_input('g_eq_q', 1, units='m', desc='Mechanical Clearance in the q-axis')
+
 
     def compute(self, inputs, outputs):
         # TODO:  Finish
@@ -403,7 +411,7 @@ class k_w1(ExplicitComponent):
     def setup(self):
         self.add_input('w_sl', 1, units=None, desc='Coil span measured in number of slots')  # Do we know how to measure? - Create picture showing how it is measured?
         self.add_input('m_1', 1, units=None, desc='Number of phases')
-        self.add_input('n_m', 1, units=None, desc='Number of poles')  # 'p' in Gieras's book
+        self.add_input('n_m', 1, units=None, desc='Number of poles')  # '2p' in Gieras's book
         self.add_input('n_s', 1, units=None, desc='Number of slots')  # 's_1' in Gieras's book
 
         self.add_output('pps', 1, units='rad', desc='Poles Per Slot - Angular displacement between adjacent slots in electrical degrees')

@@ -19,6 +19,8 @@ Known Issues (TODO):
 TODO:
 - Make connections / promote variables to be used in other calculations
 
+- Is Armature Stack Effective Length already a variable (named something else?)
+
 - Comments for equations:
 	- Book the equation is from
 	- Equation Number
