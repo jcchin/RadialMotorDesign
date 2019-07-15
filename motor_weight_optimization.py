@@ -358,7 +358,7 @@ class Reactance(ExplicitComponent):
         # TODO:  Finish
         f = inputs['f']
 
-# Air Gap Magnetic Flux Density
+# First Harmonic of the Air Gap Magnetic Flux Density
 class B_mg1(ExplicitComponent):
     def setup(self):
         self.add_input('b_p', 1, units='m', desc='Pole shoe width')  # Gieras - Not Defined
