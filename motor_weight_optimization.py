@@ -354,13 +354,18 @@ class Reactance(ExplicitComponent):
         self.add_input('N_1', 1, units=None, desc='Number of the stator turns per phase')  # Confirm how this is measured
         self.add_input('k_w1', 1, units=None, desc='Stator winding factor')
         self.add_input('n_m', 1, units=None, desc='Number of poles')  # '2p' in Gieras's book
-        self.add_input('tau', 1, units=None, desc='Pole pitch')  # Gieras - (4.27) - pg.134
+        self.add_input('tau', 1, units=None, desc='Pole pitch')  # Gieras - pg.134 - (4.27)
         self.add_input('L_i', 1, units='m', desc='Armature stack effective length')
-        self.add_input('k_fd', 1, units=None, desc='Form Factor of the Armature Reaction')  # Gieras - pg. 192
-        self.add_input('k_fq', 1, units=None, desc='Form Factor of the Armature Reaction')  # Gieras - pg. 192
-        self.add_input('g_eq', 1, units='m', desc='Equivalent Air Gap') # Gieras - pg. 180
-        self.add_input('g_eq_q', 1, units='m', desc='Mechanical Clearance in the q-axis')
+        self.add_input('k_fd', 1, units=None, desc='Form Factor of the Armature Reaction')  # Gieras - pg.192
+        self.add_input('k_fq', 1, units=None, desc='Form Factor of the Armature Reaction')  # Gieras - pg.192
+        self.add_input('g_eq', 1, units='m', desc='Equivalent Air Gap') # Gieras - pg.180
+        self.add_input('g_eq_q', 1, units='m', desc='Mechanical Clearance in the q-axis')  # Gieras - pg.180
 
+        self.add_output('X_1', 1, units='ohm', desc='Stator Leakage Reactance')  # Gieras - pg.176
+        self.add_output('X_ad', 1, units='ohm', desc='d-axis armature reaction reactance')  # Gieras - pg.176
+        self.add_output('X_aq', 1, units='ohm', desc='q-axis armature reaction reactance')  # Gieras - pg.176
+        self.add_output('X_sd', 1, units='ohm', desc='d-axis synchronous reactance')  # Gieras - pg.176 - (5.15)
+        self.add_output('X_sq', 1, units='ohm', desc='q-axis synchronous reactance')  # Gieras - pg.176 - (5.15)
 
     def compute(self, inputs, outputs):
         # TODO:  Finish
@@ -370,13 +375,13 @@ class Reactance(ExplicitComponent):
 class B_mg1(ExplicitComponent):
     def setup(self):
         self.add_input('b_p', 1, units='m', desc='Pole shoe width')  # Gieras - Not Defined
-        self.add_input('tau', 1, units=None, desc='Pole pitch')  # Gieras - (4.27) - pg.134
+        self.add_input('tau', 1, units=None, desc='Pole pitch')  # Gieras - pg.134 - (4.27)
         self.add_input('B_mg', 2.4, units='T', desc='Magnetic Flux Desnity under the pole shoe')  # Set to stator max flux density (Hiperco 50) = 2.4T ?  Or calculate.
 
-        self.add_output('pole_arc', 1, units=None, desc='Effective Pole Arc Coefficient')  # Gieras - (4.28) & (5.4) - pg.174
+        self.add_output('pole_arc', 1, units=None, desc='Effective Pole Arc Coefficient')  # Gieras - pg.174 - (4.28) & (5.4)
         self.add_output('B_mg1', 1, units='T', desc='Air Gap Magnetic Flux Density')
 
-    def calculate(self, inputs, outputs):
+    def compute(self, inputs, outputs):
         b_p = inputs['b_p']
         tau = inputs['tau']
         B_mg = inputs['B_mg']
@@ -393,7 +398,7 @@ class eMag_Flux(ExplicitComponent):
         self.add_input('mot_or', .075, units='m', desc='motor outer radius')
         self.add_input('n_m', 1, units=None, desc='Number of poles')  # '2p' in Gieras's book
         
-        self.add_output('tau', 1, units=None, desc='Pole pitch')  # Gieras - (4.27) - pg. 134
+        self.add_output('tau', 1, units=None, desc='Pole pitch')  # Gieras - pg.134 - (4.27)
         self.add_output('eMag_Flux', 1, units='V*s', desc='Excitation Magnetic Flux')
 
     def compute(self, inputs, outputs):
