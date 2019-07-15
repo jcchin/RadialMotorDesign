@@ -358,11 +358,45 @@ class Reactance(ExplicitComponent):
         # TODO:  Finish
         f = inputs['f']
 
+# Air Gap Magnetic Flux Density
+class B_mg1(ExplicitComponent):
+    def setup(self):
+        self.add_input('b_p', 1, units='m', desc='Pole shoe width')  # Gieras - Not Defined
+        self.add_input('tau', 1, units=None, desc='Pole pitch')  # Gieras - (4.27) - pg.134
+        self.add_input('B_mg', 2.4, units='T', desc='Magnetic Flux Desnity under the pole shoe')  # Set to stator max flux density (Hiperco 50) = 2.4T ?  Or calculate.
+
+        self.add_output('pole_arc', 1, units=None, desc='Effective Pole Arc Coefficient')  # Gieras - (4.28) & (5.4) - pg.174
+        self.add_output('B_mg1', 1, units='T', desc='Air Gap Magnetic Flux Density')
+
+    def calculate(self, inputs, outputs):
+        b_p = inputs['b_p']
+        tau = inputs['tau']
+        B_mg = inputs['B_mg']
+
+        outputs['pole_arc'] = b_p/tau
+        pole_arc = outputs['pole_arc']
+        outputs['B_mg1'] = (4/pi)*B_mg*sin(0.5*pole_arc*pi)
+
 # Excitation Magnetic Flux
 class eMag_Flux(ExplicitComponent):
     def setup(self):
         self.add_input('L_i', 1, units='m', desc='Armature stack effective length')
-        self.add_input('tau', 1, units='', desc='Pole pitch')  # Research into what this is exactly.
+        self.add_input('B_mg1', 1, units='T', desc='Air Gap Magnetic Flux Density')  # Should we calculate or insert value?
+        self.add_input('mot_or', .075, units='m', desc='motor outer radius')
+        self.add_input('n_m', 1, units=None, desc='Number of poles')  # '2p' in Gieras's book
+        
+        self.add_output('tau', 1, units=None, desc='Pole pitch')  # Gieras - (4.27) - pg. 134
+        self.add_output('eMag_Flux', 1, units='V*s', desc='Excitation Magnetic Flux')
+
+    def compute(self, inputs, outputs):
+        L_i = inputs['L_i']
+        B_mg1 = inputs['B_mg1']
+        mot_or = inputs['mot_or']
+        n_m = inputs['n_m']
+
+        outputs['tau'] = (2*pi*mot_or)/n_m
+        tau = outputs['tau']
+        outputs['eMag_Flux'] = (2/pi)*tau*L_i*B_mg1
 
 # Stator Winding Factor
 class k_w1(ExplicitComponent):
