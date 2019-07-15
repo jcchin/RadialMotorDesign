@@ -18,7 +18,9 @@ Known Issues (TODO):
 
 TODO:
 - Make connections / promote variables to be used in other calculations
-
+- Make sure:
+	- Magnetic Flux = Wb
+	- Magnetic Flux Density = T = Wb/m**2
 - Is Armature Stack Effective Length already a variable (named something else?)
 
 - Comments for equations:
