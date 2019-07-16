@@ -361,6 +361,7 @@ class Reactance(ExplicitComponent):
         self.add_input('k_fd', 1, units=None, desc='Form Factor of the Armature Reaction')  # Gieras - pg.192
         self.add_input('k_fq', 1, units=None, desc='Form Factor of the Armature Reaction')  # Gieras - pg.192
         
+        # Equivalent Air Gap 
         self.add_input('g_eq', 1, units='m', desc='Equivalent Air Gap') # Gieras - pg.180
         self.add_input('g_eq_q', 1, units='m', desc='Mechanical Clearance in the q-axis')  # Gieras - pg.180
 
@@ -391,6 +392,9 @@ class Reactance(ExplicitComponent):
         k_fd = inputs['k_fd']
         k_fq = inputs['k_fq']
 
+        g_eq = inputs['g_eq']
+        g_eq_q = inputs['g_eq_q']
+
         mag_flux = inputs['mag_flux']
 
         outputs['flux_link'] = N_1*mag_flux
@@ -403,11 +407,12 @@ class Reactance(ExplicitComponent):
 
         outputs['X_1'] = 2*pi*f*L_1
 
-        outputs['X_ad'] = 4*m_1*u_0*f((N_1*k_w1)**2)/(pi*pp)
+        outputs['X_ad'] = 4*m_1*u_0*f(((N_1*k_w1)**2)/(pi*pp))*(tau*L_i/g_eq)*k_fq
 
 # Equivalent Air Gap Calculations - g' and g'_q
 class airGap_eq(ExplicitComponent):
     def setup(self):
+        x = 'random variable to keep python happy'
 
 # First Harmonic of the Air Gap Magnetic Flux Density
 class B_mg1(ExplicitComponent):
