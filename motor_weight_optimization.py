@@ -406,9 +406,14 @@ class Reactance(ExplicitComponent):
         pp = outputs['pp']
 
         outputs['X_1'] = 2*pi*f*L_1
-
+        X_1 = outputs['X_1']
         outputs['X_ad'] = 4*m_1*u_0*f(((N_1*k_w1)**2)/(pi*pp))*(tau*L_i/g_eq)*k_fd
+        X_ad = outputs['X_ad']
         outputs['X_aq'] = 4*m_1*u_0*f(((N_1*k_w1)**2)/(pi*pp))*(tau*L_i/g_eq_q)*k_fq
+        X_aq = outputs['X_aq']
+
+        outputs['X_sd'] = X_1 + X_ad
+        outputs['X_sq'] = X_1 + X_aq
 
 # Equivalent Air Gap Calculations - g' and g'_q
 class airGap_eq(ExplicitComponent):
