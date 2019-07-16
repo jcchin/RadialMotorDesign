@@ -364,7 +364,7 @@ class Reactance(ExplicitComponent):
 
         self.add_input('mag_flux', 1, units='Wb', desc='Magnetic Flux')
         #self.add_input('N_1', 1, units=None, desc='Number of Turns per Phase')
-        self.add_output('flux_link', 1, units='', desc='')
+        self.add_output('flux_link', 1, units='Wb', desc='Flux Linkage - Weber-turn')
         self.add_output('L_1', 1, units='H', desc='Leakage Inductance of the armature winding per phase')  # Gieras - pg.204
         
         self.add_output('X_1', 1, units='ohm', desc='Stator Leakage Reactance')  # Gieras - pg.176
@@ -383,6 +383,8 @@ class Reactance(ExplicitComponent):
         L_i = inputs['L_i']
         k_fd = inputs['k_fd']
         k_fq = inputs['k_fq']
+
+        mag_flux = inputs['mag_flux']
 
         outputs['X_1'] = 2*pi*f*L_1  # TODO: Compute L_1
 
@@ -413,7 +415,7 @@ class eMag_Flux(ExplicitComponent):
         self.add_input('mot_or', .075, units='m', desc='motor outer radius')
         self.add_input('n_m', 1, units=None, desc='Number of poles')  # '2p' in Gieras's book
         
-        self.add_output('tau', 1, units=None, desc='Pole pitch')  # Gieras - pg.134 - (4.27)
+        self.add_output('tau', 1, units='m', desc='Pole pitch')  # Gieras - pg.134 - (4.27)
         self.add_output('eMag_Flux', 1, units='Wb', desc='Excitation Magnetic Flux')
 
     def compute(self, inputs, outputs):
