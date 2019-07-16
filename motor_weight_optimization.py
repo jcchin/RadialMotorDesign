@@ -349,6 +349,8 @@ class motor_size(ExplicitComponent):
 # Reactance:
 class Reactance(ExplicitComponent):
     def setup(self):
+        self.add_input('m_1', 1, units=None, desc='Number of phases')
+        self.add_input('u_0', 0.4*pi*10**-6, units='H/m', desc='Magnetic Permeability of Free Space')  # CONSTANT - Is this the best way to represent a constant?
         self.add_input('f', 1, units='Hz', desc='frequency')
         self.add_input('i', 1, units='A', desc='current')
         self.add_input('N_1', 1, units=None, desc='Number of the stator turns per phase')  # Confirm how this is measured
@@ -366,14 +368,19 @@ class Reactance(ExplicitComponent):
         #self.add_input('N_1', 1, units=None, desc='Number of Turns per Phase')
         self.add_output('flux_link', 1, units='Wb', desc='Flux Linkage - Weber-turn')
         self.add_output('L_1', 1, units='H', desc='Leakage Inductance of the armature winding per phase')  # Gieras - pg.204
+
+        self.add_output('pp', 1, units=None, desc='Number of pole pairs')  # 'p' in Gieras's book
         
         self.add_output('X_1', 1, units='ohm', desc='Stator Leakage Reactance')  # Gieras - pg.176
+        #self.add_output('X_a', 1, units='ohm', desc='Armature reaction reactance')  # Gieras - pg.176
         self.add_output('X_ad', 1, units='ohm', desc='d-axis armature reaction reactance')  # Gieras - pg.176
         self.add_output('X_aq', 1, units='ohm', desc='q-axis armature reaction reactance')  # Gieras - pg.176
         self.add_output('X_sd', 1, units='ohm', desc='d-axis synchronous reactance')  # Gieras - pg.176 - (5.15)
         self.add_output('X_sq', 1, units='ohm', desc='q-axis synchronous reactance')  # Gieras - pg.176 - (5.15)
 
     def compute(self, inputs, outputs):
+        m_1 = inputs['m_1']
+        u_0 = inputs['u_0']
         f = inputs['f']
         i = inputs['i']
         N_1 = inputs['N_1']
@@ -386,7 +393,21 @@ class Reactance(ExplicitComponent):
 
         mag_flux = inputs['mag_flux']
 
-        outputs['X_1'] = 2*pi*f*L_1  # TODO: Compute L_1
+        outputs['flux_link'] = N_1*mag_flux
+        flux_link = outputs['flux_link']
+        outputs['L_1'] = flux_link/i
+        L_1 = outputs['L_1']
+
+        outputs['pp'] = n_m/2
+        pp = outputs['pp']
+
+        outputs['X_1'] = 2*pi*f*L_1
+
+        outputs['X_ad'] = 4*m_1*u_0*f((N_1*k_w1)**2)/(pi*pp)
+
+# Equivalent Air Gap Calculations - g' and g'_q
+class airGap_eq(ExplicitComponent):
+    def setup(self):
 
 # First Harmonic of the Air Gap Magnetic Flux Density
 class B_mg1(ExplicitComponent):
