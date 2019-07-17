@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 import numpy as np
-from math import pi
+from math import pi, sin
 from openmdao.api import Problem, IndepVarComp, ExplicitComponent, ExecComp
 from openmdao.api import NewtonSolver, Group, DirectSolver, NonlinearRunOnce, LinearRunOnce, view_model, BalanceComp, ScipyOptimizeDriver
 
@@ -76,7 +76,30 @@ class Reactance(ExplicitComponent):
 # Equivalent Air Gap Calculations - g' and g'_q
 class airGap_eq(ExplicitComponent):
     def setup(self):
-        x = 'random variable to keep python happy'
+        self.add_input('g', 0.001, units='m', desc='Air Gap - Mechanical Clearance')
+        self.add_input('k_c', )
+
+# Carter's Coefficient
+class k_c(ExplicitComponent):
+    def setup(self):
+        self.add_input('t_1', 1, units='m', desc='Slot Pitch')  # Gieras - pg.218
+        self.add_input('g', 0.001, units='m', desc='Air Gap - Mechanical Clearance')
+        self.add_input('D_1in', 1, units='m', desc='Inner diameter of the stator')  # Gieras - pg.217 - Vairable Table
+        self.add_input('n_s', 1, units=None, desc='Number of slots')  # 's_1' in Gieras's book
+        self.add_input('b_14', 1, units='m', desc='Width of the stator slot opening')  # Gieras
+        
+        self.add_output('mech_angle', 1, units='rad', desc='Mechanical angle')  # Gieras - pg.563 - (A.28) - LOWER CASE GAMMA
+        self.add_output('k_c', 1, units=None, desc='Carters Coefficient')  # Gieras - pg.563 - (A.27)
+
+    def compute(self, inputs, outputs):
+        t_1 = inputs['t_1']
+        g = inputs['g']
+        D_1in = inputs['D_1in']
+        n_s = inputs['n_s']
+        b_14 = inputs['b_14']
+
+        outputs['mech_angle'] = (4/pi)
+
 
 # First Harmonic of the Air Gap Magnetic Flux Density
 class B_mg1(ExplicitComponent):
