@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 import numpy as np
-from math import pi, sin
+from math import pi, sin, atan, log, e, sqrt
 from openmdao.api import Problem, IndepVarComp, ExplicitComponent, ExecComp
 from openmdao.api import NewtonSolver, Group, DirectSolver, NonlinearRunOnce, LinearRunOnce, view_model, BalanceComp, ScipyOptimizeDriver
 
@@ -98,7 +98,8 @@ class k_c(ExplicitComponent):
         n_s = inputs['n_s']
         b_14 = inputs['b_14']
 
-        outputs['mech_angle'] = (4/pi)
+        outputs['mech_angle'] = (4/pi)*(((0.5*b_14*g)*atan(0.5*b_14*g))-(log(sqrt(1+((0.5*b_14*g)**2), e))))
+        outputs['k_c'] = (pi*D_1in)/n_s
 
 
 # First Harmonic of the Air Gap Magnetic Flux Density
