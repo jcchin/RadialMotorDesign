@@ -77,7 +77,12 @@ class Reactance(ExplicitComponent):
 class airGap_eq(ExplicitComponent):
     def setup(self):
         self.add_input('g', 0.001, units='m', desc='Air Gap - Mechanical Clearance')
-        self.add_input('k_c', )
+        self.add_input('k_c', 1, units=None, desc='Carters Coefficient')  # Gieras - pg.563 - (A.27)
+        self.add_input('k_sat', 1, units=None, desc='Saturation factor of the magnetic circuit due to the main (linkage) magnetic flux')
+        self.add_input('t_mag', 0.005, units='m', desc='Magnet thickness')  # 'h_m' in Gieras's book
+        # TODO:  Finish this:
+        self.add_input('mu_rrec', 1, units='', desc='Relative recoil permeability')  # Gieras - pg.48 - (2.5)
+
 
 # Carter's Coefficient
 class k_c(ExplicitComponent):
@@ -102,8 +107,6 @@ class k_c(ExplicitComponent):
         t_1 = outputs['t_1']
         mech_angle = outputs['mech_angle']
         outputs['k_c'] = t_1/(t_1 - (mech_angle*g))
-
-
 
 # First Harmonic of the Air Gap Magnetic Flux Density
 class B_mg1(ExplicitComponent):
