@@ -8,7 +8,7 @@ from openmdao.api import NewtonSolver, Group, DirectSolver, NonlinearRunOnce, Li
 class Reactance(ExplicitComponent):
     def setup(self):
         self.add_input('m_1', 1, units=None, desc='Number of phases')
-        self.add_input('u_0', 0.4*pi*10**-6, units='H/m', desc='Magnetic Permeability of Free Space')  # CONSTANT - Is this the best way to represent a constant?
+        self.add_input('mu_0', 0.4*pi*10**-6, units='H/m', desc='Magnetic Permeability of Free Space')  # CONSTANT - Is this the best way to represent a constant?
         self.add_input('f', 1, units='Hz', desc='frequency')
         self.add_input('i', 1, units='A', desc='current')
         self.add_input('N_1', 1, units=None, desc='Number of the stator turns per phase')  # Confirm how this is measured
@@ -39,7 +39,7 @@ class Reactance(ExplicitComponent):
 
     def compute(self, inputs, outputs):
         m_1 = inputs['m_1']
-        u_0 = inputs['u_0']
+        mu_0 = inputs['mu_0']
         f = inputs['f']
         i = inputs['i']
         N_1 = inputs['N_1']
@@ -63,11 +63,13 @@ class Reactance(ExplicitComponent):
         outputs['pp'] = n_m/2
         pp = outputs['pp']
 
+        # Gieras - pg.196 - (5.7.3):  NOTE:  If rare-earth PMs are used, the synchronous reactances in the d- and q-axis are practically the same (Table 5.2 - pg.192).
+        # So, should X_ad = X_aq? - If so, second part of torque equation is zero?
         outputs['X_1'] = 2*pi*f*L_1
         X_1 = outputs['X_1']
-        outputs['X_ad'] = 4*m_1*u_0*f(((N_1*k_w1)**2)/(pi*pp))*(tau*L_i/g_eq)*k_fd
+        outputs['X_ad'] = 4*m_1*mu_0*f(((N_1*k_w1)**2)/(pi*pp))*(tau*L_i/g_eq)*k_fd
         X_ad = outputs['X_ad']
-        outputs['X_aq'] = 4*m_1*u_0*f(((N_1*k_w1)**2)/(pi*pp))*(tau*L_i/g_eq_q)*k_fq
+        outputs['X_aq'] = 4*m_1*mu_0*f(((N_1*k_w1)**2)/(pi*pp))*(tau*L_i/g_eq_q)*k_fq
         X_aq = outputs['X_aq']
 
         outputs['X_sd'] = X_1 + X_ad
@@ -78,11 +80,29 @@ class airGap_eq(ExplicitComponent):
     def setup(self):
         self.add_input('g', 0.001, units='m', desc='Air Gap - Mechanical Clearance')
         self.add_input('k_c', 1, units=None, desc='Carters Coefficient')  # Gieras - pg.563 - (A.27)
-        self.add_input('k_sat', 1, units=None, desc='Saturation factor of the magnetic circuit due to the main (linkage) magnetic flux')
+        self.add_input('k_sat', 1, units=None, desc='Saturation factor of the magnetic circuit due to the main (linkage) magnetic flux')  # Gieras - pg.73 - (2.48) - Typically ~1
         self.add_input('t_mag', 0.005, units='m', desc='Magnet thickness')  # 'h_m' in Gieras's book
-        # TODO:  Finish this:
-        self.add_input('mu_rrec', 1, units='', desc='Relative recoil permeability')  # Gieras - pg.48 - (2.5)
+        # Magnetic Permeability:  N/A**2 == H/m == Wb/A*m
+        self.add_input('mu_rec', 1.303*10**-6, units='N/A**2', desc='Recoil Magnetic Permeability - (Delta_B/Delta_H) - Slope of straight-line B-H Curve')  # Gieras - pg.48 - (2.5)
+        # mu_rec:  I used a data sheet for a N48H magnet and got the slope of the straight line B-H curve
+        self.add_input('mu_0', 0.4*pi*10**-6, units='H/m', desc='Magnetic Permeability of Free Space')  #CONSTANT
 
+        self.add_output('mu_rrec', 1, units=None, desc='Relative recoil permeability')  # Gieras - pg.48 - (2.5)
+        self.add_output('g_eq', 1, units='m', desc='Equivalent aig gap')  # Gieras - pg.180
+        self.add_output('g_eq_q', 1, units='m', desc='Equivalent air gap q-axis')  # Gieras - pg.180
+
+    def compute(self, inputs, outputs):
+        g = inputs['g']
+        k_c = inputs['k_c']
+        k_sat = inputs['k_sat']
+        t_mag = inputs['t_mag']
+        mu_rec = inputs['mu_rec']
+        mu_0 = inputs['mu_0']
+
+        outputs['mu_rrec'] = mu_rec/mu_0
+        mu_rrec = outputs['mu_rrec']
+        outputs['g_eq'] = g*k_c*k_sat + (t_mag/mu_rrec)
+        outputs['g_eq_q'] = g*k_c*k_sat
 
 # Carter's Coefficient
 class k_c(ExplicitComponent):
