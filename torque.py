@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 import numpy as np
-from math import pi, sin, atan, log, e, sqrt
+from math import pi, sin, atan, log, e, sqrt, cos
 from openmdao.api import Problem, IndepVarComp, ExplicitComponent, ExecComp
 from openmdao.api import NewtonSolver, Group, DirectSolver, NonlinearRunOnce, LinearRunOnce, view_model, BalanceComp, ScipyOptimizeDriver
 
@@ -23,10 +23,10 @@ class Reactance(ExplicitComponent):
         self.add_input('g_eq', 1, units='m', desc='Equivalent Air Gap') # Gieras - pg.180
         self.add_input('g_eq_q', 1, units='m', desc='Mechanical Clearance in the q-axis')  # Gieras - pg.180
 
-        self.add_input('mag_flux', 1, units='Wb', desc='Magnetic Flux')  # Same as eMag_flux???
-        #self.add_input('N_1', 1, units=None, desc='Number of Turns per Phase')
-        self.add_output('flux_link', 1, units='Wb', desc='Flux Linkage - Weber-turn')
-        self.add_output('L_1', 1, units='H', desc='Leakage Inductance of the armature winding per phase')  # Gieras - pg.204
+        #self.add_input('mag_flux', 1, units='Wb', desc='Magnetic Flux')  # Same as eMag_flux??? - The assumption is YES for now.
+        self.add_input('eMag_flux', 1, units='Wb', desc='Magnetic Flux')
+        self.add_output('flux_link', 1, units='Wb', desc='Flux Linkage A.K.A: Weber-turn') # Gieras - pg.581
+        self.add_output('L_1', 1, units='H', desc='Leakage Inductance of the armature winding per phase')  # Gieras - pg.204 & pg. 108
 
         self.add_output('pp', 1, units=None, desc='Number of pole pairs')  # 'p' in Gieras's book
         
@@ -53,9 +53,9 @@ class Reactance(ExplicitComponent):
         g_eq = inputs['g_eq']
         g_eq_q = inputs['g_eq_q']
 
-        mag_flux = inputs['mag_flux']
+        eMag_flux = inputs['eMag_flux']
 
-        outputs['flux_link'] = N_1*mag_flux
+        outputs['flux_link'] = N_1*eMag_flux
         flux_link = outputs['flux_link']
         outputs['L_1'] = flux_link/i
         L_1 = outputs['L_1']
@@ -240,6 +240,26 @@ class E_f(ExplicitComponent):
 
         outputs['E_f'] = pi*(2**0.5)*f*N_1*k_w1*b_mag
 
+# Power (load) Angle: "delta":
+class delta(ExplicitComponent):
+    def setup(self):
+        self.add_input('I_a', 1, units='A', desc='RMS Current')  # Gieras - Appendix
+        self.add_input('flux_link', 1, units='Wb', desc='Flux Linkage A.K.A: Weber-turn')  # Gieras - pg.581
+        self.add_input('X_sd', 1, units='ohm', desc='d-axis synchronous reactance')  # Gieras - pg.176
+        self.add_input('X_sq', 1, units='ohm', desc='q-axis synchronous reactance')  # Gieras - pg.176
+        self.add_input('R_1', 1, units='ohm', desc='Armature winding resistance') # Gieras - pg.579
+
+        self.add_output('delta', 1, units='rad', desc='Power (Load) Angle - The angle between V-1 and E_f')  # Gieras - pg.175 - Below (5.14)
+
+    def compute(self, inputs, outputs):
+        I_a = inputs['I_a']
+        flux_link = inputs['flux_link']
+        X_sd = inputs['X_sd']
+        X_sq = inputs['X_sq']
+        R_1 = inputs['R_1']
+
+        outputs['delta'] = ((I_a*sin(flux_link))*(R_1 + 1j*X_sd)) + ((I_a*cos(flux_link))*(R_1 + 1j*X_sq))  # Gieras - pg.180 & pg.181 - (5.35), (5.36), (5.37)
+
 # Torque
 class torque(ExplicitComponent):
     def setup(self):
@@ -247,9 +267,9 @@ class torque(ExplicitComponent):
         self.add_input('rm', 1, units='rpm', desc='motor speed')  # "n_s" in Gieras's book
         self.add_input('V_1', 1, units='V', desc='stator voltage')  # Confirm that this is the same as the bus volage
         self.add_input('E_f', 1, units='V', desc='EMF - the no-load RMS Voltage induced in one phase of the stator winding')
-        self.add_input('X_sd', 1, units='ohm', desc='d-axis synchronous reactance')
-        self.add_input('X_sq', 1, units='ohm', desc='q-axis synchronous reactance')
-        self.add_input('delta', 1, units='rad', desc='Power (Load) Angle - The angle between V-1 and E_f')  #TODO: Check units and calculation
+        self.add_input('X_sd', 1, units='ohm', desc='d-axis synchronous reactance')  # Gieras - pg.176
+        self.add_input('X_sq', 1, units='ohm', desc='q-axis synchronous reactance')  # Gieras - pg.176
+        self.add_input('delta', 1, units='rad', desc='Power (Load) Angle - The angle between V-1 and E_f')  # Gieras - pg.180  TODO: Check units and calculation
         
         self.add_output('p_elm', 1, units='W', desc='Power - Electromagnetic')
         self.add_output('tq', 1, units='N*m', desc='Torque - Electromagnetic')
