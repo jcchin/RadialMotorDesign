@@ -131,7 +131,7 @@ class k_c(ExplicitComponent):
 # First Harmonic of the Air Gap Magnetic Flux Density
 class B_mg1(ExplicitComponent):
     def setup(self):
-        self.add_input('b_p', 1, units='m', desc='Pole shoe width')  # Gieras - Not Defined
+        self.add_input('b_p', 1, units='m', desc='Pole shoe width - Tooth Width')  # Gieras - Not Defined
         self.add_input('tau', 1, units=None, desc='Pole pitch')  # Gieras - pg.134 - (4.27)
         self.add_input('B_mg', 2.4, units='T', desc='Magnetic Flux Density under the pole shoe')  # Set to stator max flux density (Hiperco 50) = 2.4T ?  Or calculate.
 
@@ -294,6 +294,7 @@ if __name__ == "__main__":
 
     ind = model.add_subsystem('indeps', IndepVarComp(), promotes=['*'])
 
+    #NOTE: Got measurements from X_57_9.3.2Hd.mot Motor-CAD File
     # Reactance:
     ind.add_output('m_1', 3)
     ind.add_output('i', 35.36, units='A')
@@ -312,3 +313,7 @@ if __name__ == "__main__":
     # Carter's Coefficient:
     ind.add_output('D_1in', 125, units='mm')
     ind.add_output('n_s', 24)
+    ind.add_output('b_14', 3.25, units='mm')
+
+    # B_mg1
+    ind.add_output('b_p', 4.3, units='mm')
