@@ -287,3 +287,28 @@ class torque(ExplicitComponent):
         outputs['p_elm'] = (m_1)((V_1*E_f*sin(delta))+(((V_1**2)/2)((1/X_sq)-(1/X_sd))*sin(2*delta)))
         p_elm = outputs['p_elm']
         outputs['tq'] = p_elm/(2*pi*rm)
+
+if __name__ == "__main__":
+    p = Problem()
+    model = p.model
+
+    ind = model.add_subsystem('indeps', IndepVarComp(), promotes=['*'])
+
+    # Reactance:
+    ind.add_output('m_1', 3)
+    ind.add_output('i', 35.36, units='A')
+    ind.add_output('N_1', 96)
+    ind.add_output('n_m', 20)
+    ind.add_output('L_i', 0.033, units='m')
+    ind.add_output('k_fd', 1)
+    ind.add_output('k_fq', 1)
+    ind.add_output('pp', 10)
+
+    # Equivalent Air Gap:
+    ind.add_output('g', 0.001, units='m')
+    ind.add_output('k_sat', 1.1)
+    ind.add_output('t_mag', 0.005, units='m')
+
+    # Carter's Coefficient:
+    ind.add_output('D_1in', 125, units='mm')
+    ind.add_output('n_s', 24)
