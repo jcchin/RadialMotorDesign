@@ -171,7 +171,7 @@ class eMag_flux(ExplicitComponent):
 # Stator Winding Factor
 class k_w1(ExplicitComponent):
     def setup(self):
-        self.add_input('w_sl', 1, units=None, desc='Coil span measured in number of slots')  # Do we know how to measure? - Create picture showing how it is measured?
+        self.add_input('w_sl', 1, units=None, desc='Coil span measured in number of slots - Coil Span: the peripheral distance between two sides of a coil, measured in term of the number of armature slots between them.')  # Gieras - pg. - Do we know how to measure? - Create picture showing how it is measured?
         self.add_input('m_1', 1, units=None, desc='Number of phases')
         self.add_input('n_m', 1, units=None, desc='Number of poles')  # '2p' in Gieras's book
         self.add_input('n_s', 1, units=None, desc='Number of slots')  # 's_1' in Gieras's book
@@ -315,5 +315,13 @@ if __name__ == "__main__":
     ind.add_output('n_s', 24)
     ind.add_output('b_14', 3.25, units='mm')
 
-    # B_mg1
+    # B_mg1:
     ind.add_output('b_p', 4.3, units='mm')
+    ind.add_output('B_mg', 2.4, units='T')
+
+    # eMag Flux:
+    ind.add_output('mot_or', .075, units='m')
+    
+    # Stator Winding Factor:
+    ind.add_output('w_sl', 1)
+    
