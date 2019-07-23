@@ -243,7 +243,7 @@ class E_f(ExplicitComponent):
 # Power (load) Angle: "delta":
 class delta(ExplicitComponent):
     def setup(self):
-        self.add_input('I_a', 1, units='A', desc='RMS Current')  # Gieras - Appendix
+        self.add_input('i', 1, units='A', desc='RMS Current')  # Gieras - Appendix
         self.add_input('flux_link', 1, units='Wb', desc='Flux Linkage A.K.A: Weber-turn')  # Gieras - pg.581
         self.add_input('X_sd', 1, units='ohm', desc='d-axis synchronous reactance')  # Gieras - pg.176
         self.add_input('X_sq', 1, units='ohm', desc='q-axis synchronous reactance')  # Gieras - pg.176
@@ -252,13 +252,13 @@ class delta(ExplicitComponent):
         self.add_output('delta', 1, units='rad', desc='Power (Load) Angle - The angle between V-1 and E_f')  # Gieras - pg.175 - Below (5.14)
 
     def compute(self, inputs, outputs):
-        I_a = inputs['I_a']
+        i = inputs['i']
         flux_link = inputs['flux_link']
         X_sd = inputs['X_sd']
         X_sq = inputs['X_sq']
         R_1 = inputs['R_1']
 
-        outputs['delta'] = ((I_a*sin(flux_link))*(R_1 + 1j*X_sd)) + ((I_a*cos(flux_link))*(R_1 + 1j*X_sq))  # Gieras - pg.180 & pg.181 - (5.35), (5.36), (5.37)
+        outputs['delta'] = ((i*sin(flux_link))*(R_1 + 1j*X_sd)) + ((i*cos(flux_link))*(R_1 + 1j*X_sq))  # Gieras - pg.180 & pg.181 - (5.35), (5.36), (5.37)
 
 # Torque
 class torque(ExplicitComponent):
@@ -327,4 +327,8 @@ if __name__ == "__main__":
 
     # Frequency:
     ind.add_output('rm', 5460, units='rpm')  # TRY: Sweep across a RPM range?
+    
+    # EMF:
+    
+    # Power (load) Angle:
     ind.add_output('')
