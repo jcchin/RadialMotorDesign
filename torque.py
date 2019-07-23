@@ -10,7 +10,7 @@ class Reactance(ExplicitComponent):
         self.add_input('m_1', 1, units=None, desc='Number of phases')
         self.add_input('mu_0', 0.4*pi*10**-6, units='H/m', desc='Magnetic Permeability of Free Space')  # CONSTANT - Is this the best way to represent a constant?
         self.add_input('f', 1, units='Hz', desc='frequency')
-        self.add_input('i', 1, units='A', desc='current')
+        self.add_input('i', 1, units='A', desc='current')  # 'I_a' in Gieras's book
         self.add_input('N_1', 1, units=None, desc='Number of the stator turns per phase')  # Confirm how this is measured
         self.add_input('k_w1', 1, units=None, desc='Stator winding factor')
         self.add_input('n_m', 1, units=None, desc='Number of poles')  # '2p' in Gieras's book
@@ -28,6 +28,7 @@ class Reactance(ExplicitComponent):
         self.add_output('flux_link', 1, units='Wb', desc='Flux Linkage A.K.A: Weber-turn') # Gieras - pg.581
         self.add_output('L_1', 1, units='H', desc='Leakage Inductance of the armature winding per phase')  # Gieras - pg.204 & pg. 108
 
+        # TODO: Is this "pp" redundant?
         self.add_output('pp', 1, units=None, desc='Number of pole pairs')  # 'p' in Gieras's book
         
         self.add_output('X_1', 1, units='ohm', desc='Stator Leakage Reactance')  # Gieras - pg.176
@@ -171,7 +172,7 @@ class eMag_flux(ExplicitComponent):
 # Stator Winding Factor
 class k_w1(ExplicitComponent):
     def setup(self):
-        self.add_input('w_sl', 1, units=None, desc='Coil span measured in number of slots - Coil Span: the peripheral distance between two sides of a coil, measured in term of the number of armature slots between them.')  # Gieras - pg. - Do we know how to measure? - Create picture showing how it is measured?
+        self.add_input('w_sl', 1, units=None, desc='Coil span measured in number of slots - Coil Span: the peripheral distance between two sides of a coil, measured in term of the number of armature slots between them.')  # Gieras
         self.add_input('m_1', 1, units=None, desc='Number of phases')
         self.add_input('n_m', 1, units=None, desc='Number of poles')  # '2p' in Gieras's book
         self.add_input('n_s', 1, units=None, desc='Number of slots')  # 's_1' in Gieras's book
@@ -219,24 +220,18 @@ class Frequency(ExplicitComponent):
 # EMF
 class E_f(ExplicitComponent):
     def setup(self):
-        self.add_input('rm', 1, units='rpm', desc='motor speed')  # "n_s" in Gieras's book
-        self.add_input('pp', 1, units=None, desc='Number of pole pairs')
         self.add_input('N_1', 1, units=None, desc='Number of the stator turns per phase')  # How do we get this?
         self.add_input('k_w1', 1, units=None, desc='the stator winding coefficient')  # Computed in the "k_w1" class TODO: Connect k_w1 output to here
         self.add_input('eMag_flux', 1, units='Wb', desc='Excitation Magnetic Flux')  # What value to use?  Or does it need to be calculated?
-
-        self.add_output('f', 1, units='Hz', desc='frequency')
+        self.add_input('f', 1, units='Hz', desc='frequency')
+        
         self.add_output('E_f', 1, units='V', desc='EMF - the no-load RMS Voltage induced in one phase of the stator winding')
 
     def compute(self, inputs, outputs):
-        rm = inputs['rm']
-        pp = inputs['pp']
         N_1 = inputs['N_1']
         k_w1 = inputs['k_w1']
         b_mag = inputs['b_mag']
-
-        outputs['f'] = rm*pp
-        f = outputs['f']
+        f = inputs['f']
 
         outputs['E_f'] = pi*(2**0.5)*f*N_1*k_w1*b_mag
 
@@ -294,15 +289,15 @@ if __name__ == "__main__":
 
     ind = model.add_subsystem('indeps', IndepVarComp(), promotes=['*'])
 
-    #NOTE: Got measurements from X_57_9.3.2Hd.mot Motor-CAD File
+    #NOTE: Got measurements from X_57_9.3.2Hd.mot Motor-CAD File and Specification Rev B 20190212
     # Reactance:
     ind.add_output('m_1', 3)
     ind.add_output('i', 35.36, units='A')
     ind.add_output('N_1', 96)
     ind.add_output('n_m', 20)
     ind.add_output('L_i', 0.033, units='m')
-    ind.add_output('k_fd', 1)
-    ind.add_output('k_fq', 1)
+    ind.add_output('k_fd', 1)  # Default = 1
+    ind.add_output('k_fq', 1)  # Default = 1
     ind.add_output('pp', 10)
 
     # Equivalent Air Gap:
@@ -331,4 +326,17 @@ if __name__ == "__main__":
     # EMF:
     
     # Power (load) Angle:
-    ind.add_output('')
+    ind.add_output('R_1', 0.1281, units='ohm')  # Motor-CAD
+
+    # Torque:
+    ind.add_output('V_1', 385, units='V')  # TRY: Sweep across a Voltage range?
+
+    # SUBSYSTEM ADD (Add subsystems in the order they need to computed in?):
+    model.add_subsystem('Frequency', Frequency(), promotes_outputs=['f'])
+    model.add_subsystem('WindingFactor', k_w1(), promotes_outputs=['pps', 'q_1', 'Q_1', 'k_d1', 'k_p1', 'k_w1'])
+    model.add_subsystem('B_mg1', B_mg1(), promotes_outputs=['pole_arc', 'B_mg1'])
+    model.add_subsystem('ExcitationMagneticFlux', eMag_flux(), promotes_outputs=['tau', 'eMag_flux'])
+    model.add_subsystem('CartersCoefficient', k_c(), promotes_outputs=['mech_angle', 't_1', 'k_c'])
+    model.add_subsystem('EquivalentAirGap', airGap_eq(), promotes_outputs=['mu_rrec', 'g_eq', 'g_eq_q'])
+    model.add_subsystem('Reactance', Reactance(), promotes_outputs=['flux_link', 'L_1', 'X_1', 'X_ad', 'X_aq', 'X_sd', 'X_sq'])
+    model.add_subsystem('EMF', E_f(), promotes_outputs=[''])
