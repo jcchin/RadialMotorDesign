@@ -14,7 +14,7 @@ class Reactance(ExplicitComponent):
         self.add_input('N_1', 1, units=None, desc='Number of the stator turns per phase')  # Confirm how this is measured
         self.add_input('k_w1', 1, units=None, desc='Stator winding factor')
         self.add_input('n_m', 1, units=None, desc='Number of poles')  # '2p' in Gieras's book
-        self.add_input('tau', 1, units=None, desc='Pole pitch')  # Gieras - pg.134 - (4.27)
+        self.add_input('tau', 1, units='m', desc='Pole pitch')  # Gieras - pg.134 - (4.27)
         self.add_input('L_i', 1, units='m', desc='Armature stack effective length')
         self.add_input('k_fd', 1, units=None, desc='Form Factor of the Armature Reaction')  # Gieras - pg.192
         self.add_input('k_fq', 1, units=None, desc='Form Factor of the Armature Reaction')  # Gieras - pg.192
@@ -123,7 +123,7 @@ class k_c(ExplicitComponent):
         n_s = inputs['n_s']
         b_14 = inputs['b_14']
 
-        outputs['mech_angle'] = (4/pi)*(((0.5*b_14*g)*atan(0.5*b_14*g))-(log(sqrt(1+((0.5*b_14*g)**2), e))))
+        outputs['mech_angle'] = (4/pi)*(((0.5*b_14*g)*atan(0.5*b_14*g))-(log(sqrt(1+((0.5*b_14*g)**2)), e)))
         outputs['t_1'] = (pi*D_1in)/n_s
         t_1 = outputs['t_1']
         mech_angle = outputs['mech_angle']
@@ -133,7 +133,7 @@ class k_c(ExplicitComponent):
 class B_mg1(ExplicitComponent):
     def setup(self):
         self.add_input('b_p', 1, units='m', desc='Pole shoe width - Tooth Width')  # Gieras - Not Defined
-        self.add_input('tau', 1, units=None, desc='Pole pitch')  # Gieras - pg.134 - (4.27)
+        self.add_input('tau', 1, units='m', desc='Pole pitch')  # Gieras - pg.134 - (4.27)
         self.add_input('B_mg', 2.4, units='T', desc='Magnetic Flux Density under the pole shoe')  # Set to stator max flux density (Hiperco 50) = 2.4T ?  Or calculate.
 
         self.add_output('pole_arc', 1, units=None, desc='Effective Pole Arc Coefficient')  # Gieras - pg.174 - (4.28) & (5.4)
@@ -339,4 +339,15 @@ if __name__ == "__main__":
     model.add_subsystem('CartersCoefficient', k_c(), promotes_outputs=['mech_angle', 't_1', 'k_c'])
     model.add_subsystem('EquivalentAirGap', airGap_eq(), promotes_outputs=['mu_rrec', 'g_eq', 'g_eq_q'])
     model.add_subsystem('Reactance', Reactance(), promotes_outputs=['flux_link', 'L_1', 'X_1', 'X_ad', 'X_aq', 'X_sd', 'X_sq'])
-    model.add_subsystem('EMF', E_f(), promotes_outputs=[''])
+    model.add_subsystem('EMF', E_f(), promotes_outputs=['E_f'])
+    model.add_subsystem('PowerAngle', delta(), promotes_outputs=['delta'])
+    model.add_subsystem('Torque', torque(), promotes_outputs=['p_elm', 'tq'])
+
+    p.setup()
+    p.final_setup()
+    p.model.list_outputs(implicit=True)
+    #p.model.list_inputs(implicit=True)
+    p.set_solver_print(level=2)
+    p.run_model()
+
+    print('Motor Torque:...........', p.get_val('tq', units='N*m'))
