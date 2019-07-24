@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 import numpy as np
-from math import pi, sin, atan, log, e, sqrt, cos
+from math import pi, sin, atan, log, e, sqrt, cos, degrees
 from openmdao.api import Problem, IndepVarComp, ExplicitComponent, ExecComp
 from openmdao.api import NewtonSolver, Group, DirectSolver, NonlinearRunOnce, LinearRunOnce, view_model, BalanceComp, ScipyOptimizeDriver
 
@@ -57,9 +57,6 @@ class Reactance(ExplicitComponent):
 
         outputs['flux_link'] = N_1*eMag_flux
         flux_link = outputs['flux_link']
-        
-        print('CALC FLUX LINK:   ', flux_link)
-    
         outputs['L_1'] = flux_link/i
         L_1 = outputs['L_1']
 
@@ -112,6 +109,7 @@ class k_c(ExplicitComponent):
         self.add_input('n_s', 1, units=None, desc='Number of slots')  # 's_1' in Gieras's book
         self.add_input('b_14', 1, units='m', desc='Width of the stator slot opening')  # Gieras
         
+        # 'mech_angle' in calculated in rad
         self.add_output('mech_angle', 1, units='rad', desc='Mechanical angle')  # Gieras - pg.563 - (A.28) - LOWER CASE GAMMA
         self.add_output('t_1', 1, units='m', desc='Slot Pitch')  # Gieras - pg.218
         self.add_output('k_c', 1, units=None, desc='Carters Coefficient')  # Gieras - pg.563 - (A.27)
@@ -122,11 +120,15 @@ class k_c(ExplicitComponent):
         n_s = inputs['n_s']
         b_14 = inputs['b_14']
 
-        outputs['mech_angle'] = (4/pi)*(((0.5*b_14*g)*atan(0.5*b_14*g))-(log(sqrt(1+((0.5*b_14*g)**2)), e)))
+        outputs['mech_angle'] = (4/pi)*(((0.5*b_14/g)*atan(0.5*b_14/g))-(log(sqrt(1+((0.5*b_14/g)**2)), e)))
         outputs['t_1'] = (pi*D_1in)/n_s
         t_1 = outputs['t_1']
         mech_angle = outputs['mech_angle']
         outputs['k_c'] = t_1/(t_1 - (mech_angle*g))
+
+        #TODO:  Fix mech_angle - It is basically ZERO - Radians||Degrees problem?
+        print('HERE:  ', n_s)
+        print('mech_angle:  ', outputs['mech_angle'])
 
 # First Harmonic of the Air Gap Magnetic Flux Density
 class B_mg1(ExplicitComponent):
@@ -176,7 +178,7 @@ class k_w1(ExplicitComponent):
         self.add_input('n_m', 1, units=None, desc='Number of poles')  # '2p' in Gieras's book
         self.add_input('n_s', 1, units=None, desc='Number of slots')  # 's_1' in Gieras's book
 
-        self.add_output('pps', 1, units='rad', desc='Poles Per Slot - Angular displacement between adjacent slots in electrical degrees')
+        self.add_output('pps', 1, units='deg', desc='Poles Per Slot - Angular displacement between adjacent slots in electrical degrees')
         self.add_output('q_1', 1, units=None, desc='Number of slots per pole per phase')
         self.add_output('Q_1', 1, units=None, desc='Number of slots per pole')
         self.add_output('k_d1', 1, units=None, desc='Distribution factor')
@@ -189,7 +191,7 @@ class k_w1(ExplicitComponent):
         n_m = inputs['n_m']
         n_s = inputs['n_s']
 
-        outputs['pps'] = (pi*n_m)/n_s
+        outputs['pps'] = degrees((pi*n_m)/n_s)
         outputs['q_1'] = n_s/(n_m*m_1)
         outputs['Q_1'] = n_s/n_m
 
@@ -213,9 +215,6 @@ class Frequency(ExplicitComponent):
     def compute(self, inputs, outputs):
         rm = inputs['rm']
         pp = inputs['pp']
-
-        print('==========: ', rm)
-
         outputs['f'] = rm*pp
 
 # EMF - Gieras - pg. 174
@@ -250,7 +249,6 @@ class delta(ExplicitComponent):
     def compute(self, inputs, outputs):
         i = inputs['i']
         flux_link = inputs['flux_link']
-        print('------------------:  ', flux_link)
         X_sd = inputs['X_sd']
         X_sq = inputs['X_sq']
         R_1 = inputs['R_1']
@@ -285,9 +283,13 @@ class torque(ExplicitComponent):
         p_elm = outputs['p_elm']
         outputs['tq'] = p_elm/(2*pi*rm)
 
+        print(V_1)
+        print(delta)
+        print(outputs['p_elm'])
+
 if __name__ == "__main__":
-    p = Problem()
-    model = p.model
+    prob = Problem()
+    model = prob.model
 
     ind = model.add_subsystem('indeps', IndepVarComp(), promotes=['*'])
 
@@ -345,11 +347,11 @@ if __name__ == "__main__":
     model.add_subsystem('PowerAngle', delta(), promotes_inputs=['i', 'flux_link', 'X_sd', 'X_sq', 'R_1'], promotes_outputs=['delta'])
     model.add_subsystem('Torque', torque(), promotes_inputs=['m_1', 'rm', 'V_1', 'E_f', 'X_sd', 'X_sq', 'delta'], promotes_outputs=['p_elm', 'tq'])
 
-    p.setup()
-    p.final_setup()
-    p.model.list_outputs(implicit=True)
-    #p.model.list_inputs(implicit=True)
-    p.set_solver_print(level=2)
-    p.run_model()
+    prob.setup()
+    prob.final_setup()
+    prob.model.list_outputs(implicit=True)
+    prob.set_solver_print(level=2)
+    prob.run_model()
 
-    print('Motor Torque:...........', p.get_val('tq', units='N*m'))
+    print('Motor Torque:...........', prob.get_val('tq', units='N*m'))
+    print('k_c:...........', prob.get_val('k_c'))
