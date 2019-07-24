@@ -18,7 +18,8 @@ class Reactance(ExplicitComponent):
         self.add_input('L_i', 1, units='m', desc='Armature stack effective length')
         self.add_input('k_fd', 1, units=None, desc='Form Factor of the Armature Reaction')  # Gieras - pg.192
         self.add_input('k_fq', 1, units=None, desc='Form Factor of the Armature Reaction')  # Gieras - pg.192
-        
+        self.add_input('pp', 1, units=None, desc='Number of pole pairs')  # 'p' in Gieras's book
+
         # Equivalent Air Gap 
         self.add_input('g_eq', 1, units='m', desc='Equivalent Air Gap') # Gieras - pg.180
         self.add_input('g_eq_q', 1, units='m', desc='Mechanical Clearance in the q-axis')  # Gieras - pg.180
@@ -27,9 +28,6 @@ class Reactance(ExplicitComponent):
         self.add_input('eMag_flux', 1, units='Wb', desc='Magnetic Flux')
         self.add_output('flux_link', 1, units='Wb', desc='Flux Linkage A.K.A: Weber-turn') # Gieras - pg.581
         self.add_output('L_1', 1, units='H', desc='Leakage Inductance of the armature winding per phase')  # Gieras - pg.204 & pg. 108
-
-        # TODO: Is this "pp" redundant?
-        self.add_output('pp', 1, units=None, desc='Number of pole pairs')  # 'p' in Gieras's book
         
         self.add_output('X_1', 1, units='ohm', desc='Stator Leakage Reactance')  # Gieras - pg.176
         #self.add_output('X_a', 1, units='ohm', desc='Armature reaction reactance')  # Gieras - pg.176
@@ -50,6 +48,7 @@ class Reactance(ExplicitComponent):
         L_i = inputs['L_i']
         k_fd = inputs['k_fd']
         k_fq = inputs['k_fq']
+        pp = inputs['pp']
 
         g_eq = inputs['g_eq']
         g_eq_q = inputs['g_eq_q']
@@ -58,11 +57,11 @@ class Reactance(ExplicitComponent):
 
         outputs['flux_link'] = N_1*eMag_flux
         flux_link = outputs['flux_link']
+        
+        print('CALC FLUX LINK:   ', flux_link)
+    
         outputs['L_1'] = flux_link/i
         L_1 = outputs['L_1']
-
-        outputs['pp'] = n_m/2
-        pp = outputs['pp']
 
         # Gieras - pg.196 - (5.7.3):  NOTE:  If rare-earth PMs are used, the synchronous reactances in the d- and q-axis are practically the same (Table 5.2 - pg.192).
         # So, should X_ad = X_aq? - If so, second part of torque equation is zero?
@@ -215,6 +214,8 @@ class Frequency(ExplicitComponent):
         rm = inputs['rm']
         pp = inputs['pp']
 
+        print('==========: ', rm)
+
         outputs['f'] = rm*pp
 
 # EMF - Gieras - pg. 174
@@ -238,8 +239,8 @@ class E_f(ExplicitComponent):
 # Power (load) Angle: "delta":
 class delta(ExplicitComponent):
     def setup(self):
-        self.add_input('i', 1, units='A', desc='RMS Current')  # Gieras - Appendix
-        self.add_input('flux_link', 1, units='Wb', desc='Flux Linkage A.K.A: Weber-turn')  # Gieras - pg.581
+        self.add_input('i', 35.36, units='A', desc='RMS Current')  # Gieras - Appendix
+        self.add_input('flux_link', units='Wb', desc='Flux Linkage A.K.A: Weber-turn')  # Gieras - pg.581
         self.add_input('X_sd', 1, units='ohm', desc='d-axis synchronous reactance')  # Gieras - pg.176
         self.add_input('X_sq', 1, units='ohm', desc='q-axis synchronous reactance')  # Gieras - pg.176
         self.add_input('R_1', 1, units='ohm', desc='Armature winding resistance') # Gieras - pg.579
@@ -249,6 +250,7 @@ class delta(ExplicitComponent):
     def compute(self, inputs, outputs):
         i = inputs['i']
         flux_link = inputs['flux_link']
+        print('------------------:  ', flux_link)
         X_sd = inputs['X_sd']
         X_sq = inputs['X_sq']
         R_1 = inputs['R_1']
@@ -332,16 +334,16 @@ if __name__ == "__main__":
     ind.add_output('V_1', 385, units='V')  # TRY: Sweep across a Voltage range?
 
     # SUBSYSTEM ADD (Add subsystems in the order they need to computed in?):
-    model.add_subsystem('Frequency', Frequency(), promotes_outputs=['f'])
-    model.add_subsystem('WindingFactor', k_w1(), promotes_outputs=['pps', 'q_1', 'Q_1', 'k_d1', 'k_p1', 'k_w1'])
-    model.add_subsystem('B_mg1', B_mg1(), promotes_outputs=['pole_arc', 'B_mg1'])
-    model.add_subsystem('ExcitationMagneticFlux', eMag_flux(), promotes_outputs=['tau', 'eMag_flux'])
-    model.add_subsystem('CartersCoefficient', k_c(), promotes_outputs=['mech_angle', 't_1', 'k_c'])
-    model.add_subsystem('EquivalentAirGap', airGap_eq(), promotes_outputs=['mu_rrec', 'g_eq', 'g_eq_q'])
-    model.add_subsystem('Reactance', Reactance(), promotes_outputs=['flux_link', 'L_1', 'X_1', 'X_ad', 'X_aq', 'X_sd', 'X_sq'])
-    model.add_subsystem('EMF', E_f(), promotes_outputs=['E_f'])
-    model.add_subsystem('PowerAngle', delta(), promotes_outputs=['delta'])
-    model.add_subsystem('Torque', torque(), promotes_outputs=['p_elm', 'tq'])
+    model.add_subsystem('Frequency', Frequency(), promotes_inputs=['rm', 'pp'], promotes_outputs=['f'])
+    model.add_subsystem('WindingFactor', k_w1(), promotes_inputs=['w_sl', 'm_1', 'n_m', 'n_s'], promotes_outputs=['pps', 'q_1', 'Q_1', 'k_d1', 'k_p1', 'k_w1'])
+    model.add_subsystem('B_mg1', B_mg1(), promotes_inputs=['b_p', 'tau', 'B_mg'], promotes_outputs=['pole_arc', 'B_mg1'])
+    model.add_subsystem('ExcitationMagneticFlux', eMag_flux(), promotes_inputs=['L_i', 'B_mg1', 'mot_or', 'n_m'], promotes_outputs=['tau', 'eMag_flux'])
+    model.add_subsystem('CartersCoefficient', k_c(), promotes_inputs=['g', 'D_1in', 'n_s', 'b_14'], promotes_outputs=['mech_angle', 't_1', 'k_c'])
+    model.add_subsystem('EquivalentAirGap', airGap_eq(), promotes_inputs=['g', 'k_c', 'k_sat', 't_mag', 'mu_rec', 'mu_0'], promotes_outputs=['mu_rrec', 'g_eq', 'g_eq_q'])
+    model.add_subsystem('Reactance', Reactance(), promotes_inputs=['m_1', 'mu_0', 'f', 'i', 'N_1', 'k_w1', 'n_m', 'tau', 'L_i', 'k_fd', 'k_fq', 'g_eq', 'g_eq_q', 'eMag_flux', 'pp'], promotes_outputs=['flux_link', 'L_1', 'X_1', 'X_ad', 'X_aq', 'X_sd', 'X_sq'])
+    model.add_subsystem('EMF', E_f(), promotes_inputs=['N_1', 'k_w1', 'eMag_flux', 'f'], promotes_outputs=['E_f'])
+    model.add_subsystem('PowerAngle', delta(), promotes_inputs=['i', 'flux_link', 'X_sd', 'X_sq', 'R_1'], promotes_outputs=['delta'])
+    model.add_subsystem('Torque', torque(), promotes_inputs=['m_1', 'rm', 'V_1', 'E_f', 'X_sd', 'X_sq', 'delta'], promotes_outputs=['p_elm', 'tq'])
 
     p.setup()
     p.final_setup()
