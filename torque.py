@@ -249,8 +249,8 @@ class delta(ExplicitComponent):
         X_sq = inputs['X_sq']
         R_1 = inputs['R_1']
 
+        #NOTE: Complex part of 'delta' is going away due to type casting.
         outputs['delta'] = ((i*sin(flux_link))*(R_1 + 1j*X_sd)) + ((i*cos(flux_link))*(R_1 + 1j*X_sq))  # Gieras - pg.180 & pg.181 - (5.35), (5.36), (5.37)
-        print(outputs['delta'])
 
 # Torque
 class torque(ExplicitComponent):
@@ -274,6 +274,10 @@ class torque(ExplicitComponent):
         X_sd = inputs['X_sd']
         X_sq = inputs['X_sq']
         delta = inputs['delta']
+        
+        # TODO:  Left off here:
+        # Should delta be in degrees???
+        delta = degrees(delta)
 
         #outputs['tq'] = (m_1/(2*pi*rm))((V_1*E_f*sin(delta))+(((V_1**2)/2)((1/X_sq)-(1/X_sd))*sin(2*delta)))
         outputs['p_elm'] = (m_1)*((V_1*E_f*sin(delta))+(((V_1**2)/2)*((1/X_sq)-(1/X_sd))*sin(2*delta)))
