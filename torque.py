@@ -68,9 +68,9 @@ class Reactance(ExplicitComponent):
         # So, should X_ad = X_aq? - If so, second part of torque equation is zero?
         outputs['X_1'] = 2*pi*f*L_1
         X_1 = outputs['X_1']
-        outputs['X_ad'] = 4*m_1*mu_0*f(((N_1*k_w1)**2)/(pi*pp))*(tau*L_i/g_eq)*k_fd
+        outputs['X_ad'] = 4*m_1*mu_0*f*(((N_1*k_w1)**2)/(pi*pp))*(tau*L_i/g_eq)*k_fd
         X_ad = outputs['X_ad']
-        outputs['X_aq'] = 4*m_1*mu_0*f(((N_1*k_w1)**2)/(pi*pp))*(tau*L_i/g_eq_q)*k_fq
+        outputs['X_aq'] = 4*m_1*mu_0*f*(((N_1*k_w1)**2)/(pi*pp))*(tau*L_i/g_eq_q)*k_fq
         X_aq = outputs['X_aq']
 
         outputs['X_sd'] = X_1 + X_ad
