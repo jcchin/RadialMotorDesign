@@ -217,12 +217,12 @@ class Frequency(ExplicitComponent):
 
         outputs['f'] = rm*pp
 
-# EMF
+# EMF - Gieras - pg. 174
 class E_f(ExplicitComponent):
     def setup(self):
         self.add_input('N_1', 1, units=None, desc='Number of the stator turns per phase')  # How do we get this?
         self.add_input('k_w1', 1, units=None, desc='the stator winding coefficient')  # Computed in the "k_w1" class TODO: Connect k_w1 output to here
-        self.add_input('eMag_flux', 1, units='Wb', desc='Excitation Magnetic Flux')  # What value to use?  Or does it need to be calculated?
+        self.add_input('eMag_flux', 1, units='Wb', desc='Excitation Magnetic Flux')
         self.add_input('f', 1, units='Hz', desc='frequency')
         
         self.add_output('E_f', 1, units='V', desc='EMF - the no-load RMS Voltage induced in one phase of the stator winding')
@@ -230,10 +230,10 @@ class E_f(ExplicitComponent):
     def compute(self, inputs, outputs):
         N_1 = inputs['N_1']
         k_w1 = inputs['k_w1']
-        b_mag = inputs['b_mag']
+        eMag_flux = inputs['eMag_flux']
         f = inputs['f']
 
-        outputs['E_f'] = pi*(2**0.5)*f*N_1*k_w1*b_mag
+        outputs['E_f'] = pi*(2**0.5)*f*N_1*k_w1*eMag_flux
 
 # Power (load) Angle: "delta":
 class delta(ExplicitComponent):
