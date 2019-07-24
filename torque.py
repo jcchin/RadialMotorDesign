@@ -279,7 +279,7 @@ class torque(ExplicitComponent):
         delta = inputs['delta']
 
         #outputs['tq'] = (m_1/(2*pi*rm))((V_1*E_f*sin(delta))+(((V_1**2)/2)((1/X_sq)-(1/X_sd))*sin(2*delta)))
-        outputs['p_elm'] = (m_1)((V_1*E_f*sin(delta))+(((V_1**2)/2)((1/X_sq)-(1/X_sd))*sin(2*delta)))
+        outputs['p_elm'] = (m_1)*((V_1*E_f*sin(delta))+(((V_1**2)/2)*((1/X_sq)-(1/X_sd))*sin(2*delta)))
         p_elm = outputs['p_elm']
         outputs['tq'] = p_elm/(2*pi*rm)
 
