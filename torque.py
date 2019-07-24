@@ -126,10 +126,6 @@ class k_c(ExplicitComponent):
         mech_angle = outputs['mech_angle']
         outputs['k_c'] = t_1/(t_1 - (mech_angle*g))
 
-        #TODO:  Fix mech_angle - It is basically ZERO - Radians||Degrees problem?
-        print('HERE:  ', n_s)
-        print('mech_angle:  ', outputs['mech_angle'])
-
 # First Harmonic of the Air Gap Magnetic Flux Density
 class B_mg1(ExplicitComponent):
     def setup(self):
@@ -254,6 +250,7 @@ class delta(ExplicitComponent):
         R_1 = inputs['R_1']
 
         outputs['delta'] = ((i*sin(flux_link))*(R_1 + 1j*X_sd)) + ((i*cos(flux_link))*(R_1 + 1j*X_sq))  # Gieras - pg.180 & pg.181 - (5.35), (5.36), (5.37)
+        print(outputs['delta'])
 
 # Torque
 class torque(ExplicitComponent):
@@ -282,10 +279,6 @@ class torque(ExplicitComponent):
         outputs['p_elm'] = (m_1)*((V_1*E_f*sin(delta))+(((V_1**2)/2)*((1/X_sq)-(1/X_sd))*sin(2*delta)))
         p_elm = outputs['p_elm']
         outputs['tq'] = p_elm/(2*pi*rm)
-
-        print(V_1)
-        print(delta)
-        print(outputs['p_elm'])
 
 if __name__ == "__main__":
     prob = Problem()
