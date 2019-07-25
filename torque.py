@@ -59,6 +59,10 @@ class Reactance(ExplicitComponent):
         flux_link = outputs['flux_link']
         outputs['L_1'] = flux_link/i
         L_1 = outputs['L_1']
+        
+        #TODO:
+        #print('L_1:  ', outputs['L_1'])
+        #N_1 = 1
 
         # Gieras - pg.196 - (5.7.3):  NOTE:  If rare-earth PMs are used, the synchronous reactances in the d- and q-axis are practically the same (Table 5.2 - pg.192).
         # So, should X_ad = X_aq? - If so, second part of torque equation is zero?
@@ -249,8 +253,14 @@ class delta(ExplicitComponent):
         X_sq = inputs['X_sq']
         R_1 = inputs['R_1']
 
+        #flux_link = pi/2
+
         #NOTE: Complex part of 'delta' is going away due to type casting.
+        #NOTE: Look at Gieras - pg.223 - Graphs show typical delta angles?
+        #NOTE: Torque is seems to be pretty coupled to how the controller operates too.
         outputs['delta'] = ((i*sin(flux_link))*(R_1 + 1j*X_sd)) + ((i*cos(flux_link))*(R_1 + 1j*X_sq))  # Gieras - pg.180 & pg.181 - (5.35), (5.36), (5.37)
+        #TODO:
+        #outputs['delta'] = 0.96  # ~55 degrees
 
 # Torque
 class torque(ExplicitComponent):
@@ -277,7 +287,8 @@ class torque(ExplicitComponent):
         
         # TODO:  Left off here:
         # Should delta be in degrees???
-        delta = degrees(delta)
+        #delta = degrees(delta)
+        print(m_1, rm, V_1, 'EMF volts:', E_f, 'X_sd:', X_sd, 'X_sq:', X_sq, 'Delta (Power Angle):', delta)
 
         #outputs['tq'] = (m_1/(2*pi*rm))((V_1*E_f*sin(delta))+(((V_1**2)/2)((1/X_sq)-(1/X_sd))*sin(2*delta)))
         outputs['p_elm'] = (m_1)*((V_1*E_f*sin(delta))+(((V_1**2)/2)*((1/X_sq)-(1/X_sd))*sin(2*delta)))
@@ -294,7 +305,8 @@ if __name__ == "__main__":
     # Reactance:
     ind.add_output('m_1', 3)
     ind.add_output('i', 35.36, units='A')
-    ind.add_output('N_1', 96)
+    ind.add_output('N_1', 96)  # Check this
+    #ind.add_output('N_1', 12)
     ind.add_output('n_m', 20)
     ind.add_output('L_i', 0.033, units='m')
     ind.add_output('k_fd', 1)  # Default = 1
@@ -351,4 +363,6 @@ if __name__ == "__main__":
     prob.run_model()
 
     print('Motor Torque:...........', prob.get_val('tq', units='N*m'))
+    print('Delta..............', prob.get_val('delta'))
     print('k_c:...........', prob.get_val('k_c'))
+    print('Flux Link..............', prob.get_val('flux_link', units='Wb'))
