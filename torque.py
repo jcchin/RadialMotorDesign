@@ -133,7 +133,7 @@ class k_c(ExplicitComponent):
 # First Harmonic of the Air Gap Magnetic Flux Density
 class B_mg1(ExplicitComponent):
     def setup(self):
-        self.add_input('b_p', 1, units='m', desc='Pole shoe width - Tooth Width')  # Gieras - Not Defined
+        self.add_input('b_p', 1, units='m', desc='Pole shoe width || Tooth Width')  # Gieras - Not Defined
         self.add_input('tau', 1, units='m', desc='Pole pitch')  # Gieras - pg.134 - (4.27)
         self.add_input('B_mg', 2.4, units='T', desc='Magnetic Flux Density under the pole shoe')  # Set to stator max flux density (Hiperco 50) = 2.4T ?  Or calculate.
 
@@ -166,7 +166,7 @@ class eMag_flux(ExplicitComponent):
         mot_or = inputs['mot_or']
         n_m = inputs['n_m']
 
-        outputs['tau'] = (2*pi*mot_or)/n_m
+        outputs['tau'] = (pi*2*mot_or)/n_m
         tau = outputs['tau']
         outputs['eMag_flux'] = (2/pi)*tau*L_i*B_mg1
 
@@ -178,7 +178,7 @@ class k_w1(ExplicitComponent):
         self.add_input('n_m', 1, units=None, desc='Number of poles')  # '2p' in Gieras's book
         self.add_input('n_s', 1, units=None, desc='Number of slots')  # 's_1' in Gieras's book
 
-        self.add_output('pps', 1, units='deg', desc='Poles Per Slot - Angular displacement between adjacent slots in electrical degrees')
+        self.add_output('pps', 1, units='rad', desc='Poles Per Slot - Angular displacement between adjacent slots in electrical degrees')
         self.add_output('q_1', 1, units=None, desc='Number of slots per pole per phase')
         self.add_output('Q_1', 1, units=None, desc='Number of slots per pole')
         self.add_output('k_d1', 1, units=None, desc='Distribution factor')
@@ -191,7 +191,7 @@ class k_w1(ExplicitComponent):
         n_m = inputs['n_m']
         n_s = inputs['n_s']
 
-        outputs['pps'] = degrees((pi*n_m)/n_s)
+        outputs['pps'] = (pi*n_m)/n_s
         outputs['q_1'] = n_s/(n_m*m_1)
         outputs['Q_1'] = n_s/n_m
 
@@ -199,10 +199,15 @@ class k_w1(ExplicitComponent):
         q_1 = outputs['q_1']
         Q_1 = outputs['Q_1']
         outputs['k_d1'] = (sin(0.5*q_1*pps))/(q_1*sin(0.5*pps))
-        outputs['k_p1'] = sin(0.5*pi*w_sl/Q_1)
+        outputs['k_p1'] = sin((0.5*pi*w_sl)/Q_1)
         k_d1 = outputs['k_d1']
         k_p1 = outputs['k_p1']
+        #TODO
         outputs['k_w1'] = k_d1*k_p1
+        #outputs['k_w1'] = 0.96  # Typical value from Gieras book
+        #print('pps: ', pps)
+        #print('k_d1: ', k_d1)
+        #print('k_p1: ', k_p1)
 
 # Frequency:
 class Frequency(ExplicitComponent):
@@ -258,9 +263,11 @@ class delta(ExplicitComponent):
         #NOTE: Complex part of 'delta' is going away due to type casting.
         #NOTE: Look at Gieras - pg.223 - Graphs show typical delta angles?
         #NOTE: Torque is seems to be pretty coupled to how the controller operates too.
-        outputs['delta'] = ((i*sin(flux_link))*(R_1 + 1j*X_sd)) + ((i*cos(flux_link))*(R_1 + 1j*X_sq))  # Gieras - pg.180 & pg.181 - (5.35), (5.36), (5.37)
+        #outputs['delta'] = ((i*sin(flux_link))*(R_1 + 1j*X_sd)) + ((i*cos(flux_link))*(R_1 + 1j*X_sq))  # Gieras - pg.180 & pg.181 - (5.35), (5.36), (5.37)
         #TODO:
-        #outputs['delta'] = 0.96  # ~55 degrees
+        outputs['delta'] = ((i*sin(flux_link))*(R_1 + 1j*X_sd)) + ((i*cos(flux_link))*(R_1 + 1j*X_sq))
+        print('sin flux', sin(flux_link))
+        #outputs['delta'] = 1.5
 
 # Torque
 class torque(ExplicitComponent):
@@ -288,7 +295,7 @@ class torque(ExplicitComponent):
         # TODO:  Left off here:
         # Should delta be in degrees???
         #delta = degrees(delta)
-        print(m_1, rm, V_1, 'EMF volts:', E_f, 'X_sd:', X_sd, 'X_sq:', X_sq, 'Delta (Power Angle):', delta)
+        print(m_1, rm, V_1, ' \nEMF volts:', E_f, 'X_sd:', X_sd, 'X_sq:', X_sq, 'Delta (Power Angle):', delta)
 
         #outputs['tq'] = (m_1/(2*pi*rm))((V_1*E_f*sin(delta))+(((V_1**2)/2)((1/X_sq)-(1/X_sd))*sin(2*delta)))
         outputs['p_elm'] = (m_1)*((V_1*E_f*sin(delta))+(((V_1**2)/2)*((1/X_sq)-(1/X_sd))*sin(2*delta)))
@@ -366,3 +373,5 @@ if __name__ == "__main__":
     print('Delta..............', prob.get_val('delta'))
     print('k_c:...........', prob.get_val('k_c'))
     print('Flux Link..............', prob.get_val('flux_link', units='Wb'))
+    print('eMag_flux.................', prob.get_val('eMag_flux', units='Wb'))
+    print('B_mg1......', prob.get_val('B_mg1'))
