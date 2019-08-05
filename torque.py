@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 import numpy as np
-from math import pi, sin, atan, log, e, sqrt, cos, degrees
+from math import pi, sin, atan, log, e, sqrt, cos, degrees, radians
 from openmdao.api import Problem, IndepVarComp, ExplicitComponent, ExecComp
 from openmdao.api import NewtonSolver, Group, DirectSolver, NonlinearRunOnce, LinearRunOnce, view_model, BalanceComp, ScipyOptimizeDriver
 
@@ -76,9 +76,9 @@ class Reactance(ExplicitComponent):
         outputs['X_sd'] = X_1 + X_ad
         outputs['X_sq'] = X_1 + X_aq
 
-        outputs['X_sd'] = 4.8
-        outputs['X_sq'] = 4.8
-        outputs['flux_link'] = 2.0
+        outputs['X_sd'] = 0.14
+        outputs['X_sq'] = 0.145
+        #outputs['flux_link'] = 0.001
 
 # Equivalent Air Gap Calculations - g' and g'_q
 class airGap_eq(ExplicitComponent):
@@ -106,8 +106,7 @@ class airGap_eq(ExplicitComponent):
 
         outputs['mu_rrec'] = mu_rec/mu_0
         mu_rrec = outputs['mu_rrec']
-        #outputs['g_eq'] = g*k_c*k_sat + (t_mag/mu_rrec)
-        outputs['g_eq'] = 0.001
+        outputs['g_eq'] = g*k_c*k_sat + (t_mag/mu_rrec)
         outputs['g_eq_q'] = g*k_c*k_sat
 
 # Carter's Coefficient
@@ -208,8 +207,8 @@ class k_w1(ExplicitComponent):
         k_d1 = outputs['k_d1']
         k_p1 = outputs['k_p1']
         #TODO
-        outputs['k_w1'] = k_d1*k_p1
-        #outputs['k_w1'] = 0.96  # Typical value from Gieras book
+        #outputs['k_w1'] = k_d1*k_p1
+        outputs['k_w1'] = 0.96  # Typical value from Gieras book
         #print('pps: ', pps)
         #print('k_d1: ', k_d1)
         #print('k_p1: ', k_p1)
@@ -245,6 +244,7 @@ class E_f(ExplicitComponent):
         f = inputs['f']
 
         outputs['E_f'] = pi*(2**0.5)*f*N_1*k_w1*eMag_flux
+        outputs['E_f'] = 129
 
 # Power (load) Angle: "delta":
 class delta(ExplicitComponent):
@@ -273,7 +273,7 @@ class delta(ExplicitComponent):
         #TODO:
         outputs['delta'] = ((i*sin(flux_link))*(R_1 + 1j*X_sd)) + ((i*cos(flux_link))*(R_1 + 1j*X_sq))
         print('sin flux', sin(flux_link))
-        #outputs['delta'] = 1.5
+        outputs['delta'] = radians(19)
 
 # Torque
 class torque(ExplicitComponent):
@@ -297,15 +297,13 @@ class torque(ExplicitComponent):
         X_sd = inputs['X_sd']
         X_sq = inputs['X_sq']
         delta = inputs['delta']
-        
-        # TODO:  Left off here:
-        # Should delta be in degrees???
-        #delta = degrees(delta)
 
-        #outputs['tq'] = (m_1/(2*pi*rm))((V_1*E_f*sin(delta))+(((V_1**2)/2)((1/X_sq)-(1/X_sd))*sin(2*delta)))
-        #outputs['p_elm'] = (m_1)*((V_1*E_f*sin(delta))+(((V_1**2)/2)*((1/X_sq)-(1/X_sd))*sin(2*delta)))
-        outputs['p_elm'] = 13118
+        #outputs['tq'] = (60)*(m_1/(2*pi*rm))((V_1*E_f*sin(delta))+(((V_1**2)/2)((1/X_sq)-(1/X_sd))*sin(2*delta)))  # Full Equation
+        
+        outputs['p_elm'] = (m_1)*((V_1*E_f*sin(delta))+(((V_1**2)/2)*((1/X_sq)-(1/X_sd))*sin(2*delta)))
+        #outputs['p_elm'] = 13118  # Value according to Motor-CAD
         p_elm = outputs['p_elm']
+        # Torque/Power Equation must be multiplied by 60 seconds to convert from minutes to seconds
         outputs['tq'] = p_elm/(2*pi*rm)*60
 
 if __name__ == "__main__":
