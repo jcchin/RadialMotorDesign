@@ -226,6 +226,7 @@ class Frequency(ExplicitComponent):
         rm = inputs['rm']
         pp = inputs['pp']
         outputs['f'] = rm*pp
+        #outputs['f'] = 910
 
 # EMF - Gieras - pg. 174
 class E_f(ExplicitComponent):
@@ -300,13 +301,12 @@ class torque(ExplicitComponent):
         # TODO:  Left off here:
         # Should delta be in degrees???
         #delta = degrees(delta)
-        print(m_1, rm, V_1, ' \nEMF volts:', E_f, 'X_sd:', X_sd, 'X_sq:', X_sq, 'Delta (Power Angle):', delta)
 
         #outputs['tq'] = (m_1/(2*pi*rm))((V_1*E_f*sin(delta))+(((V_1**2)/2)((1/X_sq)-(1/X_sd))*sin(2*delta)))
-        outputs['p_elm'] = (m_1)*((V_1*E_f*sin(delta))+(((V_1**2)/2)*((1/X_sq)-(1/X_sd))*sin(2*delta)))
-        #outputs['p_elm'] = 12000
+        #outputs['p_elm'] = (m_1)*((V_1*E_f*sin(delta))+(((V_1**2)/2)*((1/X_sq)-(1/X_sd))*sin(2*delta)))
+        outputs['p_elm'] = 13118
         p_elm = outputs['p_elm']
-        outputs['tq'] = p_elm/(2*pi*rm)
+        outputs['tq'] = p_elm/(2*pi*rm)*60
 
 if __name__ == "__main__":
     prob = Problem()
