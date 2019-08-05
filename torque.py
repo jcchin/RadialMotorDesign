@@ -76,6 +76,10 @@ class Reactance(ExplicitComponent):
         outputs['X_sd'] = X_1 + X_ad
         outputs['X_sq'] = X_1 + X_aq
 
+        outputs['X_sd'] = 4.8
+        outputs['X_sq'] = 4.8
+        outputs['flux_link'] = 2.0
+
 # Equivalent Air Gap Calculations - g' and g'_q
 class airGap_eq(ExplicitComponent):
     def setup(self):
@@ -102,7 +106,8 @@ class airGap_eq(ExplicitComponent):
 
         outputs['mu_rrec'] = mu_rec/mu_0
         mu_rrec = outputs['mu_rrec']
-        outputs['g_eq'] = g*k_c*k_sat + (t_mag/mu_rrec)
+        #outputs['g_eq'] = g*k_c*k_sat + (t_mag/mu_rrec)
+        outputs['g_eq'] = 0.001
         outputs['g_eq_q'] = g*k_c*k_sat
 
 # Carter's Coefficient
@@ -299,6 +304,7 @@ class torque(ExplicitComponent):
 
         #outputs['tq'] = (m_1/(2*pi*rm))((V_1*E_f*sin(delta))+(((V_1**2)/2)((1/X_sq)-(1/X_sd))*sin(2*delta)))
         outputs['p_elm'] = (m_1)*((V_1*E_f*sin(delta))+(((V_1**2)/2)*((1/X_sq)-(1/X_sd))*sin(2*delta)))
+        #outputs['p_elm'] = 12000
         p_elm = outputs['p_elm']
         outputs['tq'] = p_elm/(2*pi*rm)
 
@@ -365,9 +371,9 @@ if __name__ == "__main__":
 
     prob.setup()
     prob.final_setup()
-    prob.model.list_outputs(implicit=True)
     prob.set_solver_print(level=2)
     prob.run_model()
+    prob.model.list_outputs(implicit=True)
 
     print('Motor Torque:...........', prob.get_val('tq', units='N*m'))
     print('Delta..............', prob.get_val('delta'))
@@ -375,3 +381,6 @@ if __name__ == "__main__":
     print('Flux Link..............', prob.get_val('flux_link', units='Wb'))
     print('eMag_flux.................', prob.get_val('eMag_flux', units='Wb'))
     print('B_mg1......', prob.get_val('B_mg1'))
+    print('L_1 ......', prob.get_val('L_1', units='uH'))
+    print('Eq Air Gap............', prob.get_val('g_eq', units='mm'))
+    print('Eq Air Gap_Q-axis............', prob.get_val('g_eq_q', units='mm'))
