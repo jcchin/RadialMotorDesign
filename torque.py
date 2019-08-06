@@ -76,8 +76,10 @@ class Reactance(ExplicitComponent):
         outputs['X_sd'] = X_1 + X_ad
         outputs['X_sq'] = X_1 + X_aq
 
-        outputs['X_sd'] = 0.14
-        outputs['X_sq'] = 0.145
+        #outputs['X_sd'] = 0.14
+        #outputs['X_sq'] = 0.145
+        outputs['X_sd'] = 0.69
+        outputs['X_sq'] = 0.84
         #outputs['flux_link'] = 0.001
 
 # Equivalent Air Gap Calculations - g' and g'_q
