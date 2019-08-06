@@ -207,11 +207,8 @@ class k_w1(ExplicitComponent):
         k_d1 = outputs['k_d1']
         k_p1 = outputs['k_p1']
         #TODO
-        #outputs['k_w1'] = k_d1*k_p1
-        outputs['k_w1'] = 0.96  # Typical value from Gieras book
-        #print('pps: ', pps)
-        #print('k_d1: ', k_d1)
-        #print('k_p1: ', k_p1)
+        outputs['k_w1'] = k_d1*k_p1
+        #outputs['k_w1'] = 0.96  # Typical value from Gieras book
 
 # Frequency:
 class Frequency(ExplicitComponent):
@@ -273,7 +270,7 @@ class delta(ExplicitComponent):
         #TODO:
         outputs['delta'] = ((i*sin(flux_link))*(R_1 + 1j*X_sd)) + ((i*cos(flux_link))*(R_1 + 1j*X_sq))
         print('sin flux', sin(flux_link))
-        outputs['delta'] = radians(19)
+        outputs['delta'] = radians(19)  # 19 degrees was taken from Motor-CAD
 
 # Torque
 class torque(ExplicitComponent):
