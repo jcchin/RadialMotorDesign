@@ -199,8 +199,10 @@ class k_w1(ExplicitComponent):
         n_m = inputs['n_m']
         n_s = inputs['n_s']
 
-        outputs['pps'] = (pi*n_m)/n_s
         outputs['q_1'] = n_s/(n_m*m_1)
+        q_1 = outputs['q_1']
+        #outputs['pps'] = (pi*n_m)/n_s
+        outputs['pps'] = (2*pi)/m_1*q_1  # Phase belt = 120 degrees for a three phase motor - Gieras - pg.559
         outputs['Q_1'] = n_s/n_m
 
         pps = outputs['pps']
