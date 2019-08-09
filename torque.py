@@ -143,10 +143,9 @@ class B_mg1(ExplicitComponent):
     def setup(self):
         self.add_input('b_p', 1, units='m', desc='Pole shoe width || Tooth Width')  # Gieras - Not Defined
         self.add_input('tau', 1, units='m', desc='Pole pitch')  # Gieras - pg.134 - (4.27)
-        self.add_input('B_mg', 2.4, units='T', desc='Magnetic Flux Density under the pole shoe')  # Set to stator max flux density (Hiperco 50) = 2.4T ?  Or calculate.
-
+        self.add_input('B_mg', 2.4, units='T', desc='Magnetic Flux Density under the pole shoe')  # Set to stator max flux density (Hiperco 50) = 2.4T
         self.add_output('pole_arc', 1, units=None, desc='Effective Pole Arc Coefficient')  # Gieras - pg.174 - (4.28) & (5.4)
-        self.add_output('B_mg1', 1, units='T', desc='Air Gap Magnetic Flux Density')
+        self.add_output('B_mg1', 1, units='T', desc='Air Gap Magnetic Flux Density')  # Gieras - pg. 173 - (5.2)
 
     def compute(self, inputs, outputs):
         b_p = inputs['b_p']
@@ -166,7 +165,7 @@ class eMag_flux(ExplicitComponent):
         self.add_input('n_m', 1, units=None, desc='Number of poles')  # '2p' in Gieras's book
         
         self.add_output('tau', 1, units='m', desc='Pole pitch')  # Gieras - pg.134 - (4.27)
-        self.add_output('eMag_flux', 1, units='Wb', desc='Excitation Magnetic Flux')
+        self.add_output('eMag_flux', 1, units='Wb', desc='Excitation Magnetic Flux')  # Gieras - pg.174 - (5.6)
 
     def compute(self, inputs, outputs):
         L_i = inputs['L_i']
@@ -189,9 +188,9 @@ class k_w1(ExplicitComponent):
         self.add_output('pps', 1, units='rad', desc='Poles Per Slot - Angular displacement between adjacent slots in electrical degrees')
         self.add_output('q_1', 1, units=None, desc='Number of slots per pole per phase')
         self.add_output('Q_1', 1, units=None, desc='Number of slots per pole')
-        self.add_output('k_d1', 1, units=None, desc='Distribution factor')
-        self.add_output('k_p1', 1, units=None, desc='Pitch Factor')
-        self.add_output('k_w1', 1, units=None, desc='Stator winding factor')
+        self.add_output('k_d1', 1, units=None, desc='Distribution factor')  # Gieras - pg.559 - (A.2)
+        self.add_output('k_p1', 1, units=None, desc='Pitch Factor')  # Gieras - pg.559 - (A.3)
+        self.add_output('k_w1', 1, units=None, desc='Stator winding factor')  # Gieras - pg.559 - (A.1)
 
     def compute(self, inputs, outputs):
         w_sl = inputs['w_sl']
@@ -228,17 +227,16 @@ class Frequency(ExplicitComponent):
         rm = inputs['rm']
         pp = inputs['pp']
         outputs['f'] = rm*pp
-        #outputs['f'] = 910
 
 # EMF - Gieras - pg. 174
 class E_f(ExplicitComponent):
     def setup(self):
-        self.add_input('N_1', 1, units=None, desc='Number of the stator turns per phase')  # How do we get this?
+        self.add_input('N_1', 1, units=None, desc='Number of the stator turns per phase')
         self.add_input('k_w1', 1, units=None, desc='the stator winding coefficient')  # Computed in the "k_w1" class TODO: Connect k_w1 output to here
-        self.add_input('eMag_flux', 1, units='Wb', desc='Excitation Magnetic Flux')
+        self.add_input('eMag_flux', 1, units='Wb', desc='Excitation Magnetic Flux')  # Gieras - pg.174 - (5.6)
         self.add_input('f', 1, units='Hz', desc='frequency')
         
-        self.add_output('E_f', 1, units='V', desc='EMF - the no-load RMS Voltage induced in one phase of the stator winding')
+        self.add_output('E_f', 1, units='V', desc='EMF - the no-load RMS Voltage induced in one phase of the stator winding')  # Gieras - pg.174 - (5.5)
 
     def compute(self, inputs, outputs):
         N_1 = inputs['N_1']
