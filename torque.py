@@ -1,4 +1,5 @@
-#TODO: mech_angle is incorrect.
+#TODO: 'X_sd' and 'X_sq' --> not accurate
+#TODO: 'delta' --> not accurate, the current value is taken from Motor-CAD
 
 from __future__ import absolute_import
 import numpy as np
@@ -61,10 +62,6 @@ class Reactance(ExplicitComponent):
         flux_link = outputs['flux_link']
         outputs['L_1'] = flux_link/i
         L_1 = outputs['L_1']
-        
-        #TODO:
-        #print('L_1:  ', outputs['L_1'])
-        #N_1 = 1
 
         # Gieras - pg.196 - (5.7.3):  NOTE:  If rare-earth PMs are used, the synchronous reactances in the d- and q-axis are practically the same (Table 5.2 - pg.192).
         # So, should X_ad = X_aq? - If so, second part of torque equation is zero?
@@ -78,11 +75,10 @@ class Reactance(ExplicitComponent):
         outputs['X_sd'] = X_1 + X_ad
         outputs['X_sq'] = X_1 + X_aq
 
-        #outputs['X_sd'] = 0.14
-        #outputs['X_sq'] = 0.145
-        outputs['X_sd'] = 0.69
-        outputs['X_sq'] = 0.84
-        #outputs['flux_link'] = 0.001
+        # TODO: The difference between 'X_sd' and 'X_sq' heavily plays into output torque...
+        # So, either reevaluate the calculations and work out bugs, or insert assumption values for 'X_sd' and 'X_sq'
+        outputs['X_sd'] = 0.14
+        outputs['X_sq'] = 0.145
 
 # Equivalent Air Gap Calculations - g' and g'_q
 class airGap_eq(ExplicitComponent):
@@ -270,10 +266,9 @@ class delta(ExplicitComponent):
         #NOTE: Complex part of 'delta' is going away due to type casting.
         #NOTE: Look at Gieras - pg.223 - Graphs show typical delta angles?
         #NOTE: Torque is seems to be pretty coupled to how the controller operates too.
-        #outputs['delta'] = ((i*sin(flux_link))*(R_1 + 1j*X_sd)) + ((i*cos(flux_link))*(R_1 + 1j*X_sq))  # Gieras - pg.180 & pg.181 - (5.35), (5.36), (5.37)
-        #TODO:
-        outputs['delta'] = ((i*sin(flux_link))*(R_1 + 1j*X_sd)) + ((i*cos(flux_link))*(R_1 + 1j*X_sq))
-        print('sin flux', sin(flux_link))
+        outputs['delta'] = ((i*sin(flux_link))*(R_1 + 1j*X_sd)) + ((i*cos(flux_link))*(R_1 + 1j*X_sq))  # Gieras - pg.180 & pg.181 - (5.35), (5.36), (5.37)
+        
+        #TODO:  Cannot get accurate delta angles, so I overwrote it here to give accurate output...
         outputs['delta'] = radians(19)  # 19 degrees was taken from Motor-CAD
 
 # Torque
@@ -372,7 +367,7 @@ if __name__ == "__main__":
     prob.final_setup()
     prob.set_solver_print(level=2)
     prob.run_model()
-    prob.model.list_outputs(implicit=True)
+    prob.model.list_outputs(implicit=True)  # Gives all final numbers
 
     print('Motor Torque:...........', prob.get_val('tq', units='N*m'))
     print('Delta..............', prob.get_val('delta'))
