@@ -29,7 +29,7 @@ class Losses(ExplicitComponent):
 		self.add_output('L_bear', units='W', desc='bearing loss')
 		self.add_output('L_total', 15, units='kW', desc='total loss')
 		
-        self.declare_partials('*','*',method='fd')
+		self.declare_partials('*','*',method='fd')
 
 
 	def compute(self, inputs, outputs):
@@ -38,29 +38,29 @@ class Losses(ExplicitComponent):
 		alpha = inputs['alpha']
 		f = n_m*rm/120
 		rm = inputs['rm']
-        k = inputs['k']
-        rho_a = inputs['rho_a']
-        rot_or = inputs['rot_or']
-        rot_ir = inputs['rot_ir']
-        l_st = inputs['l_st']
-        gap = inputs['gap']
-        mu_a = inputs['mu_a']
-        omega = rm*(2*pi/60)
-        Rea = rho_a*omega*(rot_or**2)/mu_a
-        Cfa = .146/(Rea**2)
-        Reg = rho_a*omega*rot_or*gap/mu_a
-        Cfg = .515*((gap**.3)/rot_or)/(Reg**.5)
-        muf_b = inputs['muf_b']
-        D_b = inputs['D_b']
-        F_b = inputs['F_b']
+		k = inputs['k']
+		rho_a = inputs['rho_a']
+		rot_or = inputs['rot_or']
+		rot_ir = inputs['rot_ir']
+		l_st = inputs['l_st']
+		gap = inputs['gap']
+		mu_a = inputs['mu_a']
+		omega = rm*(2*pi/60)
+		Rea = rho_a*omega*(rot_or**2)/mu_a
+		Cfa = .146/(Rea**2)
+		Reg = rho_a*omega*rot_or*gap/mu_a
+		Cfg = .515*((gap**.3)/rot_or)/(Reg**.5)
+		muf_b = inputs['muf_b']
+		D_b = inputs['D_b']
+		F_b = inputs['F_b']
 
 		outputs['L_core'] = .2157*(f**alpha)
 		outputs['L_emag'] = .0010276*(f**2)
 		outputs['L_ewir'] = .00040681*(f**2)
 		outputs['L_airg'] = k*Cfg*pi*rho_a*(omega**3)*(rot_or**4)*l_st
-        outputs['L_airf'] = .5*Cfa*rho_a*(omega**3)*((rot_or**5)-(rot_ir**5))
-        outputs['L_bear'] = .5*muf_b*D_b*F_b*omega
-        outputs['L_total'] = L_airg + L_airf + L_bear + L_emag + L_ewir + L_core + L_res
+		outputs['L_airf'] = .5*Cfa*rho_a*(omega**3)*((rot_or**5)-(rot_ir**5))
+		outputs['L_bear'] = .5*muf_b*D_b*F_b*omega
+		outputs['L_total'] = L_airg + L_airf + L_bear + L_emag + L_ewir + L_core + L_res
 
 
 

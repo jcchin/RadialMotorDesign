@@ -158,7 +158,7 @@ class torque(ExplicitComponent):
 #         self.add_input('L_res', 50, units='W', desc='resistive loss')
         
 #         self.add_output('P_in', units='W', desc='input power')
-#         #self.add_output('P_out', units='W', desc='output power')
+#         self.add_output('P_out', units='W', desc='output power')
 #         self.add_output('L_total', units='W', desc='total loss')
         
 #         self.declare_partials('*','*',method='fd')
