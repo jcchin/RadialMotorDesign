@@ -57,7 +57,7 @@ for i in range(-10, Hc_20, -100):
     H_demag.append(i)
     Bi_demag.append(Bi)
 
-plt.plot(H_demag,B_demag)
+cdplt.plot(H_demag,B_demag)
 plt.show()
 # Source: https://www.arnoldmagnetics.com/products/neodymium-iron-boron-magnets/
 

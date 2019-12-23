@@ -2,7 +2,7 @@ n48h={
       'Br_20':1.39,                               # Tesla
       'mu_r':1.04,            
       'electric_resistivity':1.8e-6,              # micro-ohm * cm
-      'H_c':-1046,                              # kA/m
+      'H_c':-1046,                                # kA/m
       'T_coef_remanence_flux_density' : -0.12,    # no units
       'T_coef_intrinsic_coercivity'   : -0.605,   # no units
       'density' : 7500,                           # kg/m**3
