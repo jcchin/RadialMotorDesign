@@ -7,21 +7,21 @@ from math import pi
 from openmdao.api import Problem, IndepVarComp, ExplicitComponent, ExecComp
 from openmdao.api import NewtonSolver, Group, DirectSolver, NonlinearRunOnce, LinearRunOnce, view_model, BalanceComp, ScipyOptimizeDriver
 
-class torque(ExplicitComponent):
+class TorqueComp(ExplicitComponent):
 
     def setup(self):
        self.add_input('B_g', 2.4, units='T', desc='air gap flux density')    
        self.add_input('n_m', 16, desc='number of magnets')
        self.add_input('n_turns', 16, desc='number of wire turns')
        self.add_input('stack_length', .0345, units='m', desc='stack length')
-       self.add_input('i', 30, units='A', desc='RMS current')       
+       self.add_input('I', 30, units='A', desc='RMS current')       
        self.add_input('rot_or', .025, units='m', desc='rotor outer radius')
        self.add_input('sta_ir', 0.25, units='m', desc='stator inner radius')
 
-       self.add_output('tq', 25, units='N*m', desc='torque')
+       self.add_output('Tq', 25, units='N*m', desc='torque')
        self.add_output('rot_volume', 0.2, units='m**3', desc='rotor volume')
        self.add_output('stator_surface_current', 51860, units='A/m', desc='specific electrical loading')
-       #self.declare_partials('tq', ['n_m','n','B_g','stack_length','rot_or','i'])
+       #self.declare_partials('Tq', ['n_m','n','B_g','stack_length','rot_or','i'])
 
        self.declare_partials('*','*', method='fd')
 
@@ -31,13 +31,13 @@ class torque(ExplicitComponent):
        B_g= inputs['B_g']
        stack_length= inputs['stack_length']
        rot_or = inputs['rot_or']
-       i = inputs['i']
+       I = inputs['I']
        sta_ir = inputs['sta_ir']
 
        outputs['rot_volume'] = (np.pi * sta_ir**2 * stack_length)
-       outputs['stator_surface_current'] = 6 * 0.645*96/(2*sta_ir*np.pi) * i*np.sqrt(2)    # 0.75 represents the winding factor. This low value is required to match SEL from motor-cad
+       outputs['stator_surface_current'] = 6 * 0.645*96/(2*sta_ir*np.pi) * I*np.sqrt(2)    # 0.75 represents the winding factor. This low value is required to match SEL from motor-cad
 
-       outputs['tq'] = outputs['rot_volume'] * B_g* outputs['stator_surface_current'] * np.cos(0)   # Lipo, Pg. 372 # 6==constant; 0.933==winding factor; 96==turns per phase; 50==I peak; 1==cos(epsilon) when epsilon=0
+       outputs['Tq'] = outputs['rot_volume'] * B_g* outputs['stator_surface_current'] * np.cos(0)   # Lipo, Pg. 372 # 6==constant; 0.933==winding factor; 96==turns per phase; 50==I peak; 1==cos(epsilon) when epsilon=0
 
 
     # def compute_partials(self,inputs,J):
@@ -48,12 +48,12 @@ class torque(ExplicitComponent):
     #    rot_or = inputs['rot_or']
     #    i = inputs['i']
 
-    #    J['tq','n_m'] = 2*n*B_g*stack_length*rot_or*i
-    #    J['tq', 'n'] = 2*n_m*B_g*stack_length*rot_or*i
-    #    J['tq', 'B_g'] = 2*n_m*n*stack_length*rot_or*i
-    #    J['tq', 'stack_length'] = 2*n_m*n*B_g*rot_or*i
-    #    J['tq', 'rot_or'] = 2*n_m*n*B_g*stack_length*i
-    #    J['tq', 'i'] = 2*n_m*n*B_g*stack_length*rot_or
+    #    J['Tq','n_m'] = 2*n*B_g*stack_length*rot_or*i
+    #    J['Tq', 'n'] = 2*n_m*B_g*stack_length*rot_or*i
+    #    J['Tq', 'B_g'] = 2*n_m*n*stack_length*rot_or*i
+    #    J['Tq', 'stack_length'] = 2*n_m*n*B_g*rot_or*i
+    #    J['Tq', 'rot_or'] = 2*n_m*n*B_g*stack_length*i
+    #    J['Tq', 'i'] = 2*n_m*n*B_g*stack_length*rot_or
 
     # class pmsm_torque(ExplicitComponent):
 

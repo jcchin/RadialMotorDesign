@@ -7,11 +7,14 @@
 
 import numpy as np
 from math import pi
+
 from openmdao.api import Problem, IndepVarComp, ExplicitComponent, ExecComp
 from openmdao.api import NewtonSolver, Group, DirectSolver, NonlinearRunOnce, LinearRunOnce, view_model, BalanceComp
-from Physics.sizing_comp import motor_size, motor_mass
-from Physics.thermal_comp import motor_losses
-from Physics.em_comp import Efficiency, torque, flux_densities, field_intsities, airgap_eq, carters_coefficient
+
+from electromagnetics.em_group import EmGroup
+from thermal.thermal_group import ThermalGroup
+from sizing.size_group import SizeGroup
+
 
 
 if __name__ == "__main__":
@@ -20,14 +23,18 @@ if __name__ == "__main__":
 
     ind = model.add_subsystem('indeps', IndepVarComp(), promotes=['*'])
 
-    ind.add_output('v', val=385, units='V', desc='RMS voltage')
+    ind.add_output('V', val=385, units='V', desc='RMS voltage')
     ind.add_output('rpm', val=5000, units='rpm', desc='Rotation speed')
+
+    ind.add_output('Hc_20', val=-1046, units='kA/m', desc='Intrinsic Coercivity at 20 degC')
+    ind.add_output('Br_20', 1.39, units='T', desc='remnance flux density at 20 degC')
+    ind.add_output('k_sat', 1, units=None, desc='Saturation factor of the magnetic circuit due to the main (linkage) magnetic flux')
 
     ind.add_output('k', val=0.94)                           # Input - Stacking factor assumption
     ind.add_output('k_wb', val=0.58)                        # Input - copper fill factor
     ind.add_output('gap', val=0.0010, units='m')            # Air gap distance, Need to calculate 'effective air gap, using Carters Coeff'
     ind.add_output('n_turns', val=12)                       # Input - Number of wire turns     
-    ind.add_output('i', val=34.8, units='A')                # Input - RMS Current
+    ind.add_output('I', val=34.8, units='A')                # Input - RMS Current
     ind.add_output('radius_motor', val=0.0795, units='m')   # Input - Motor outer radius
     ind.add_output('t_mag', val=.0044, units='m')           # Optimize - Magnet thickness
 
@@ -36,7 +43,7 @@ if __name__ == "__main__":
     ind.add_output('b_t', val=3, units='T')             # Calculate and restrain - Tooth Flux Density
 
     ind.add_output('n_slots', val=24)                # Input - Number of Slots
-    ind.add_output('n_m', val=21)                # Input - Number of magnets
+    ind.add_output('n_m', val=21)                    # Input - Number of magnets
 
     ind.add_output('stack_length', val=0.0345, units='m')   # Optimize - Stack Length
     ind.add_output('rho', val=7845, units='kg/m**3')        # Input - Density of Hiperco-50
@@ -56,43 +63,41 @@ if __name__ == "__main__":
     ind.add_output('mag_length', val= 0.005, units='m')         # Optimize - thickness of magnet
     ind.add_output('H_c', val=1353000, units='A/m')             # Input - Intrinsic Coercivity of magnets constant
 
+
     bal = BalanceComp()
     bal.add_balance('rot_or', val=0.06, units='m', use_mult=False)
     tgt = IndepVarComp(name='J', val=10, units='A/mm**2')
     model.add_subsystem(name='target', subsys=tgt, promotes_outputs=['J'])
     
-    model.add_subsystem('flux_den', flux_densities(), promotes_inputs=['B_r', 'mu_r', 't_mag', 'g_eq'], 
-                                                      promotes_outputs=['B_g'])
 
-    model.add_subsystem('fields', field_intsities(), promotes_inputs=['B_g','B_r','H_c'], 
-                                                     promotes_outputs=['H_g'])
-
-    model.add_subsystem('size', motor_size(), promotes_inputs=['n_turns','i','k_wb','radius_motor','gap','rot_or','B_g','k','b_ry','n_m','b_sy','b_t','n_slots', 't_mag'], 
-                                              promotes_outputs=['w_ry', 'w_sy', 'w_t','s_d','rot_ir','sta_ir'])
-
-    model.add_subsystem('losses', motor_losses(), promotes_inputs=['f_e', 'B_pk', 'K_h', 'K_e', 'K_h_alpha', 'K_h_beta'], 
-                                                  promotes_outputs=['P_e','P_h'])
+    model.add_subsystem('em_properties', EmGroup(), promotes_inputs=['I', 'V', 'rpm',
+                                                                     'mu_r', 'g_eq', 't_mag', 'Hc_20', 'Br_20',
+                                                                     'gap', 'sta_ir', 'n_slots', 'l_slot_opening',
+                                                                     'carters_coef', 'k_sat', 'mu_o',
+                                                                     'B_g', 'n_m', 'n_turns', 'stack_length', 'rot_or'], 
+                                                    promotes_outputs=['P_in', 'P_out', 'B_g', 'H_g',
+                                                                      'mech_angle', 't_1', 'carters_coef',
+                                                                      'g_eq', 'g_eq_q',
+                                                                      'rot_volume', 'stator_surface_current'])
     
-    model.add_subsystem(name='balance', subsys=bal)
+    model.add_subsystem('thermal_properties', ThermalGroup(), promotes_inputs=['rpm', 'n_m', 'k', 'rot_or', 'rot_ir', 'stack_length', 'gap',
+                                                                               'K_h', 'K_e', 'f_e', 'K_h_alpha', 'K_h_beta', 'B_pk'],
+                                                              promotes_outputs=['L_core','L_emag', 'L_ewir', 'L_airg', 'L_airf', 'L_bear','L_total',
+                                                                                'P_h', 'P_e'])
 
-    model.add_subsystem('mass', motor_mass(), promotes_inputs=['t_mag','rho_mag','rho','radius_motor','n_slots','sta_ir','w_t','stack_length','s_d','rot_or','rot_ir'], 
-                                              promotes_outputs=['sta_mass','rot_mass','mag_mass'])
+    model.add_subsystem('geometry', SizeGroup(), promotes_inputs=['gap', 'B_g', 'k', 'b_ry', 'n_m',
+                                                                'b_sy', 'b_t', 'n_turns', 'I', 'k_wb',
+                                                                'rho', 'radius_motor', 'n_slots', 'sta_ir', 'w_t', 'stack_length',
+                                                                's_d', 'rot_or', 'rot_ir', 't_mag', 'rho_mag'],
+                                               promotes_outputs=['w_ry', 'w_sy', 'w_t', 'sta_ir', 'rot_ir', 's_d',
+                                                                 'mag_mass', 'sta_mass', 'rot_mass'])
 
-    model.add_subsystem('torque', torque(), promotes_inputs=['rot_or','B_g','i','n_m','n_turns','stack_length', 'sta_ir'], 
-                                            promotes_outputs=['tq', 'stator_surface_current', 'rot_volume'])
 
-    model.add_subsystem('mot_eff', Efficiency(), promotes_inputs=['rpm', 'i','tq','v'], 
-                                                 promotes_outputs=['P_in', 'P_out'])
 
-    model.add_subsystem('carters', carters_coefficient(), promotes_inputs=['gap', 'sta_ir', 'n_slots', 'l_slot_opening'],
-                                          promotes_outputs=['mech_angle', 't_1', 'carters_coef'])
-
-    model.add_subsystem('eq_gap', airgap_eq(), promotes_inputs=['gap', 'carters_coef', 'k_sat', 't_mag','mu_o', 'mu_r'],
-                                               promotes_outputs=['g_eq'])
-
+    # model.connect('J', 'geometry.size.J')
     model.connect('J', 'balance.rhs:rot_or')
     model.connect('balance.rot_or', 'rot_or')
-    model.connect('size.J', 'balance.lhs:rot_or')
+    model.connect('J', 'balance.lhs:rot_or')
 
     model.linear_solver = DirectSolver()
 
@@ -105,7 +110,8 @@ if __name__ == "__main__":
     #p.check_partials(compact_print=True)
     # p.model.list_outputs(implicit=True)
     # p.set_solver_print(2)
-    #view_model(p)
+    # view_model(p)
+    # quit()
     p.run_model()
 
     # print('Rotor Inner Diameter..............', 2 * p.get_val('rot_ir', units='mm'))

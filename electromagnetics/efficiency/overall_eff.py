@@ -6,11 +6,11 @@ from openmdao.api import NewtonSolver, Group, DirectSolver, NonlinearRunOnce, Li
 
 
 
-class Efficiency(ExplicitComponent):
+class EfficiencyComp(ExplicitComponent):
     def setup(self):
-        self.add_input('i', 30, units='A', desc='RMS current')
-        self.add_input('tq', 25, units='N*m', desc='torque')
-        self.add_input('v', 385, units='V', desc='RMS voltage')
+        self.add_input('I', 30, units='A', desc='RMS current')
+        self.add_input('Tq', 25, units='N*m', desc='torque') 
+        self.add_input('V', 385, units='V', desc='RMS voltage')
         self.add_input('rpm', 5000, units='rpm', desc='Rotational Speed')
 
         self.add_output('P_in', 15, units='kW', desc='input power')
@@ -20,12 +20,12 @@ class Efficiency(ExplicitComponent):
 
 
     def compute(self, inputs, outputs):
-        i = inputs['i']
-        tq = inputs['tq']
-        v = inputs['v']
+        I = inputs['I']
+        Tq = inputs['Tq']
+        V = inputs['V']
         rpm = inputs['rpm']
 
-        omega = rpm*(2*pi/60)
+        omega = rpm*(2*pi/60)  # mechanical rad/s
 
-        outputs['P_in'] = i*v*np.sqrt(2)
-        outputs['P_out'] = tq*omega
+        outputs['P_in'] = I*V*np.sqrt(2) # Tq * omega * total_losses
+        outputs['P_out'] = Tq*omega

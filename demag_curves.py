@@ -1,10 +1,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import math
-from Physics import materials_info
+from materials import magnet_data
 
 
-mags=materials_info
+mags=magnet_data
 
 n48h = mags.n48h
 n48sh = mags.n48sh
@@ -33,7 +33,6 @@ if mag_type == 2:
     form_factor = n48sh['form_factor']
 
 
-
 # -----------------------------------------------------------------------------------
 
 
@@ -57,7 +56,7 @@ for i in range(-10, Hc_20, -100):
     H_demag.append(i)
     Bi_demag.append(Bi)
 
-cdplt.plot(H_demag,B_demag)
+plt.plot(H_demag,B_demag)
 plt.show()
 # Source: https://www.arnoldmagnetics.com/products/neodymium-iron-boron-magnets/
 

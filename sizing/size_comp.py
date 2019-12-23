@@ -4,7 +4,7 @@ from openmdao.api import Problem, IndepVarComp, ExplicitComponent, ExecComp
 from openmdao.api import NewtonSolver, Group, DirectSolver, NonlinearRunOnce, LinearRunOnce, view_model, BalanceComp
 
 
-class motor_size(ExplicitComponent):
+class MotorSizeComp(ExplicitComponent):
 
     def setup(self):
         self.add_input('radius_motor', 0.0765, units='m', desc='outer radius of motor')
@@ -19,7 +19,7 @@ class motor_size(ExplicitComponent):
         self.add_input('b_t', 2.4, units='T', desc='flux density of tooth')
         self.add_input('n_slots', 15, desc='Number of slots')
         self.add_input('n_turns', 16, desc='number of wire turns')
-        self.add_input('i', 30, units='A', desc='RMS current')
+        self.add_input('I', 30, units='A', desc='RMS current')
         self.add_input('k_wb', 0.65, desc='bare wire slot fill factor')
 
         self.add_output('J', units='A/mm**2', desc='Current density')
@@ -36,7 +36,6 @@ class motor_size(ExplicitComponent):
         #self.declare_partials('w_ry', ['rot_or', 'B_g', 'n_m', 'k', 'b_ry'])
 
     def compute(self,inputs,outputs):
-        rot_or = inputs['rot_or']
         radius_motor = inputs['radius_motor']  # .0765
         gap = inputs['gap']
         B_g = inputs['B_g']
@@ -45,7 +44,7 @@ class motor_size(ExplicitComponent):
         b_ry = inputs['b_ry']
         t_mag = inputs['t_mag']
         n = inputs['n_turns']
-        i = inputs['i']
+        I = inputs['I']
         k_wb = inputs['k_wb']
         b_sy= inputs['b_sy']
         n_slots = inputs['n_slots']
@@ -59,7 +58,7 @@ class motor_size(ExplicitComponent):
         outputs['rot_ir'] = (rot_or- t_mag) - outputs['w_ry'] 
         outputs['sta_ir'] = rot_or + gap
         area = pi*(radius_motor-outputs['w_sy'])**2 - pi*(radius_motor-outputs['w_sy']-outputs['s_d'])**2
-        outputs['J'] = 2*n*i*(2.**0.5)/(k_wb/n_slots*(area-n_slots*1.25*(outputs['w_t']*outputs['s_d']))*1E6)
+        outputs['J'] = 2*n*I*(2.**0.5)/(k_wb/n_slots*(area-n_slots*1.25*(outputs['w_t']*outputs['s_d']))*1E6)
 
 
     # def compute_partials(self, inputs, J):
@@ -102,7 +101,7 @@ class motor_size(ExplicitComponent):
     #     J['w_t', 'b_t'] = -(2*pi*rot_or*B_g)/(n_slots*k*b_t**2)
 
 
-class motor_mass(ExplicitComponent):
+class MotorMassComp(ExplicitComponent):
 
     def setup(self):
         self.add_input('rho', 8110.2, units='kg/m**3', desc='density of hiperco-50')
@@ -158,10 +157,5 @@ class motor_mass(ExplicitComponent):
     #   J['sta_mass', 'w_t'] = 
     #   J['sta_mass', 'stack_length'] = 
 
-# ---------------------------------------       
-
-
-
-
-
-
+# ---------------------------------------      
+ 

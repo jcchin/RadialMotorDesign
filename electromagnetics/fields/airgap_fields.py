@@ -6,26 +6,32 @@ from openmdao.api import NewtonSolver, Group, DirectSolver, NonlinearRunOnce, Li
 
 
 
-class airgap_field_intsity(ExplicitComponent):
+class GapFieldsComp(ExplicitComponent):
 
   def setup(self):
-    self.add_input('B_g', 1.5, units='T', desc='air gap flux density')
-    self.add_input('H_c', 1500000, units='A/m', desc='Intrinsic Coercivity')
-    self.add_input('B_r', 1.39, units='T', desc='remnance flux density')
+    self.add_input('mu_r', 1.04, units='H/m', desc='relative magnetic permeability of ferromagnetic materials')
+    self.add_input('g_eq', .001, units='m', desc='air gap')
+    self.add_input('t_mag', 0.0045, units='m', desc='magnet height')
+    self.add_input('Hc_20', 1500000, units='A/m', desc='Intrinsic Coercivity at 20 degC')
+    self.add_input('Br_20', 1.39, units='T', desc='remnance flux density at 20 degC')
 
     self.add_output('H_g', units='A/m', desc='air gap field intensity')
+    self.add_output('B_g', 1.5, units='T', desc='air gap flux density')
 
     self.declare_partials('*','*', method='fd')
 
   def compute(self, inputs, outputs):
-    B_g=inputs['B_g']
-    H_c=inputs['H_c']
-    B_r=inputs['B_r']
+    Hc_20=inputs['Hc_20']
+    Br_20=inputs['Br_20']
+    mu_r=inputs['mu_r']
+    g_eq=inputs['g_eq']
+    t_mag=inputs['t_mag']
 
-    outputs['H_g'] = H_c*(B_g/B_r)    # Only valid at 20 deg C, and neglects voltage drop across air gap, input eqn 2.17
+    outputs['B_g'] = Br_20/(1+mu_r*g_eq/t_mag)    # neglecting leakage flux and fringing, magnetic voltag drop in steel (eqn2.14 Gieres PMSM) - g should be effective gap, not mechanical g
+    outputs['H_g'] = Hc_20*(outputs['B_g']/Br_20)    # Only valid at 20 deg C, and neglects voltage drop across air gap, input eqn 2.17
 
 
-class carters_coefficient(ExplicitComponent):
+class CartersComp(ExplicitComponent):
     def setup(self):
         self.add_input('gap', 0.001, units='m', desc='Air Gap - Mechanical Clearance')
         self.add_input('sta_ir', 1, units='m', desc='Inner diameter of the stator')  # Gieras - pg.217 - Vairable Table
@@ -52,7 +58,7 @@ class carters_coefficient(ExplicitComponent):
         outputs['carters_coef'] = t_1/(t_1 - (mech_angle*g))
 
 
-class airgap_eq(ExplicitComponent):
+class GapEquivalentComp(ExplicitComponent):
     def setup(self):
         self.add_input('gap', 0.001, units='m', desc='Air Gap - Mechanical Clearance')
         self.add_input('carters_coef', 1, units=None, desc='Carters Coefficient')  # Gieras - pg.563 - (A.27)
@@ -74,24 +80,3 @@ class airgap_eq(ExplicitComponent):
 
         outputs['g_eq'] = g*carters_coef*k_sat #+ (t_mag/mu_r)
         outputs['g_eq_q'] = g*carters_coef*k_sat
-
-
-class gap_flux_densities(ExplicitComponent):
-
-  def setup(self):
-    self.add_input('B_r', 1.39, units='T', desc='remnance flux density')
-    self.add_input('mu_r', 1.04, units='H/m', desc='relative magnetic permeability of ferromagnetic materials')
-    self.add_input('g_eq', .001, units='m', desc='air gap')
-    self.add_input('t_mag', 0.0045, units='m', desc='magnet height')
-
-    self.add_output('B_g', units='T', desc='air gap flux density')
-
-    self.declare_partials('*','*', method='fd')
-
-  def compute(self, inputs, outputs):
-    B_r=inputs['B_r']
-    mu_r=inputs['mu_r']
-    g_eq=inputs['g_eq']
-    t_mag=inputs['t_mag']
-
-    outputs['B_g'] = B_r/(1+mu_r*g_eq/t_mag)    # neglecting leakage flux and fringing, magnetic voltag drop in steel (eqn2.14 Gieres PMSM) - g should be effective gap, not mechanical g

@@ -5,16 +5,16 @@ from openmdao.api import Problem, IndepVarComp, ExplicitComponent, ExecComp
 from openmdao.api import NewtonSolver, Group, DirectSolver, NonlinearRunOnce, LinearRunOnce, view_model, BalanceComp, ScipyOptimizeDriver
 
 
-class Losses(ExplicitComponent):
+class LossesComp(ExplicitComponent):
     def setup(self):
-        self.add_input('rm', units='rpm', desc='motor speed')
+        self.add_input('rpm', units='rpm', desc='motor speed')
         self.add_input('alpha', 1.27, desc='core loss constant') 
         self.add_input('n_m', desc='number of poles')
         self.add_input('k', .003, desc='windage constant k')
         self.add_input('rho_a', 1.225, units='kg/m**3', desc='air density')
         self.add_input('rot_or', .05, units='m', desc='rotor outer radius')
         self.add_input('rot_ir', .02, units='m', desc='rotor inner radius')
-        self.add_input('l_st', units='m', desc='length of stack')
+        self.add_input('stack_length', units='m', desc='length of stack')
         self.add_input('gap', units='m', desc='air gap') #aka delta
         self.add_input('mu_a', 1.81e-5, units='(m**2)/s', desc='air dynamic viscosity')
         self.add_input('muf_b', .3, desc='bearing friction coefficient')
@@ -27,7 +27,7 @@ class Losses(ExplicitComponent):
         self.add_output('L_airg', units='W', desc='air gap windage loss') #air gap
         self.add_output('L_airf', units='W', desc='axial face windage loss') #axial face
         self.add_output('L_bear', units='W', desc='bearing loss')
-        self.add_output('L_total', 15, units='kW', desc='total loss')
+        self.add_output('L_total', units='kW', desc='total loss')
         
         self.declare_partials('*','*',method='fd')
 
@@ -42,7 +42,7 @@ class Losses(ExplicitComponent):
         rho_a = inputs['rho_a']
         rot_or = inputs['rot_or']
         rot_ir = inputs['rot_ir']
-        l_st = inputs['l_st']
+        stack_length = inputs['stack_length']
         gap = inputs['gap']
         mu_a = inputs['mu_a']
         omega = rm*(2*pi/60)
@@ -57,7 +57,7 @@ class Losses(ExplicitComponent):
         outputs['L_core'] = .2157*(f**alpha)
         outputs['L_emag'] = .0010276*(f**2)
         outputs['L_ewir'] = .00040681*(f**2)
-        outputs['L_airg'] = k*Cfg*pi*rho_a*(omega**3)*(rot_or**4)*l_st
+        outputs['L_airg'] = k*Cfg*pi*rho_a*(omega**3)*(rot_or**4)*stack_length
         outputs['L_airf'] = .5*Cfa*rho_a*(omega**3)*((rot_or**5)-(rot_ir**5))
         outputs['L_bear'] = .5*muf_b*D_b*F_b*omega
         outputs['L_total'] = L_airg + L_airf + L_bear + L_emag + L_ewir + L_core + L_res
@@ -68,7 +68,7 @@ class Losses(ExplicitComponent):
 # -------------CORE LOSSES---------------------------------
 # ---------------------------------------------------------
 # Need to have Bpk change with the actual field density
-class motor_losses(ExplicitComponent):
+class CoreLossComp(ExplicitComponent):
 
     def setup(self):
         self.add_input('K_h', 0.0073790325365744, desc='Hysteresis constant for 0.006in Hiperco-50')
