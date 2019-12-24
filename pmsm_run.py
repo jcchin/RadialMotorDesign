@@ -68,6 +68,8 @@ if __name__ == "__main__":
     bal.add_balance('rot_or', val=0.06, units='m', use_mult=False)
     tgt = IndepVarComp(name='J', val=10, units='A/mm**2')
     model.add_subsystem(name='target', subsys=tgt, promotes_outputs=['J'])
+    model.add_subsystem(name='balance', subsys=bal)
+
     
 
     model.add_subsystem('em_properties', EmGroup(), promotes_inputs=['I', 'V', 'rpm',
