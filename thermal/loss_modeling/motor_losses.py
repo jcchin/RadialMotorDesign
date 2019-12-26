@@ -59,7 +59,7 @@ class LossesComp(ExplicitComponent):
         outputs['L_airg'] = k*Cfg*pi*rho_a*(omega**3)*(rot_or**4)*stack_length
         outputs['L_airf'] = .5*Cfa*rho_a*(omega**3)*((rot_or**5)-(rot_ir**5))
         outputs['L_bear'] = .5*muf_b*D_b*F_b*omega
-        outputs['L_total'] = outputs['L_airg'] + outputs['L_airf'] + outputs['L_bear'] + outputs['L_emag'] + outputs['L_ewir'] + outputs['L_core'] + outputs['L_res']
+        outputs['L_total'] = outputs['L_airg'] + outputs['L_airf'] + outputs['L_bear'] + outputs['L_emag'] + outputs['L_ewir'] + outputs['L_core']# + outputs['L_res']
 
 
 
