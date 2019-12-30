@@ -49,12 +49,13 @@ class MotorSizeComp(ExplicitComponent):
         b_sy= inputs['b_sy']
         n_slots = inputs['n_slots']
         b_t = inputs['b_t']
+        rot_or = inputs['rot_or']
 
         outputs['w_ry'] = (pi*rot_or*B_g)/(n_m*k*b_ry) 
         outputs['w_t'] = (2*pi*rot_or*B_g) / (n_slots*k*b_t) 
         outputs['w_sy'] = (pi*rot_or*B_g)/(n_m*k*b_sy)
         outputs['s_d'] = radius_motor - rot_or - gap - outputs['w_sy']
-        #outputs['radius_motor'] = rot_or + gap + s_d + outputs['w_sy']
+        # outputs['radius_motor'] = rot_or + gap + outputs['s_d'] + outputs['w_sy']
         outputs['rot_ir'] = (rot_or- t_mag) - outputs['w_ry'] 
         outputs['sta_ir'] = rot_or + gap
         area = pi*(radius_motor-outputs['w_sy'])**2 - pi*(radius_motor-outputs['w_sy']-outputs['s_d'])**2

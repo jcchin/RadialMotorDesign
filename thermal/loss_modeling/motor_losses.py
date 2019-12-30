@@ -33,11 +33,10 @@ class LossesComp(ExplicitComponent):
 
 
     def compute(self, inputs, outputs):
-        rm = inputs['rm']
+        rpm = inputs['rpm']
         n_m = inputs['n_m']
         alpha = inputs['alpha']
-        f = n_m*rm/120
-        rm = inputs['rm']
+        f = n_m*rpm/120
         k = inputs['k']
         rho_a = inputs['rho_a']
         rot_or = inputs['rot_or']
@@ -45,7 +44,7 @@ class LossesComp(ExplicitComponent):
         stack_length = inputs['stack_length']
         gap = inputs['gap']
         mu_a = inputs['mu_a']
-        omega = rm*(2*pi/60)
+        omega = rpm*(2*pi/60)
         Rea = rho_a*omega*(rot_or**2)/mu_a
         Cfa = .146/(Rea**2)
         Reg = rho_a*omega*rot_or*gap/mu_a
@@ -60,7 +59,7 @@ class LossesComp(ExplicitComponent):
         outputs['L_airg'] = k*Cfg*pi*rho_a*(omega**3)*(rot_or**4)*stack_length
         outputs['L_airf'] = .5*Cfa*rho_a*(omega**3)*((rot_or**5)-(rot_ir**5))
         outputs['L_bear'] = .5*muf_b*D_b*F_b*omega
-        outputs['L_total'] = L_airg + L_airf + L_bear + L_emag + L_ewir + L_core + L_res
+        outputs['L_total'] = outputs['L_airg'] + outputs['L_airf'] + outputs['L_bear'] + outputs['L_emag'] + outputs['L_ewir'] + outputs['L_core']# + outputs['L_res']
 
 
 

@@ -1,0 +1,38 @@
+Motor Sizing Program
+--------------------
+Using OpenMDAO to optimize motor geometry based on given parameters and constraints.
+
+Main Goal:
+Create more accurate motor sizing code and then cross-check the results with an optimized motor design.
+--------------------
+
+Known Issues (TODO):
+- Flux Density calculation is incorrect
+	- Research and fix
+
+- Torque calculation is incorrect
+	- Research and fix
+
+--------------------
+
+
+TODO:
+- Make connections / promote variables to be used in other calculations
+- Make sure:
+	- Magnetic Flux = Wb
+	- Magnetic Flux Density = T = Wb/m**2
+- Is Armature Stack Effective Length already a variable (named something else?)
+
+- Comments for equations:
+	- Book the equation is from
+	- Equation Number
+	- Page number?
+
+- V_1
+	- Stator Voltage - Same as bus voltage?
+
+- N_1
+	- Number of turns per phase - Make sure this is understood
+
+- Power (Electromagnetic)
+	- Is it power_in or power_out?  Or neither?
