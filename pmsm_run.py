@@ -43,7 +43,7 @@ if __name__ == "__main__":
     ind.add_output('b_t', val=3, units='T')             # Calculate and restrain - Tooth Flux Density
 
     ind.add_output('n_slots', val=24)                # Input - Number of Slots
-    ind.add_output('n_m', val=21)                    # Input - Number of magnets
+    ind.add_output('n_m', val=20)                    # Input - Number of magnets
 
     ind.add_output('stack_length', val=0.0345, units='m')   # Optimize - Stack Length
     ind.add_output('rho', val=7845, units='kg/m**3')        # Input - Density of Hiperco-50
