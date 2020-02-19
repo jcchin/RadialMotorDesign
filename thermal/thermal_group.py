@@ -4,7 +4,10 @@ from math import pi
 from openmdao.api import Problem, IndepVarComp, ExplicitComponent, ExecComp
 from openmdao.api import NewtonSolver, Group, DirectSolver, NonlinearRunOnce, LinearRunOnce, view_model, BalanceComp, ScipyOptimizeDriver
 
-from thermal.loss_modeling.motor_losses import LossesComp, CoreLossComp
+from thermal.loss_modeling.motor_losses import LossesComp, CoreLossComp, WindingLossComp, SteinmetzLossComp
+
+
+
 
 class ThermalGroup(Group):
     def setup(self):
@@ -21,6 +24,16 @@ class ThermalGroup(Group):
                            subsys=CoreLossComp(),
                            promotes_inputs=['K_h', 'K_e', 'f_e', 'K_h_alpha', 'K_h_beta', 'B_pk'],
                            promotes_outputs=['P_h', 'P_e'])
+
+        self.add_subsystem(name='copperloss',
+                           subsys=WindingLossComp(),
+                           promotes_inputs=['resistivity_wire', 'T_coeff_cu', 'T_calc', 'T_ref_wire', 'I'],
+                           promotes_outputs=['P_cu'])
+
+        self.add_subsystem(name = 'steinmetzloss',
+                           subsys = SteinmetzLossComp(),
+                           promotes_inputs=['alpha_stein', 'B_pk', 'f_e', 'beta_stein', 'k_stein'],
+                           promotes_outputs = ['P_steinmetz'])
 
         # ivc.add_output('alpha', 1.27, desc='core loss constant') 
         # ivc.add_output('mu_a', 1.81e-5, units='(m**2)/s', desc='air dynamic viscosity')

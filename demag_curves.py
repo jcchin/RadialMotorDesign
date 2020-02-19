@@ -37,7 +37,7 @@ if mag_type == 2:
 
 
 T=90    # Assumed magnet temperature
-i=-10
+i=-10   # Counter
 mu_0 = (0.4 * np.pi)*10**-6
 
 

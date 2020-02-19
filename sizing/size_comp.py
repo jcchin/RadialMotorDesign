@@ -108,7 +108,7 @@ class MotorMassComp(ExplicitComponent):
         self.add_input('rho', 8110.2, units='kg/m**3', desc='density of hiperco-50')
         self.add_input('radius_motor', .075, units='m', desc='motor outer radius')           
         self.add_input('n_slots', 15, desc='number of slots')                           
-        self.add_input('sta_ir', .050, units='m', desc='stator inner radius')       
+        self.add_input('sta_ir', .06225, units='m', desc='stator inner radius')       
         self.add_input('w_t', units='m', desc='tooth width')                        
         self.add_input('stack_length', units='m', desc='length of stack')  
         self.add_input('s_d', units='m', desc='slot depth')                         
