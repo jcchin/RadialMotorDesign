@@ -4,31 +4,30 @@ from math import pi
 from openmdao.api import Problem, IndepVarComp, ExplicitComponent, ExecComp
 from openmdao.api import NewtonSolver, Group, DirectSolver, NonlinearRunOnce, LinearRunOnce, view_model, BalanceComp, ScipyOptimizeDriver
 
-from thermal.loss_modeling.motor_losses import LossesComp, CoreLossComp, WindingLossComp, SteinmetzLossComp
-
-
+from thermal.motor_losses import WindingLossComp, SteinmetzLossComp
 
 
 class ThermalGroup(Group):
     def setup(self):
         ivc = IndepVarComp()
 
-        self.add_subsystem(name='losses',
-                           subsys=LossesComp(),
-                           promotes_inputs=['rho_a', 'alpha', 'mu_a', 'muf_b', 'D_b', 'F_b', 'rpm', 'alpha', 'n_m', 'k', 'rot_or', 'rot_ir', 'stack_length', 'gap',
-                                            'mu_a', 'muf_b', 'D_b', 'F_b'],
-                           promotes_outputs=['L_core','L_emag', 'L_ewir', 'L_airg', 'L_airf', 'L_bear',
-                                             'L_total'])
+        # self.add_subsystem(name='losses',
+        #                    subsys=LossesComp(),
+        #                    promotes_inputs=['rho_a', 'alpha', 'mu_a', 'muf_b', 'D_b', 'F_b', 'rpm', 'alpha', 'n_m', 'k', 'rot_or', 'rot_ir', 'stack_length', 'gap',
+        #                                     'mu_a', 'muf_b', 'D_b', 'F_b'],
+        #                    promotes_outputs=['L_core','L_emag', 'L_ewir', 'L_airg', 'L_airf', 'L_bear',
+        #                                      'L_total'])
 
-        self.add_subsystem(name='coreloss',
-                           subsys=CoreLossComp(),
-                           promotes_inputs=['K_h', 'K_e', 'f_e', 'K_h_alpha', 'K_h_beta', 'B_pk'],
-                           promotes_outputs=['P_h', 'P_e'])
+        # self.add_subsystem(name='coreloss',
+        #                    subsys=CoreLossComp(),
+        #                    promotes_inputs=['K_h', 'K_e', 'f_e', 'K_h_alpha', 'K_h_beta', 'B_pk'],
+        #                    promotes_outputs=['P_h', 'P_e'])
 
         self.add_subsystem(name='copperloss',
                            subsys=WindingLossComp(),
-                           promotes_inputs=['resistivity_wire', 'T_coeff_cu', 'T_calc', 'T_ref_wire', 'I'],
-                           promotes_outputs=['P_cu'])
+                           promotes_inputs=['resistivity_wire', 'stack_length', 'n_slots', 'n_turns', 'T_coeff_cu', 'I',
+                                             'wire_rad', 'T_windings', 'r_strand', 'f_e', 'mu_0', 'mu_r'],
+                           promotes_outputs=['P_cu', 'L_wire', 'R_dc', 'R_ac', 'skin_depth', 'temp_resistivity'])
 
         self.add_subsystem(name = 'steinmetzloss',
                            subsys = SteinmetzLossComp(),

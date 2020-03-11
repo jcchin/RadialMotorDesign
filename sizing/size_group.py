@@ -15,7 +15,7 @@ class SizeGroup(Group):
                            subsys=MotorSizeComp(),
                            promotes_inputs=['radius_motor', 'gap', 'rot_or', 'B_g', 'k', 'b_ry', 'n_m', 't_mag',
                                             'b_sy', 'b_t', 'n_slots', 'n_turns', 'I', 'k_wb'],
-                           promotes_outputs=['J', 'w_ry', 'w_sy', 'w_t', 'sta_ir', 'rot_ir', 's_d'])
+                           promotes_outputs=['J', 'w_ry', 'w_sy', 'w_t', 'sta_ir', 'rot_ir', 's_d', 'slot_area'])
 
         self.add_subsystem(name='mass',
                            subsys=MotorMassComp(),

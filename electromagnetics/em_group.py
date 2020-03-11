@@ -6,25 +6,14 @@ from openmdao.api import Problem, IndepVarComp, ExplicitComponent, ExecComp
 from openmdao.api import NewtonSolver, Group, DirectSolver, NonlinearRunOnce, LinearRunOnce, view_model, BalanceComp, ScipyOptimizeDriver
 
 # from ..size_comp import MotorSizeComp
-from electromagnetics.efficiency.overall_eff import EfficiencyComp
-from electromagnetics.fields.airgap_fields import GapFieldsComp, CartersComp, GapEquivalentComp
-from electromagnetics.torque.torque_comp import TorqueComp
+from electromagnetics.fields.fields_comp import GapFieldsComp, CartersComp, GapEquivalentComp
+from electromagnetics.performance.performance_comp import TorqueComp, EfficiencyComp
 
 
 
 class EmGroup(Group):
     def setup(self):
         ivc = IndepVarComp()
-
-        self.add_subsystem(name='motor_efficiency', 
-                           subsys=EfficiencyComp(),
-                           promotes_inputs=['I', 'Tq', 'V', 'rpm'],
-                           promotes_outputs=['P_in', 'P_out'])
-
-        self.add_subsystem(name='gap_fields',
-                           subsys=GapFieldsComp(),
-                           promotes_inputs=['mu_r', 'g_eq', 't_mag', 'Hc_20', 'Br_20'],       
-                           promotes_outputs=['B_g', 'H_g'])
 
         self.add_subsystem(name='carters',
                            subsys=CartersComp(),
@@ -36,10 +25,20 @@ class EmGroup(Group):
                            promotes_inputs=['gap', 'carters_coef', 'k_sat', 't_mag', 'mu_o', 'mu_r'],
                            promotes_outputs=['g_eq', 'g_eq_q'])
 
+        self.add_subsystem(name='gap_fields',
+                           subsys=GapFieldsComp(),
+                           promotes_inputs=['mu_r', 'g_eq', 't_mag', 'Hc_20', 'Br_20'],       
+                           promotes_outputs=['B_g', 'H_g'])
+
         self.add_subsystem(name='torque',
                            subsys=TorqueComp(),
                            promotes_inputs=['B_g', 'n_m', 'n_turns', 'stack_length', 'I', 'rot_or', 'sta_ir'],
                            promotes_outputs=['Tq', 'rot_volume', 'stator_surface_current'])
+
+        self.add_subsystem(name='motor_efficiency', 
+                           subsys=EfficiencyComp(),
+                           promotes_inputs=['I', 'Tq', 'V', 'rpm'],
+                           promotes_outputs=['P_in', 'P_out'])
 
 
 

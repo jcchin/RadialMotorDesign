@@ -7,14 +7,14 @@ from openmdao.api import NewtonSolver, Group, DirectSolver, NonlinearRunOnce, Li
 class MotorSizeComp(ExplicitComponent):
 
     def setup(self):
-        self.add_input('radius_motor', 0.0765, units='m', desc='outer radius of motor')
+        self.add_input('radius_motor', 0.078225, units='m', desc='outer radius of motor')
         self.add_input('gap', 0.001, units='m', desc='air gap')
         self.add_input('rot_or', .05, units='m', desc='rotor outer radius')
         self.add_input('B_g', 1.0, units='T', desc='air gap flux density')
         self.add_input('k', 0.95, desc='stacking factor')
         self.add_input('b_ry', 2.4, units='T', desc='flux density of rotor yoke')
         self.add_input('n_m', 16, desc='number of poles')
-        self.add_input('t_mag', 0.005, desc='magnet thickness')
+        self.add_input('t_mag', 0.005, units='m', desc='magnet thickness')
         self.add_input('b_sy', 2.4, units='T', desc='flux density of stator yoke')
         self.add_input('b_t', 2.4, units='T', desc='flux density of tooth')
         self.add_input('n_slots', 15, desc='Number of slots')
@@ -29,6 +29,7 @@ class MotorSizeComp(ExplicitComponent):
         self.add_output('sta_ir', units='m', desc='stator inner radius')
         self.add_output('rot_ir', units='m', desc='rotor inner radius')
         self.add_output('s_d', units='m', desc='slot depth')
+        self.add_output('slot_area', units='m**2', desc='area of one slot')
 
         self.declare_partials('*','*', method='fd')
         #self.declare_partials('w_t', ['rot_or','B_g','n_slots','k','b_t'])
@@ -55,11 +56,10 @@ class MotorSizeComp(ExplicitComponent):
         outputs['w_t'] = (2*pi*rot_or*B_g) / (n_slots*k*b_t) 
         outputs['w_sy'] = (pi*rot_or*B_g)/(n_m*k*b_sy)
         outputs['s_d'] = radius_motor - rot_or - gap - outputs['w_sy']
-        # outputs['radius_motor'] = rot_or + gap + outputs['s_d'] + outputs['w_sy']
         outputs['rot_ir'] = (rot_or- t_mag) - outputs['w_ry'] 
         outputs['sta_ir'] = rot_or + gap
-        area = pi*(radius_motor-outputs['w_sy'])**2 - pi*(radius_motor-outputs['w_sy']-outputs['s_d'])**2
-        outputs['J'] = 2*n*I*(2.**0.5)/(k_wb/n_slots*(area-n_slots*1.25*(outputs['w_t']*outputs['s_d']))*1E6)
+        outputs['slot_area'] = pi*(radius_motor-outputs['w_sy'])**2 - pi*(radius_motor-outputs['w_sy']-outputs['s_d'])**2
+        outputs['J'] = 2*n*I*(2.**0.5)/(k_wb/n_slots*(outputs['slot_area']-n_slots*(outputs['w_t']*outputs['s_d']))*1E6)
 
 
     # def compute_partials(self, inputs, J):
@@ -137,7 +137,7 @@ class MotorMassComp(ExplicitComponent):
         t_mag=inputs['t_mag']
         rho_mag=inputs['rho_mag']
 
-        outputs['sta_mass'] = rho * stack_length * ((pi * radius_motor**2)-(pi * (sta_ir+s_d)**2)+(n_slots*(w_t*s_d*1.5)))
+        outputs['sta_mass'] = rho * stack_length * ((pi * radius_motor**2)-(pi * (sta_ir+s_d)**2)+(n_slots*(w_t*s_d)))
         outputs['rot_mass'] = (pi*(rot_or - t_mag)**2 - pi*rot_ir**2) * rho * stack_length
         outputs['mag_mass'] = (((pi*rot_or**2) - (pi*(rot_or-t_mag)**2))) * rho_mag * stack_length
 

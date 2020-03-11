@@ -34,7 +34,7 @@ class TorqueComp(ExplicitComponent):
        I = inputs['I']
        sta_ir = inputs['sta_ir']
 
-       outputs['rot_volume'] = (np.pi * sta_ir**2 * stack_length)
+       outputs['rot_volume'] = (np.pi * rot_or**2 * stack_length)
        outputs['stator_surface_current'] = 6 * 0.645*96/(2*sta_ir*np.pi) * I*np.sqrt(2)    # 0.75 represents the winding factor. This low value is required to match SEL from motor-cad
 
        outputs['Tq'] = outputs['rot_volume'] * B_g* outputs['stator_surface_current'] * np.cos(0)   # Lipo, Pg. 372 # 6==constant; 0.933==winding factor; 96==turns per phase; 50==I peak; 1==cos(epsilon) when epsilon=0
@@ -66,3 +66,28 @@ class TorqueComp(ExplicitComponent):
     #     self.add_output('torque_const', units=None, desc='torque constant')
 
     #     self.add_input('')
+
+
+class EfficiencyComp(ExplicitComponent):
+    def setup(self):
+        self.add_input('I', 30, units='A', desc='RMS current')
+        self.add_input('Tq', 25, units='N*m', desc='torque') 
+        self.add_input('V', 385, units='V', desc='RMS voltage')
+        self.add_input('rpm', 5000, units='rpm', desc='Rotational Speed')
+
+        self.add_output('P_in', 15, units='kW', desc='input power')
+        self.add_output('P_out', 15, units='kW', desc='output power')
+        
+        self.declare_partials('*','*', method='fd')
+
+
+    def compute(self, inputs, outputs):
+        I = inputs['I']
+        Tq = inputs['Tq']
+        V = inputs['V']
+        rpm = inputs['rpm']
+
+        omega = rpm*(2*pi/60)  # mechanical rad/s
+
+        outputs['P_in'] = I*V*np.sqrt(2) # Tq * omega * total_losses
+        outputs['P_out'] = Tq*omega
