@@ -6,8 +6,8 @@ from openmdao.api import Problem, IndepVarComp, ExplicitComponent, ExecComp
 from openmdao.api import NewtonSolver, Group, DirectSolver, NonlinearRunOnce, LinearRunOnce, view_model, BalanceComp, ScipyOptimizeDriver
 
 # from ..size_comp import MotorSizeComp
-from electromagnetics.fields.fields_comp import GapFieldsComp, CartersComp, GapEquivalentComp
-from electromagnetics.performance.performance_comp import TorqueComp, EfficiencyComp
+from electromagnetics.fields_comp import GapFieldsComp, CartersComp, GapEquivalentComp
+from electromagnetics.performance_comp import TorqueComp, EfficiencyComp
 
 
 
