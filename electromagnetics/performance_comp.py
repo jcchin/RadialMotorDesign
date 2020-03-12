@@ -35,7 +35,7 @@ class TorqueComp(ExplicitComponent):
        sta_ir = inputs['sta_ir']
 
        outputs['rot_volume'] = (np.pi * rot_or**2 * stack_length)
-       outputs['stator_surface_current'] = 6 * 0.645*96/(2*sta_ir*np.pi) * I*np.sqrt(2)    # 0.75 represents the winding factor. This low value is required to match SEL from motor-cad
+       outputs['stator_surface_current'] = 6 * 0.75*96/(2*sta_ir*np.pi) * I*np.sqrt(2)    # 0.75 represents the winding factor. This low value is required to match SEL from motor-cad
 
        outputs['Tq'] = outputs['rot_volume'] * B_g* outputs['stator_surface_current'] * np.cos(0)   # Lipo, Pg. 372 # 6==constant; 0.933==winding factor; 96==turns per phase; 50==I peak; 1==cos(epsilon) when epsilon=0
        # outputs['Tq'] = 10*3/2*I*.05
@@ -89,5 +89,5 @@ class EfficiencyComp(ExplicitComponent):
 
         omega = rpm*(2*pi/60)  # mechanical rad/s
 
-        outputs['P_in'] = I*V*np.sqrt(2) # Tq * omega * total_losses
+        outputs['P_in'] = V*I          #I*V*np.sqrt(2) # Tq * omega * total_losses
         outputs['P_out'] = Tq*omega

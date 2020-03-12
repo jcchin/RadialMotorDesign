@@ -26,8 +26,8 @@ class ThermalGroup(Group):
         self.add_subsystem(name='copperloss',
                            subsys=WindingLossComp(),
                            promotes_inputs=['resistivity_wire', 'stack_length', 'n_slots', 'n_turns', 'T_coeff_cu', 'I',
-                                             'wire_rad', 'T_windings', 'r_strand', 'f_e', 'mu_0', 'mu_r'],
-                           promotes_outputs=['P_cu', 'L_wire', 'R_dc', 'R_ac', 'skin_depth', 'temp_resistivity'])
+                                             'wire_rad', 'T_windings', 'r_strand', 'n_m', 'mu_0', 'mu_r'],
+                           promotes_outputs=['f_e', 'P_cu', 'L_wire', 'R_dc', 'R_ac', 'skin_depth', 'temp_resistivity'])
 
         self.add_subsystem(name = 'steinmetzloss',
                            subsys = SteinmetzLossComp(),

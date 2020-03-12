@@ -1,5 +1,6 @@
 # Write out systems of equations
 # Efficiency plot needs to be finished
+# Magnet and wire losses need to be completed
 # Eff inputs and outputs should match up with ccblade and zappy
 # Power in and out needs to be double checked
 # need to add torque/speed curve and print out plot
@@ -55,13 +56,13 @@ if __name__ == "__main__":
     # -------------------------------------------------------------------------
     ind.add_output('V', 385, units='V', desc='RMS voltage')            
     ind.add_output('I', 34.8, units='A', desc='RMS Current')           
-    ind.add_output('rpm', 5400, units='rpm', desc='Rotation speed')    
+    ind.add_output('rpm', 5450, units='rpm', desc='Rotation speed')    
     ind.add_output('radius_motor', .078225, units='m', desc='Motor outer radius')       # Ref motor = 0.078225
     ind.add_output('stack_length', 0.0345, units='m', desc='Stack Length')              # Ref motor = 0.0345
 
     ind.add_output('k', 0.94, desc='Stacking factor assumption')
     ind.add_output('gap', 0.0010, units='m', desc='Air gap distance, Need to calculate effective air gap, using Carters Coeff')
-    ind.add_output('f_e', 910, units='Hz', desc='Frequency: 5000 RPM / 60 - sec / 3 - phases')
+    # ind.add_output('f_e', 910, units='Hz', desc='Electrical frequency: n_m * mech_rad/s / 2pi')
 
     # -------------------------------------------------------------------------
     #                        Material Properties and Constants
@@ -105,11 +106,11 @@ if __name__ == "__main__":
                                                                       'Tq', 'rot_volume', 'stator_surface_current'])
     
     model.add_subsystem('thermal_properties', ThermalGroup(), promotes_inputs=[ 'B_pk', 'alpha_stein', 'beta_stein', 'k_stein',
-                                                                               'resistivity_wire', 'stack_length', 'n_slots', 'n_turns', 'T_coeff_cu', 'I','wire_rad', 'T_windings', 'r_strand', 'f_e', 'mu_0', 'mu_r'],
+                                                                               'resistivity_wire', 'stack_length', 'n_slots', 'n_turns', 'T_coeff_cu', 'I','wire_rad', 'T_windings', 'r_strand', 'mu_0', 'mu_r'],
                                                                                # 'K_h_alpha', 'K_h_beta', 'K_h', 'K_e', 'f_e','D_b', 'F_b', 'alpha', 'gap', 'k', 'mu_a', 'muf_b', 'n_m', 'rho_a', 'rot_ir', 'rot_or', 'rpm', 'stack_length'],
                                                               promotes_outputs=[
                                                                                 # 'L_core','L_emag', 'L_ewir', 'L_airg', 'L_airf', 'L_bear','L_total',
-                                                                                'P_steinmetz', 'P_cu', 'L_wire', 'R_dc', 'R_ac', 'skin_depth', 'temp_resistivity'])
+                                                                                'P_steinmetz', 'P_cu', 'L_wire', 'R_dc', 'R_ac', 'skin_depth', 'temp_resistivity', 'f_e'])
 
     model.add_subsystem('geometry', SizeGroup(), promotes_inputs=['gap', 'B_g', 'k', 'b_ry', 'n_m',
                                                                 'b_sy', 'b_t', 'n_turns', 'I', 'k_wb',
@@ -175,11 +176,11 @@ if __name__ == "__main__":
     print('Current Density.........',   p.get_val('J'))
     print('Watts of loss per kg....',   p.get_val('P_steinmetz'))
     print('Tot steinmentz losses...',   p.get_val('P_steinmetz') * p.get_val('sta_mass'))
-    print('Winding Resistive Losses',   p.get_val('P_cu'))
-    print('AC resistance...........',   p.get_val('R_ac', units='ohm'))
-    print('DC resistance...........',   p.get_val('R_dc', units='ohm'))
-    print('Skin Depth..............',   p.get_val('skin_depth', units='m'))
-    print('Temp Dependent Resist...',   p.get_val('temp_resistivity', units='ohm*m'))
+    # print('Winding Resistive Losses',   p.get_val('P_cu'))
+    # print('AC resistance...........',   p.get_val('R_ac', units='ohm'))
+    # print('DC resistance...........',   p.get_val('R_dc', units='ohm'))
+    # print('Skin Depth..............',   p.get_val('skin_depth', units='m'))
+    # print('Temp Dependent Resist...',   p.get_val('temp_resistivity', units='ohm*m'))
 
     print('--------------EM PERF-------------')
     print('Power In  ........................',  p.get_val('P_in'))

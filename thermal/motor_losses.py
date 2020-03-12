@@ -14,16 +14,18 @@ class WindingLossComp(ExplicitComponent):
         self.add_input('n_slots', 20, desc='number of slots')
         self.add_input('n_turns', 12, desc='number of winding turns')
         self.add_input('T_coeff_cu', 0.00393, desc='temperature coefficient for copper')
+        self.add_input('rpm', 5450, units='rpm', desc='Rotation speed')
+        self.add_input('n_m', 20, desc='Number of magnets')
         # self.add_input('T_calc', 150, units='C', desc='average winding temp used for calculations')
         # self.add_input('T_ref_wire', 20, units='C', desc='temperature R_dc is measured at')
         self.add_input('I', 30, units='A', desc='RMS current into motor')
         self.add_input('wire_rad',0.001,  units='m', desc='effective diameter of wire')
         self.add_input('T_windings', 150, units='C', desc='operating temperature of windings')
         self.add_input('r_strand', 0.0005, units='m', desc='radius of one strand of litz wire')
-        self.add_input('f_e', 1000, units='Hz', desc='Electrical frequency')
         self.add_input('mu_0', 0.4*pi*10**-6, units='H/m', desc='permeability of free space')    
         self.add_input('mu_r', 1.0, units='H/m', desc='relative magnetic permeability of ferromagnetic materials') 
 
+        self.add_output('f_e', 1000, units = 'Hz', desc='electrical frequency')
         self.add_output('P_cu', 500, units='W', desc='copper losses')
         self.add_output('L_wire', 10, units='m', desc='length of wire for one phase')
         self.add_output('R_dc', 1, units='ohm', desc= 'DC resistance')
@@ -32,7 +34,8 @@ class WindingLossComp(ExplicitComponent):
         self.add_output('temp_resistivity', 1.724e-8, units='ohm*m', desc='temp dependent resistivity')
 
     def compute(self, inputs, outputs):
-        f_e = inputs['f_e']
+        rpm = inputs['rpm']
+        n_m = inputs['n_m']
         mu_0 = inputs['mu_0']
         mu_r = inputs['mu_r']
         wire_rad = inputs['wire_rad']
@@ -47,10 +50,11 @@ class WindingLossComp(ExplicitComponent):
         n_slots = inputs['n_slots']
         n_turns = inputs['n_turns']
 
+        outputs['f_e'] = n_m * rpm / 60
         outputs['L_wire']       =(n_slots/3 * n_turns) * (stack_length*2 + .0354) # (stack_length*2 * n_slots/3 * (n_turns + 0.040))
         outputs['temp_resistivity'] = (resistivity_wire * (1+T_coeff_cu*T_windings))
         outputs['R_dc']         = outputs['temp_resistivity'] * outputs['L_wire'] / (np.pi*((wire_rad)**2))
-        outputs['skin_depth']   = np.sqrt( outputs['temp_resistivity'] / (np.pi * f_e * mu_r * mu_0) )
+        outputs['skin_depth']   = np.sqrt( outputs['temp_resistivity'] / (np.pi * outputs['f_e'] * mu_r * mu_0) )
         outputs['R_ac']         = outputs['R_dc'] / ( (2*outputs['skin_depth']/r_strand) - (outputs['skin_depth']/r_strand)**2 )
         # outputs['P_dc']         = outputs['R_dc'] * (I/3)**2
         outputs['P_cu']         = (I/3)**2 * outputs['R_ac']
