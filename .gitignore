@@ -3,4 +3,6 @@
 /notes.pdf
 /notes.log
 /notes.aux
+/torque.py
+/demag_curves.py
 *.pyc
