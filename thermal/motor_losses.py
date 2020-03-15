@@ -7,19 +7,23 @@ from openmdao.api import NewtonSolver, Group, DirectSolver, NonlinearRunOnce, Li
 
 
 class WindingLossComp(ExplicitComponent):
+    # Future: Can include litz wire design from "Simplified Desigh Method for Litz Wire" C.R. Sullivan, R.Y. Zhang
+    # Future: include Eddy current losses
+    # Future: include AC losses as fun(f_e)
+
 
     def setup(self):
         self.add_input('resistivity_wire', 1.724e-8, units='ohm*m', desc='resisitivity of Cu at 20 degC')
         self.add_input('stack_length', 0.035, units='m', desc='axial length of stator')
         self.add_input('n_slots', 20, desc='number of slots')
         self.add_input('n_turns', 12, desc='number of winding turns')
+        self.add_input('n_strands', 41, desc='number of strands in litz wire')
         self.add_input('T_coeff_cu', 0.00393, desc='temperature coefficient for copper')
-        self.add_input('rpm', 5450, units='rpm', desc='Rotation speed')
+        self.add_input('rpm', units='rpm', desc='Rotation speed')
         self.add_input('n_m', 20, desc='Number of magnets')
         # self.add_input('T_calc', 150, units='C', desc='average winding temp used for calculations')
         # self.add_input('T_ref_wire', 20, units='C', desc='temperature R_dc is measured at')
         self.add_input('I', 30, units='A', desc='RMS current into motor')
-        self.add_input('wire_rad',0.001,  units='m', desc='effective diameter of wire')
         self.add_input('T_windings', 150, units='C', desc='operating temperature of windings')
         self.add_input('r_strand', 0.0005, units='m', desc='radius of one strand of litz wire')
         self.add_input('mu_0', 0.4*pi*10**-6, units='H/m', desc='permeability of free space')    
@@ -30,15 +34,16 @@ class WindingLossComp(ExplicitComponent):
         self.add_output('L_wire', 10, units='m', desc='length of wire for one phase')
         self.add_output('R_dc', 1, units='ohm', desc= 'DC resistance')
         self.add_output('skin_depth', 0.001, units='m', desc='skin depth of wire')
+        self.add_output('r_litz', 0.002, units='m', desc='radius of whole litz wire')
         self.add_output('R_ac', 1, units='ohm', desc= 'AC resistance')
         self.add_output('temp_resistivity', 1.724e-8, units='ohm*m', desc='temp dependent resistivity')
+        self.add_output('A_cu', .005, units='m**2', desc='total area of copper in one slot')
 
     def compute(self, inputs, outputs):
         rpm = inputs['rpm']
         n_m = inputs['n_m']
         mu_0 = inputs['mu_0']
         mu_r = inputs['mu_r']
-        wire_rad = inputs['wire_rad']
         r_strand = inputs['r_strand']
         T_windings = inputs['T_windings']
         T_coeff_cu = inputs['T_coeff_cu']
@@ -49,15 +54,17 @@ class WindingLossComp(ExplicitComponent):
         stack_length = inputs['stack_length']
         n_slots = inputs['n_slots']
         n_turns = inputs['n_turns']
+        n_strands = inputs['n_strands']
 
-        outputs['f_e'] = n_m * rpm / 60
-        outputs['L_wire']       =(n_slots/3 * n_turns) * (stack_length*2 + .0354) # (stack_length*2 * n_slots/3 * (n_turns + 0.040))
-        outputs['temp_resistivity'] = (resistivity_wire * (1+T_coeff_cu*T_windings))
-        outputs['R_dc']         = outputs['temp_resistivity'] * outputs['L_wire'] / (np.pi*((wire_rad)**2))
-        outputs['skin_depth']   = np.sqrt( outputs['temp_resistivity'] / (np.pi * outputs['f_e'] * mu_r * mu_0) )
-        outputs['R_ac']         = outputs['R_dc'] / ( (2*outputs['skin_depth']/r_strand) - (outputs['skin_depth']/r_strand)**2 )
-        # outputs['P_dc']         = outputs['R_dc'] * (I/3)**2
-        outputs['P_cu']         = (I/3)**2 * outputs['R_ac']
+        outputs['f_e']              = n_m / 2 * rpm / 60                                            # Eqn 1.5 "Brushless PM Motor Design" by D. Hansleman
+        outputs['r_litz']           = (np.sqrt(n_strands) * 1.154 * r_strand*2)/2                   # New England Wire
+        outputs['L_wire']           = (n_slots/3 * n_turns) * (stack_length*2 + .0354)              
+        outputs['temp_resistivity'] = (resistivity_wire * (1 + T_coeff_cu*(T_windings-20)))         # Eqn 4.14 "Brushless PM Motor Design" by D. Hansleman
+        outputs['R_dc']             = outputs['temp_resistivity'] * outputs['L_wire'] / ((np.pi*(r_strand)**2)*41)
+        outputs['skin_depth']       = np.sqrt( outputs['temp_resistivity'] / (np.pi * outputs['f_e'] * mu_r * mu_0) )
+        outputs['R_ac']             = outputs['R_dc'] / 2.3   #outputs['R_dc'] / ( (2*outputs['skin_depth']/r_strand) - (outputs['skin_depth']/r_strand)**2 )
+        outputs['A_cu']             = n_turns * n_strands * 2 * np.pi * r_strand**2
+        outputs['P_cu']             =(I*np.sqrt(2))**2 * (outputs['R_dc'] + outputs['R_ac']) *3/2
 
 
 

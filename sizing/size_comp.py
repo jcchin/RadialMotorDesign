@@ -29,7 +29,7 @@ class MotorSizeComp(ExplicitComponent):
         self.add_output('sta_ir', units='m', desc='stator inner radius')
         self.add_output('rot_ir', units='m', desc='rotor inner radius')
         self.add_output('s_d', units='m', desc='slot depth')
-        self.add_output('slot_area', units='m**2', desc='area of one slot')
+        self.add_output('slot_area', 0.0002, units='m**2', desc='area of one slot')
 
         self.declare_partials('*','*', method='fd')
         #self.declare_partials('w_t', ['rot_or','B_g','n_slots','k','b_t'])
@@ -58,9 +58,8 @@ class MotorSizeComp(ExplicitComponent):
         outputs['s_d'] = radius_motor - rot_or - gap - outputs['w_sy']
         outputs['rot_ir'] = (rot_or- t_mag) - outputs['w_ry'] 
         outputs['sta_ir'] = rot_or + gap
-        outputs['slot_area'] = pi*(radius_motor-outputs['w_sy'])**2 - pi*(radius_motor-outputs['w_sy']-outputs['s_d'])**2
-        outputs['J'] = 2*n*I*(2.**0.5)/(k_wb/n_slots*(outputs['slot_area']-n_slots*(outputs['w_t']*outputs['s_d']))*1E6)
-
+        outputs['slot_area'] = (pi*(radius_motor-outputs['w_sy'])**2 - pi*(radius_motor-outputs['w_sy']-outputs['s_d'])**2)/n_slots - (outputs['w_t'] * outputs['s_d'])# - (0.000127*outputs['s_d']*4)
+        outputs['J'] = 2*n*I*(2.**0.5)/(k_wb*(outputs['slot_area'])*1E6)
 
     # def compute_partials(self, inputs, J):
 
