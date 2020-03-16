@@ -10,7 +10,7 @@ from openmdao.api import NewtonSolver, Group, DirectSolver, NonlinearRunOnce, Li
 class TorqueComp(ExplicitComponent):
 
     def setup(self):
-       self.add_input('B_g', 2.4, units='T', desc='air gap flux density')    
+       self.add_input('B_g', 1, units='T', desc='air gap flux density')    
        self.add_input('n_m', 16, desc='number of magnets')
        self.add_input('n_turns', 16, desc='number of wire turns')
        self.add_input('stack_length', .0345, units='m', desc='stack length')
@@ -37,8 +37,8 @@ class TorqueComp(ExplicitComponent):
        outputs['rot_volume'] = (np.pi * rot_or**2 * stack_length)
        outputs['stator_surface_current'] = 6 * 0.75*96/(2*sta_ir*np.pi) * I*np.sqrt(2)    # 0.75 represents the winding factor. This low value is required to match SEL from motor-cad
 
-       outputs['Tq'] = outputs['rot_volume'] * B_g* outputs['stator_surface_current'] * np.cos(0)   # Lipo, Pg. 372 # 6==constant; 0.933==winding factor; 96==turns per phase; 50==I peak; 1==cos(epsilon) when epsilon=0
-       # outputs['Tq'] = 10*3/2*I*.05
+       # outputs['Tq'] = outputs['rot_volume'] * B_g* outputs['stator_surface_current'] * np.cos(0)   # Lipo, Pg. 372 # 6==constant; 0.933==winding factor; 96==turns per phase; 50==I peak; 1==cos(epsilon) when epsilon=0
+       outputs['Tq'] = 2*n_m*n_turns*B_g*rot_or*stack_length*I      # Eqn 4.11, pg 79, from D.Hansleman book
 
     # def compute_partials(self,inputs,J):
     #    n_m=inputs['n_m']
@@ -70,24 +70,31 @@ class TorqueComp(ExplicitComponent):
 
 class EfficiencyComp(ExplicitComponent):
     def setup(self):
-        self.add_input('I', 30, units='A', desc='RMS current')
+        # self.add_input('I', 30, units='A', desc='RMS current')
         self.add_input('Tq', 25, units='N*m', desc='torque') 
-        self.add_input('V', 385, units='V', desc='RMS voltage')
+        # self.add_input('V', 385, units='V', desc='RMS voltage')
         self.add_input('rpm', 5000, units='rpm', desc='Rotational Speed')
+        self.add_input('P_cu', 500, units='W', desc='copper losses')
+        self.add_input('P_steinmetz', 500, units='W', desc='iron losses')        
 
         self.add_output('P_in', 15, units='kW', desc='input power')
         self.add_output('P_out', 15, units='kW', desc='output power')
+        self.add_output('Eff', 0.95, desc='efficiency of motor')
         
         self.declare_partials('*','*', method='fd')
 
 
     def compute(self, inputs, outputs):
-        I = inputs['I']
+        # I = inputs['I']
         Tq = inputs['Tq']
-        V = inputs['V']
+        # V = inputs['V']
         rpm = inputs['rpm']
+        P_cu = inputs['P_cu']
+        P_steinmetz =inputs['P_steinmetz']
 
         omega = rpm*(2*pi/60)  # mechanical rad/s
 
-        outputs['P_in'] = V*I          #I*V*np.sqrt(2) # Tq * omega * total_losses
+        outputs['P_in']  = (Tq*omega) + P_cu + P_steinmetz         #I*V*np.sqrt(2) # Tq * omega * total_losses
         outputs['P_out'] = Tq*omega
+
+        outputs['Eff'] =  outputs['P_out'] / outputs['P_in']

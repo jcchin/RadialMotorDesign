@@ -1,14 +1,18 @@
-# Write out systems of equations
+# Keep systems of equations up to date
 # Efficiency plot needs to be finished
-# Magnet and wire losses need to be completed
+# Magnet losses need to be completed
 # Eff inputs and outputs should match up with ccblade and zappy
-# Power in and out needs to be double checked
 # need to add torque/speed curve and print out plot
-# need to improve carters coefficient for the equivalent gap
-# options for full / half wave operation
-# Calculate winding factor from Lipo book, see chapter two
-# output phasor diagrams?
-# Why is flux density so high?
+# Future: Calculate winding factor from Lipo book, see chapter two
+# Future: output phasor diagrams
+
+# Make models of 20 hp motors roughly the size of a small personal quadcopter
+    # Change current density based on liquid/air cooling
+    # Material may matter, can do a cost / mass study
+    # What voltage and current
+    # What are geometry constraints: diameter, length
+    # Need to implement air gap calculation 
+    # RPM from NDARC
 
 import numpy as np
 from math import pi
@@ -31,10 +35,10 @@ if __name__ == "__main__":
     # -------------------------------------------------------------------------
     #                              
     # -------------------------------------------------------------------------
-    ind.add_output('b_ry', 3.7, units='T', desc='Rotor yoke flux density')              # FEA
-    ind.add_output('b_sy', 3.7, units='T', desc='Stator yoke flux density')             # FEA
-    ind.add_output('b_t', 3.7, units='T', desc='Tooth Flux Density')                    # FEA
-    ind.add_output('B_pk', 2.2, units='T', desc='Peak flux density for Hiperco-50')     # FEA
+    ind.add_output('b_ry', 3.0, units='T', desc='Rotor yoke flux density')              # FEA
+    ind.add_output('b_sy', 2.4, units='T', desc='Stator yoke flux density')             # FEA
+    ind.add_output('b_t', 3.0, units='T', desc='Tooth Flux Density')                    # FEA
+    ind.add_output('B_pk', 2.4, units='T', desc='Peak flux density for Hiperco-50')     # FEA
     ind.add_output('k_wb', 0.58, desc='copper fill factor')                             # Ref motor = 0.58
     
 
@@ -48,6 +52,7 @@ if __name__ == "__main__":
     
     ind.add_output('t_mag', .0044, units='m', desc='Radial magnet thickness')               # Ref motor = 0.0044
     ind.add_output('T_windings', 150, units='C', desc='operating temperature of windings')
+    ind.add_output('T_mag', 100, units='C', desc='operating temperature of the magnets')
     ind.add_output('r_strand', 0.0001605, units='m', desc='28 AWG radius of one strand of litz wire')
     ind.add_output('n_strands', 41, desc='number of strands in hand for litz wire')
         
@@ -56,7 +61,7 @@ if __name__ == "__main__":
     # -------------------------------------------------------------------------
     ind.add_output('V', 385, units='V', desc='RMS voltage')            
     ind.add_output('I', 34.8, units='A', desc='RMS Current')           
-    ind.add_output('rpm', 3450, units='rpm', desc='Rotation speed')    
+    ind.add_output('rpm', 5450, units='rpm', desc='Rotation speed')    
     ind.add_output('radius_motor', .078225, units='m', desc='Motor outer radius')       # Ref motor = 0.078225
     ind.add_output('stack_length', 0.0345, units='m', desc='Stack Length')              # Ref motor = 0.0345
 
@@ -92,20 +97,22 @@ if __name__ == "__main__":
     ind.add_output('alpha_stein', 1.286, desc='Alpha coefficient for steinmetz, constant')
     ind.add_output('beta_stein', 1.76835, desc='Beta coefficient for steinmentz, dependent on freq')
     ind.add_output('k_stein', 0.0044, desc='k constant for steinmentz')
+    ind.add_output('T_coef_rem_mag', -0.12, desc=' Temperature coefficient of the remnance flux density for N48H magnets')
 
 
 
-    model.add_subsystem('em_properties', EmGroup(), promotes_inputs=['I', 'V', 'rpm', 'mu_r', 'g_eq', 't_mag', 'Hc_20', 'Br_20',
-                                                                     'gap', 'sta_ir', 'n_slots', 'l_slot_opening',
-                                                                     'carters_coef', 'k_sat', 'mu_o',
-                                                                     'B_g', 'n_m', 'n_turns', 'stack_length', 'rot_or'], 
-                                                    promotes_outputs=['P_in', 'P_out', 'B_g', 'H_g',
+    model.add_subsystem('em_properties', EmGroup(), promotes_inputs=['T_coef_rem_mag', 'T_mag', 'I', 'rpm', 'mu_r', 'g_eq', 't_mag', 'Br_20',
+                                                                     'gap', 'sta_ir', 'n_slots', 'l_slot_opening', 't_mag',
+                                                                     'carters_coef', 'k_sat', 'mu_o', 'P_cu', 'P_steinmetz',
+                                                                     'B_g', 'n_m', 'n_turns', 'stack_length', 'rot_or', 's_d', 'w_t', 'slot_area', 't_mag', 'w_slot'], 
+                                                    promotes_outputs=['P_in', 'P_out', 'B_g', 
                                                                       'mech_angle', 't_1', 'carters_coef',
-                                                                      'g_eq', 'g_eq_q',
+                                                                      'g_eq', 'g_eq_q', 'Br', 'Eff', 
                                                                       'Tq', 'rot_volume', 'stator_surface_current'])
     
     model.add_subsystem('thermal_properties', ThermalGroup(), promotes_inputs=[ 'B_pk', 'alpha_stein', 'beta_stein', 'k_stein', 'rpm', 
-                                                                               'resistivity_wire', 'stack_length', 'n_slots', 'n_turns', 'T_coeff_cu', 'I', 'T_windings', 'r_strand', 'mu_0', 'mu_r'],
+                                                                               'resistivity_wire', 'stack_length', 'n_slots', 'n_strands', 
+                                                                               'n_m', 'mu_o', 'n_turns', 'T_coeff_cu', 'I', 'T_windings', 'r_strand', 'mu_r'],
                                                                                # 'K_h_alpha', 'K_h_beta', 'K_h', 'K_e', D_b', 'F_b', 'alpha', 'gap', 'k', 'mu_a', 'muf_b', 'n_m', 'rho_a', 'rot_ir', 'rot_or', 'rpm', 'stack_length'],
                                                               promotes_outputs=[
                                                                                 # 'L_core','L_emag', 'L_ewir', 'L_airg', 'L_airf', 'L_bear','L_total',
@@ -116,7 +123,7 @@ if __name__ == "__main__":
                                                                 'rho', 'radius_motor', 'n_slots', 'sta_ir', 'w_t', 'stack_length',
                                                                 's_d', 'rot_or', 'rot_ir', 't_mag', 'rho_mag'],
                                                  promotes_outputs=['J', 'w_ry', 'w_sy', 'w_t', 'sta_ir', 'rot_ir', 's_d',
-                                                                 'mag_mass', 'sta_mass', 'rot_mass', 'slot_area'])
+                                                                 'mag_mass', 'sta_mass', 'rot_mass', 'slot_area', 'w_slot'])
 
     bal = BalanceComp()
     bal.add_balance('rot_or_state', val=0.05, units='m')#, use_mult=True, mult_val=0.5)
@@ -163,10 +170,10 @@ if __name__ == "__main__":
     print('Motor Outer Radius................',      p.get_val('radius_motor', units='mm'))
 
     print('Tooth Width.......................',  p.get_val('w_t', units='mm'))
-
     print('Radius of litz wire ..............', p.get_val('r_litz', units='m'))
     print('Length of Windings................',  p.get_val('L_wire', units='m'))
     print('Slot Area.........................', p.get_val('slot_area', units='m**2'))
+    print('Slot Width........................', p.get_val('w_slot'))
     print('Copper area in one slot...........', p.get_val('A_cu', units='m**2'))
     print('Copper Slot Fill Percentage.......', p.get_val('A_cu') / p.get_val('slot_area'))
 
@@ -182,6 +189,7 @@ if __name__ == "__main__":
     print('Iron losses.............',   p.get_val('P_steinmetz') * p.get_val('sta_mass'))
     print('Winding  Losses.........',   p.get_val('P_cu'))
     print('Total Losses............',   p.get_val('P_steinmetz') * p.get_val('sta_mass') + p.get_val('P_cu'))
+    print('Overall Efficiency......',   p.get_val('Eff'))
     # print('Skin Depth..............',   p.get_val('skin_depth', units='mm'))
     # print('Temp Dependent Resistivity.......', p.get_val('temp_resistivity', units='ohm*m'))
 
@@ -193,18 +201,12 @@ if __name__ == "__main__":
 
     print('--------------FIELDS--------------')
     print('Air gap flux density .............',  p.get_val('B_g'))   
-    print('Air gap field intensity ..........',  p.get_val('H_g'))  
+    # print('Air gap field intensity ..........',  p.get_val('H_g'))  
     print('Equivalent air gap ...............',  p.get_val('g_eq', units='mm'))
     print('Carters Coefficient ..............',  p.get_val('carters_coef'))
     print('Ks1 ..............................',  p.get_val('stator_surface_current'))
+    print('Mu_r for magnet...................',  p.get_val('Br'))
 
     # print('l core ..................................', p.get_val('L_core'))
 
 
-# Make models of 20 hp motors roughly the size of a small personal quadcopter
-    # Change current density based on liquid/air cooling
-    # Material may matter, can do a cost / mass study
-    # What voltage and current
-    # What are geometry constraints: diameter, length
-    # Need to implement air gap calculation 
-    # RPM from NDARC

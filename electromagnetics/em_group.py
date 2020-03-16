@@ -17,8 +17,8 @@ class EmGroup(Group):
 
         self.add_subsystem(name='carters',
                            subsys=CartersComp(),
-                           promotes_inputs=['gap', 'sta_ir', 'n_slots', 'l_slot_opening'],
-                           promotes_outputs=['mech_angle', 't_1', 'carters_coef'])
+                           promotes_inputs=['gap', 'sta_ir', 'n_slots', 'l_slot_opening', 'w_slot', 's_d', 'w_t', 'slot_area', 't_mag', 'Br_20', 'T_coef_rem_mag', 'T_mag'],
+                           promotes_outputs=['Br', 'mech_angle', 't_1', 'carters_coef'])
 
         self.add_subsystem(name='equivalent_gap',
                            subsys=GapEquivalentComp(),
@@ -27,18 +27,18 @@ class EmGroup(Group):
 
         self.add_subsystem(name='gap_fields',
                            subsys=GapFieldsComp(),
-                           promotes_inputs=['mu_r', 'g_eq', 't_mag', 'Hc_20', 'Br_20'],       
+                           promotes_inputs=['Hc_20', 'Br_20', 'Br', 'mu_r', 'g_eq', 't_mag'],       
                            promotes_outputs=['B_g', 'H_g'])
 
         self.add_subsystem(name='torque',
                            subsys=TorqueComp(),
-                           promotes_inputs=['B_g', 'n_m', 'n_turns', 'stack_length', 'I', 'rot_or', 'sta_ir'],
+                           promotes_inputs=['n_m', 'n_turns', 'B_g', 'stack_length', 'rot_or', 'I', 'sta_ir'],
                            promotes_outputs=['Tq', 'rot_volume', 'stator_surface_current'])
 
         self.add_subsystem(name='motor_efficiency', 
                            subsys=EfficiencyComp(),
-                           promotes_inputs=['I', 'Tq', 'V', 'rpm'],
-                           promotes_outputs=['P_in', 'P_out'])
+                           promotes_inputs=['Tq', 'rpm','P_cu', 'P_steinmetz'],
+                           promotes_outputs=['P_in', 'P_out', 'Eff'])
 
 
 

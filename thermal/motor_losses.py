@@ -26,7 +26,7 @@ class WindingLossComp(ExplicitComponent):
         self.add_input('I', 30, units='A', desc='RMS current into motor')
         self.add_input('T_windings', 150, units='C', desc='operating temperature of windings')
         self.add_input('r_strand', 0.0005, units='m', desc='radius of one strand of litz wire')
-        self.add_input('mu_0', 0.4*pi*10**-6, units='H/m', desc='permeability of free space')    
+        self.add_input('mu_o', 0.4*pi*10**-6, units='H/m', desc='permeability of free space')    
         self.add_input('mu_r', 1.0, units='H/m', desc='relative magnetic permeability of ferromagnetic materials') 
 
         self.add_output('f_e', 1000, units = 'Hz', desc='electrical frequency')
@@ -42,7 +42,7 @@ class WindingLossComp(ExplicitComponent):
     def compute(self, inputs, outputs):
         rpm = inputs['rpm']
         n_m = inputs['n_m']
-        mu_0 = inputs['mu_0']
+        mu_o = inputs['mu_o']
         mu_r = inputs['mu_r']
         r_strand = inputs['r_strand']
         T_windings = inputs['T_windings']
@@ -61,7 +61,7 @@ class WindingLossComp(ExplicitComponent):
         outputs['L_wire']           = (n_slots/3 * n_turns) * (stack_length*2 + .0354)              
         outputs['temp_resistivity'] = (resistivity_wire * (1 + T_coeff_cu*(T_windings-20)))         # Eqn 4.14 "Brushless PM Motor Design" by D. Hansleman
         outputs['R_dc']             = outputs['temp_resistivity'] * outputs['L_wire'] / ((np.pi*(r_strand)**2)*41)
-        outputs['skin_depth']       = np.sqrt( outputs['temp_resistivity'] / (np.pi * outputs['f_e'] * mu_r * mu_0) )
+        outputs['skin_depth']       = np.sqrt( outputs['temp_resistivity'] / (np.pi * outputs['f_e'] * mu_r * mu_o) )
         outputs['R_ac']             = outputs['R_dc'] / 2.3   #outputs['R_dc'] / ( (2*outputs['skin_depth']/r_strand) - (outputs['skin_depth']/r_strand)**2 )
         outputs['A_cu']             = n_turns * n_strands * 2 * np.pi * r_strand**2
         outputs['P_cu']             =(I*np.sqrt(2))**2 * (outputs['R_dc'] + outputs['R_ac']) *3/2
