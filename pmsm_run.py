@@ -99,7 +99,7 @@ if __name__ == "__main__":
 
     model.add_subsystem('em_properties', EmGroup(), promotes_inputs=['T_coef_rem_mag', 'T_mag', 'I', 'rpm', 'mu_r', 'g_eq', 't_mag', 'Br_20',
                                                                      'gap', 'sta_ir', 'n_slots', 'l_slot_opening', 't_mag',
-                                                                     'carters_coef', 'k_sat', 'mu_o', 'P_cu', 'P_steinmetz',
+                                                                     'carters_coef', 'k_sat', 'mu_o', 'P_wire', 'P_steinmetz',
                                                                      'B_g', 'n_m', 'n_turns', 'stack_length', 'rot_or', 's_d', 'w_t', 'slot_area', 't_mag', 'w_slot'], 
                                                     promotes_outputs=['P_in', 'P_out', 'B_g', 
                                                                       'mech_angle', 't_1', 'carters_coef',
@@ -112,7 +112,7 @@ if __name__ == "__main__":
                                                                                # 'K_h_alpha', 'K_h_beta', 'K_h', 'K_e', D_b', 'F_b', 'alpha', 'gap', 'k', 'mu_a', 'muf_b', 'n_m', 'rho_a', 'rot_ir', 'rot_or', 'rpm', 'stack_length'],
                                                               promotes_outputs=[
                                                                                 # 'L_core','L_emag', 'L_ewir', 'L_airg', 'L_airf', 'L_bear','L_total',
-                                                                                'A_cu', 'r_litz', 'P_steinmetz', 'P_cu', 'L_wire', 'R_dc', 'R_ac', 'skin_depth', 'temp_resistivity', 'f_e'])
+                                                                                'A_cu', 'r_litz', 'P_steinmetz', 'P_dc', 'P_ac', 'P_wire', 'L_wire', 'R_dc', 'skin_depth', 'temp_resistivity', 'f_e'])
 
     model.add_subsystem('geometry', SizeGroup(), promotes_inputs=['gap', 'B_g', 'k', 'b_ry', 'n_m',
                                                                 'b_sy', 'b_t', 'n_turns', 'I', 'k_wb',
@@ -183,8 +183,10 @@ if __name__ == "__main__":
     print('--------------LOSSES-------------')
     print('Current Density.........',   p.get_val('J'))
     print('Iron losses.............',   p.get_val('P_steinmetz') * p.get_val('sta_mass'))
-    print('Winding  Losses.........',   p.get_val('P_cu'))
-    print('Total Losses............',   p.get_val('P_steinmetz') * p.get_val('sta_mass') + p.get_val('P_cu'))
+    print('DC Winding  Losses......',   p.get_val('P_dc'))
+    print('AC Winding  Losses......',   p.get_val('P_ac'))
+    print('TOTAL Winding  Losses...',   p.get_val('P_wire'))
+    print('Total Losses............',   p.get_val('P_steinmetz') * p.get_val('sta_mass') + p.get_val('P_wire'))
     print('Overall Efficiency......',   p.get_val('Eff'))
     # print('Skin Depth..............',   p.get_val('skin_depth', units='mm'))
     # print('Temp Dependent Resistivity.......', p.get_val('temp_resistivity', units='ohm*m'))

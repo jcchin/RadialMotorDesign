@@ -94,7 +94,7 @@ class GapFieldsComp(ExplicitComponent):
     t_mag=inputs['t_mag']
 
     
-    outputs['B_g'] = (Br/(1+mu_r*g_eq/t_mag))    # neglecting leakage flux and fringing, magnetic voltag drop in steel (eqn2.14 Gieres PMSM) - g should be effective gap, not mechanical g
-    outputs['H_g'] = Hc_20*(outputs['B_g']/Br_20)           # Only valid at 20 deg C, and neglects voltage drop across air gap, input eqn 2.17
+    outputs['B_g'] = (Br/(1+mu_r*g_eq/t_mag))               # neglecting leakage flux and fringing, magnetic voltag drop in steel (eqn2.14 Gieres PMSM)
+    outputs['H_g'] = Hc_20*(outputs['B_g']/Br_20)           # Nont required now
 
 

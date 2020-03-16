@@ -19,7 +19,7 @@ class WindingLossComp(ExplicitComponent):
         self.add_input('n_turns', 12, desc='number of winding turns')
         self.add_input('n_strands', 41, desc='number of strands in litz wire')
         self.add_input('T_coeff_cu', 0.00393, desc='temperature coefficient for copper')
-        self.add_input('rpm', units='rpm', desc='Rotation speed')
+        self.add_input('rpm', 5400, units='rpm', desc='Rotation speed')
         self.add_input('n_m', 20, desc='Number of magnets')
         # self.add_input('T_calc', 150, units='C', desc='average winding temp used for calculations')
         # self.add_input('T_ref_wire', 20, units='C', desc='temperature R_dc is measured at')
@@ -35,7 +35,9 @@ class WindingLossComp(ExplicitComponent):
         self.add_output('R_dc', 1, units='ohm', desc= 'DC resistance')
         self.add_output('skin_depth', 0.001, units='m', desc='skin depth of wire')
         self.add_output('r_litz', 0.002, units='m', desc='radius of whole litz wire')
-        self.add_output('R_ac', 1, units='ohm', desc= 'AC resistance')
+        self.add_output('P_dc', 100, units='W ', desc= 'Power loss from dc resistance')
+        self.add_output('P_ac', 100, units='W ', desc= 'Power loss from ac resistance')
+        self.add_output('P_wire', 400, units='W ', desc= 'total power loss from wire')
         self.add_output('temp_resistivity', 1.724e-8, units='ohm*m', desc='temp dependent resistivity')
         self.add_output('A_cu', .005, units='m**2', desc='total area of copper in one slot')
 
@@ -62,9 +64,11 @@ class WindingLossComp(ExplicitComponent):
         outputs['temp_resistivity'] = (resistivity_wire * (1 + T_coeff_cu*(T_windings-20)))         # Eqn 4.14 "Brushless PM Motor Design" by D. Hansleman
         outputs['R_dc']             = outputs['temp_resistivity'] * outputs['L_wire'] / ((np.pi*(r_strand)**2)*41)
         outputs['skin_depth']       = np.sqrt( outputs['temp_resistivity'] / (np.pi * outputs['f_e'] * mu_r * mu_o) )
-        outputs['R_ac']             = outputs['R_dc'] / 2.3   #outputs['R_dc'] / ( (2*outputs['skin_depth']/r_strand) - (outputs['skin_depth']/r_strand)**2 )
         outputs['A_cu']             = n_turns * n_strands * 2 * np.pi * r_strand**2
-        outputs['P_cu']             =(I*np.sqrt(2))**2 * (outputs['R_dc'] + outputs['R_ac']) *3/2
+        outputs['P_dc']             = (I*np.sqrt(2))**2 * (outputs['R_dc']) *3/2
+        outputs['P_ac']             = (1.4274767151338558e-08 * rpm**1.9999999326125777) * outputs['P_dc']  # Best fit line from ac/dc loss fraction of reference motor, valid for any rpm at 50 A
+        outputs['P_wire']           = outputs['P_dc'] + outputs['P_ac']
+
 
 
 
