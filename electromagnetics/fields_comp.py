@@ -80,8 +80,6 @@ class GapFieldsComp(ExplicitComponent):
     self.add_input('Br', 1, units = 'T', desc='temp dependent renmance flux density of an N48H magnet')
     self.add_input('Br_20', 1.39, units='T', desc='remnance flux density at 20 degC')
     
-
-    
     self.add_output('H_g', units='A/m', desc='air gap field intensity')
     self.add_output('B_g', 1.5, units='T', desc='air gap flux density')
 
