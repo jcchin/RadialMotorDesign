@@ -36,9 +36,9 @@ if __name__ == "__main__":
     # -------------------------------------------------------------------------
     #                              
     # -------------------------------------------------------------------------
-    ind.add_output('radius_motor', 0.078225, units='m', desc='Motor outer radius')            # Ref motor = 0.078225
+    ind.add_output('radius_motor', 0.078225, units='m', desc='Motor outer radius')      # Ref motor = 0.078225
     ind.add_output('rpm', 5400, units='rpm', desc='Rotation speed')  
-    ind.add_output('I', 34.8, units='A', desc='RMS Current')
+    ind.add_output('I', 34.35, units='A', desc='RMS Current')
     ind.add_output('V', 385, units='V', desc='RMS voltage')  
     ind.add_output('stack_length', 0.0345, units='m', desc='Stack Length')              # Ref motor = 0.0345
 
@@ -97,6 +97,14 @@ if __name__ == "__main__":
     ind.add_output('gap', 0.0010, units='m', desc='Air gap distance, Need to calculate effective air gap, using Carters Coeff')
 
 
+    model.add_subsystem('thermal_properties', ThermalGroup(), promotes_inputs=[ 'B_pk', 'alpha_stein', 'beta_stein', 'k_stein', 'rpm', 
+                                                                               'resistivity_wire', 'stack_length', 'n_slots', 'n_strands', 
+                                                                               'n_m', 'mu_o', 'n_turns', 'T_coeff_cu', 'I', 'T_windings', 'r_strand', 'mu_r'],
+                                                                               # 'K_h_alpha', 'K_h_beta', 'K_h', 'K_e', D_b', 'F_b', 'alpha', 'gap', 'k', 'mu_a', 'muf_b', 'n_m', 'rho_a', 'rot_ir', 'rot_or', 'rpm', 'stack_length'],
+                                                              promotes_outputs=[
+                                                                                # 'L_core','L_emag', 'L_ewir', 'L_airg', 'L_airf', 'L_bear','L_total',
+                                                                                'A_cu', 'r_litz', 'P_steinmetz', 'P_dc', 'P_ac', 'P_wire', 'L_wire', 'R_dc', 'skin_depth', 'temp_resistivity', 'f_e'])
+
     model.add_subsystem('em_properties', EmGroup(), promotes_inputs=['T_coef_rem_mag', 'T_mag', 'I', 'rpm', 'mu_r', 'g_eq', 't_mag', 'Br_20',
                                                                      'gap', 'sta_ir', 'n_slots', 'l_slot_opening', 't_mag',
                                                                      'carters_coef', 'k_sat', 'mu_o', 'P_wire', 'P_steinmetz',
@@ -106,13 +114,7 @@ if __name__ == "__main__":
                                                                       'g_eq', 'g_eq_q', 'Br', 'Eff', 
                                                                       'Tq', 'rot_volume', 'stator_surface_current'])
     
-    model.add_subsystem('thermal_properties', ThermalGroup(), promotes_inputs=[ 'B_pk', 'alpha_stein', 'beta_stein', 'k_stein', 'rpm', 
-                                                                               'resistivity_wire', 'stack_length', 'n_slots', 'n_strands', 
-                                                                               'n_m', 'mu_o', 'n_turns', 'T_coeff_cu', 'I', 'T_windings', 'r_strand', 'mu_r'],
-                                                                               # 'K_h_alpha', 'K_h_beta', 'K_h', 'K_e', D_b', 'F_b', 'alpha', 'gap', 'k', 'mu_a', 'muf_b', 'n_m', 'rho_a', 'rot_ir', 'rot_or', 'rpm', 'stack_length'],
-                                                              promotes_outputs=[
-                                                                                # 'L_core','L_emag', 'L_ewir', 'L_airg', 'L_airf', 'L_bear','L_total',
-                                                                                'A_cu', 'r_litz', 'P_steinmetz', 'P_dc', 'P_ac', 'P_wire', 'L_wire', 'R_dc', 'skin_depth', 'temp_resistivity', 'f_e'])
+    
 
     model.add_subsystem('geometry', SizeGroup(), promotes_inputs=['gap', 'B_g', 'k', 'b_ry', 'n_m',
                                                                 'b_sy', 'b_t', 'n_turns', 'I', 'k_wb',
@@ -123,7 +125,7 @@ if __name__ == "__main__":
 
     bal = BalanceComp()
     bal.add_balance('rot_or_state', val=0.05, units='m')#, use_mult=True, mult_val=0.5)
-    tgt = IndepVarComp(name='J_tgt', val=10.47, units='A/mm**2')
+    tgt = IndepVarComp(name='J_tgt', val=10.4, units='A/mm**2')
     model.add_subsystem(name='target', subsys=tgt, promotes_outputs=['J_tgt'])
     model.add_subsystem(name='balance', subsys=bal)
 
