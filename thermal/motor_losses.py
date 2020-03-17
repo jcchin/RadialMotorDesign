@@ -39,6 +39,8 @@ class WindingLossComp(om.ExplicitComponent):
         self.add_output('temp_resistivity', 1.724e-8, units='ohm*m', desc='temp dependent resistivity')
         self.add_output('A_cu', .005, units='m**2', desc='total area of copper in one slot')
 
+        self.declare_partials('*' , '*', method='fd')
+        
     def compute(self, inputs, outputs):
         rpm = inputs['rpm']
         n_m = inputs['n_m']
@@ -78,6 +80,7 @@ class SteinmetzLossComp(om.ExplicitComponent):
         self.add_input('k_stein', 0.0044, desc='k constant for steinmentz')
         self.add_output('P_steinmetz', 400, units='W', desc='Simplified steinmetz losses')
 
+        self.declare_partials('*' , '*', method='fd')
 
     def compute(self, inputs, outputs):
         f_e = inputs['f_e']

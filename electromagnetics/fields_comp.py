@@ -25,6 +25,8 @@ class CartersComp(om.ExplicitComponent):
         self.add_output('t_1', 1, units='m', desc='Slot Pitch')  # Gieras - pg.218
         self.add_output('carters_coef', 1,  desc='How much the air gap must be increased to account for slots')  # Gieras - pg.563 - (A.27)
 
+        self.declare_partials('*','*', method='fd')
+
     def compute(self, inputs, outputs):
         g = inputs['gap']
         sta_ir = inputs['sta_ir'] * 2
@@ -56,6 +58,8 @@ class GapEquivalentComp(om.ExplicitComponent):
 
         self.add_output('g_eq', 1, units='m', desc='Equivalent aig gap')  # Gieras - pg.180
         self.add_output('g_eq_q', 1, units='m', desc='Equivalent air gap q-axis')  # Gieras - pg.180
+
+        self.declare_partials('*','*', method='fd')
 
     def compute(self, inputs, outputs):
         g = inputs['gap']
