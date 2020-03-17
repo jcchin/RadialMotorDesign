@@ -4,10 +4,10 @@ from math import pi
 
 import openmdao.api as om
 
+from thermal.ACpowerFactor import ACDC
+
 class WindingLossComp(om.ExplicitComponent):
     # Future: Can include litz wire design from "Simplified Desigh Method for Litz Wire" C.R. Sullivan, R.Y. Zhang
-    # Future: include Eddy current losses
-    # Future: include AC losses as fun(f_e)
 
 
     def setup(self):
@@ -26,6 +26,7 @@ class WindingLossComp(om.ExplicitComponent):
         self.add_input('r_strand', 0.0005, units='m', desc='radius of one strand of litz wire')
         self.add_input('mu_o', 0.4*pi*10**-6, units='H/m', desc='permeability of free space')    
         self.add_input('mu_r', 1.0, units='H/m', desc='relative magnetic permeability of ferromagnetic materials') 
+        self.add_input('AC_power_factor', 0.5, desc='litz wire AC power factor')
 
         self.add_output('f_e', 1000, units = 'Hz', desc='electrical frequency')
         self.add_output('P_cu', 500, units='W', desc='copper losses')
@@ -66,17 +67,17 @@ class WindingLossComp(om.ExplicitComponent):
         outputs['skin_depth']       = np.sqrt( outputs['temp_resistivity'] / (np.pi * outputs['f_e'] * mu_r * mu_o) )
         outputs['A_cu']             = n_turns * n_strands * 2 * np.pi * r_strand**2
         outputs['P_dc']             = (I*np.sqrt(2))**2 * (outputs['R_dc']) *3/2
-        outputs['P_ac']             = (1.4274767151338558e-08 * rpm**1.9999999326125777) * outputs['P_dc']  # Best fit line from ac/dc loss fraction of reference motor, valid for any rpm at 50 A
+        outputs['P_ac']             = inputs['AC_power_factor'] * outputs['P_dc']
         outputs['P_wire']           = outputs['P_dc'] + outputs['P_ac']
 
 
-
 class SteinmetzLossComp(om.ExplicitComponent):
+
     def setup(self):
         self.add_input('f_e', 1000, units='Hz', desc='Electrical frequency')
         self.add_input('B_pk', 2.05, units='T', desc='Peak magnetic field in Tesla')
         self.add_input('alpha_stein', 1.286, desc='Alpha coefficient for steinmetz, constant')
-        self.add_input('beta_stein', 1.76835, desc='Beta coefficient for steinmentz, dependent on freq')    # needs a looup table as fun(freq)
+        self.add_input('beta_stein', 1.76835, desc='Beta coefficient for steinmentz, dependent on freq')  
         self.add_input('k_stein', 0.0044, desc='k constant for steinmentz')
         self.add_output('P_steinmetz', 400, units='W', desc='Simplified steinmetz losses')
 
@@ -176,6 +177,8 @@ class SteinmetzLossComp(om.ExplicitComponent):
 #         outputs['P_e'] = 2 * np.pi**2 * K_e * f_e**2 * B_pk**2
 
     # def compute_partials(self,inputs,J):
+
+
 
 
 

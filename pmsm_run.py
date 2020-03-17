@@ -35,9 +35,9 @@ if __name__ == "__main__":
     # -------------------------------------------------------------------------
     #                              
     # -------------------------------------------------------------------------
-    ind.add_output('radius_motor', 0.078225, units='m', desc='Motor outer radius')            # Ref motor = 0.078225
+    ind.add_output('radius_motor', 0.078225, units='m', desc='Motor outer radius')      # Ref motor = 0.078225
     ind.add_output('rpm', 5400, units='rpm', desc='Rotation speed')  
-    ind.add_output('I', 34.8, units='A', desc='RMS Current')
+    ind.add_output('I', 34.35, units='A', desc='RMS Current')
     ind.add_output('V', 385, units='V', desc='RMS voltage')  
     ind.add_output('stack_length', 0.0345, units='m', desc='Stack Length')              # Ref motor = 0.0345
 
@@ -104,8 +104,8 @@ if __name__ == "__main__":
                                                                                 # 'L_core','L_emag', 'L_ewir', 'L_airg', 'L_airf', 'L_bear','L_total',
                                                                                 'A_cu', 'r_litz', 'P_steinmetz', 'P_dc', 'P_ac', 'P_wire', 'L_wire', 'R_dc', 'skin_depth', 'temp_resistivity', 'f_e'])
 
-    conv = model.add_subsystem('converge', om.Group(), promotes=['*'])
-    conv.add_subsystem('em_properties', EmGroup(), promotes_inputs=['T_coef_rem_mag', 'T_mag', 'I', 'rpm', 'mu_r', 'g_eq', 't_mag', 'Br_20',
+
+    model.add_subsystem('em_properties', EmGroup(), promotes_inputs=['T_coef_rem_mag', 'T_mag', 'I', 'rpm', 'mu_r', 'g_eq', 't_mag', 'Br_20',
                                                                      'gap', 'sta_ir', 'n_slots', 'l_slot_opening', 't_mag',
                                                                      'carters_coef', 'k_sat', 'mu_o', 'P_wire', 'P_steinmetz',
                                                                      'B_g', 'n_m', 'n_turns', 'stack_length', 'rot_or', 's_d', 'w_t', 'slot_area', 't_mag', 'w_slot'], 
@@ -115,23 +115,19 @@ if __name__ == "__main__":
                                                                       'Tq', 'rot_volume', 'stator_surface_current'])
     
    
-    conv.add_subsystem('geometry', SizeGroup(), promotes_inputs=['gap', 'B_g', 'k', 'b_ry', 'n_m',
+    model.add_subsystem('geometry', SizeGroup(), promotes_inputs=['gap', 'B_g', 'k', 'b_ry', 'n_m',
                                                                 'b_sy', 'b_t', 'n_turns', 'I', 'k_wb',
                                                                 'rho', 'radius_motor', 'n_slots', 'sta_ir', 'w_t', 'stack_length',
                                                                 's_d', 'rot_or', 'rot_ir', 't_mag', 'rho_mag'],
                                                  promotes_outputs=['J', 'w_ry', 'w_sy', 'w_t', 'sta_ir', 'rot_ir', 's_d',
                                                                  'mag_mass', 'sta_mass', 'rot_mass', 'slot_area', 'w_slot'])
 
-    conv.linear_solver = om.DirectSolver()
 
-    newton = conv.nonlinear_solver = om.NewtonSolver()
-    newton.options['maxiter'] = 10
-    newton.options['iprint'] = 2
-    newton.options['solve_subsystems'] = True
 
     bal = om.BalanceComp()
-    bal.add_balance('rot_or_state', val=0.05, units='cm', eq_units='A/mm**2', lower=1e-4, upper=8.5)#, use_mult=True, mult_val=0.5)
+    bal.add_balance('rot_or_state', val=0.05, units='cm', eq_units='A/mm**2', lower=1e-4)#, use_mult=True, mult_val=0.5)
     tgt = om.IndepVarComp(name='J_tgt', val=10.47, units='A/mm**2')
+
     model.add_subsystem(name='target', subsys=tgt, promotes_outputs=['J_tgt'])
     model.add_subsystem(name='balance', subsys=bal)
 
@@ -229,5 +225,5 @@ if __name__ == "__main__":
 
     # print('l core ..................................', p.get_val('L_core'))
 
-    p.model.list_outputs(residuals=True)
+    # p.model.list_outputs(residuals=True)
     # p.check_partials(compact_print=True)
