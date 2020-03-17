@@ -1,11 +1,10 @@
 from __future__ import absolute_import
 import numpy as np
 from math import pi
-from openmdao.api import Problem, IndepVarComp, ExplicitComponent, ExecComp
-from openmdao.api import NewtonSolver, Group, DirectSolver, NonlinearRunOnce, LinearRunOnce, view_model, BalanceComp, ScipyOptimizeDriver
 
+import openmdao.api as om
 
-class CartersComp(ExplicitComponent):
+class CartersComp(om.ExplicitComponent):
     def setup(self):
         self.add_input('gap', 0.001, units='m', desc='Air Gap - Mechanical Clearance')
         self.add_input('sta_ir', 1, units='m', desc='Inner diameter of the stator')  # Gieras - pg.217 - Vairable Table
@@ -46,14 +45,14 @@ class CartersComp(ExplicitComponent):
         outputs['carters_coef'] = 2.0727# (1 - (w_slot/(w_slot + w_t)) + ((4*(g+t_mag/outputs['Br'])/(np.pi*(w_slot + w_t))) * np.log(1 + (np.pi*w_slot/(4*(g+t_mag/outputs['Br']))))))**-1      #2.07269
 
 
-class GapEquivalentComp(ExplicitComponent):
+class GapEquivalentComp(om.ExplicitComponent):
     def setup(self):
         self.add_input('gap', 0.001, units='m', desc='Air Gap - Mechanical Clearance')
         self.add_input('carters_coef', 1,  desc='Carters Coefficient')  # Gieras - pg.563 - (A.27)
         self.add_input('k_sat', 1,  desc='Saturation factor of the magnetic circuit due to the main (linkage) magnetic flux')  # Gieras - pg.73 - (2.48) - Typically ~1
         self.add_input('t_mag', 0.0044, units='m', desc='Magnet thickness')  # 'h_m' in Gieras's book
         self.add_input('mu_o', 0.4*pi*10**-6, units='H/m', desc='Magnetic Permeability of Free Space')  #CONSTANT
-        self.add_input('mu_r', 1,  desc='Relative recoil permeability')  # Gieras - pg.48 - (2.5)
+        self.add_input('mu_r', 1, units='H/m', desc='Relative recoil permeability')  # Gieras - pg.48 - (2.5)
 
         self.add_output('g_eq', 1, units='m', desc='Equivalent aig gap')  # Gieras - pg.180
         self.add_output('g_eq_q', 1, units='m', desc='Equivalent air gap q-axis')  # Gieras - pg.180
@@ -70,7 +69,7 @@ class GapEquivalentComp(ExplicitComponent):
         outputs['g_eq_q'] = g*carters_coef*k_sat
 
 
-class GapFieldsComp(ExplicitComponent):
+class GapFieldsComp(om.ExplicitComponent):
 
   def setup(self):
     self.add_input('mu_r', 1.04, units='H/m', desc='relative magnetic permeability of ferromagnetic materials')

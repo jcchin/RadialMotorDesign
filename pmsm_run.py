@@ -17,8 +17,7 @@
 import numpy as np
 from math import pi
 
-from openmdao.api import Problem, IndepVarComp, ExplicitComponent, ExecComp
-from openmdao.api import NewtonSolver, Group, DirectSolver, NonlinearRunOnce, LinearRunOnce, view_model, BalanceComp
+import openmdao.api as om
 
 from electromagnetics.em_group import EmGroup
 from thermal.thermal_group import ThermalGroup
@@ -27,10 +26,10 @@ from sizing.size_group import SizeGroup
 
 
 if __name__ == "__main__":
-    p = Problem()
+    p = om.Problem()
     model = p.model
 
-    ind = model.add_subsystem('indeps', IndepVarComp(), promotes=['*'])
+    ind = model.add_subsystem('indeps', om.IndepVarComp(), promotes=['*'])
 
 
     # -------------------------------------------------------------------------
@@ -121,9 +120,9 @@ if __name__ == "__main__":
                                                  promotes_outputs=['J', 'w_ry', 'w_sy', 'w_t', 'sta_ir', 'rot_ir', 's_d',
                                                                  'mag_mass', 'sta_mass', 'rot_mass', 'slot_area', 'w_slot'])
 
-    bal = BalanceComp()
-    bal.add_balance('rot_or_state', val=0.05, units='m')#, use_mult=True, mult_val=0.5)
-    tgt = IndepVarComp(name='J_tgt', val=10.47, units='A/mm**2')
+    bal = om.BalanceComp()
+    bal.add_balance('rot_or_state', val=0.05, units='m', eq_units='A/mm**2')#, use_mult=True, mult_val=0.5)
+    tgt = om.IndepVarComp(name='J_tgt', val=10.47, units='A/mm**2')
     model.add_subsystem(name='target', subsys=tgt, promotes_outputs=['J_tgt'])
     model.add_subsystem(name='balance', subsys=bal)
 
@@ -132,11 +131,12 @@ if __name__ == "__main__":
     model.connect('J', 'balance.lhs:rot_or_state')
 
 
-    model.linear_solver = DirectSolver()
+    model.linear_solver = om.DirectSolver()
 
-    model.nonlinear_solver = NewtonSolver()
-    model.nonlinear_solver.options['maxiter'] = 100
-    model.nonlinear_solver.options['iprint'] = 0
+    newton = model.nonlinear_solver = om.NewtonSolver()
+    newton.options['maxiter'] = 100
+    newton.options['iprint'] = 0
+    newton.options['solve_subsystems'] = True
 
     p.setup()
     p.final_setup()

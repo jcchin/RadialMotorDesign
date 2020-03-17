@@ -1,15 +1,14 @@
 from __future__ import absolute_import
 import numpy as np
 from math import pi
-from openmdao.api import Problem, IndepVarComp, ExplicitComponent, ExecComp
-from openmdao.api import NewtonSolver, Group, DirectSolver, NonlinearRunOnce, LinearRunOnce, view_model, BalanceComp, ScipyOptimizeDriver
+
+import openmdao.api as om
 
 from sizing.size_comp import MotorSizeComp, MotorMassComp
 
 
-class SizeGroup(Group):
+class SizeGroup(om.Group):
     def setup(self):
-        ivc = IndepVarComp()
 
         self.add_subsystem(name='size',
                            subsys=MotorSizeComp(),

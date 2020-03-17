@@ -1,12 +1,10 @@
 from __future__ import absolute_import
 import numpy as np
 from math import pi
-from openmdao.api import Problem, IndepVarComp, ExplicitComponent, ExecComp
-from openmdao.api import NewtonSolver, Group, DirectSolver, NonlinearRunOnce, LinearRunOnce, view_model, BalanceComp, ScipyOptimizeDriver
 
+import openmdao.api as om
 
-
-class WindingLossComp(ExplicitComponent):
+class WindingLossComp(om.ExplicitComponent):
     # Future: Can include litz wire design from "Simplified Desigh Method for Litz Wire" C.R. Sullivan, R.Y. Zhang
     # Future: include Eddy current losses
     # Future: include AC losses as fun(f_e)
@@ -71,16 +69,14 @@ class WindingLossComp(ExplicitComponent):
 
 
 
-
-
-class SteinmetzLossComp(ExplicitComponent):
+class SteinmetzLossComp(om.ExplicitComponent):
     def setup(self):
         self.add_input('f_e', 1000, units='Hz', desc='Electrical frequency')
         self.add_input('B_pk', 2.05, units='T', desc='Peak magnetic field in Tesla')
         self.add_input('alpha_stein', 1.286, desc='Alpha coefficient for steinmetz, constant')
         self.add_input('beta_stein', 1.76835, desc='Beta coefficient for steinmentz, dependent on freq')    # needs a looup table as fun(freq)
         self.add_input('k_stein', 0.0044, desc='k constant for steinmentz')
-        self.add_output('P_steinmetz', 400, desc='Simplified steinmetz losses')
+        self.add_output('P_steinmetz', 400, units='W', desc='Simplified steinmetz losses')
 
 
     def compute(self, inputs, outputs):

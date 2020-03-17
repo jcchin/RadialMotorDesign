@@ -1,10 +1,9 @@
 import numpy as np
 from math import pi
-from openmdao.api import Problem, IndepVarComp, ExplicitComponent, ExecComp
-from openmdao.api import NewtonSolver, Group, DirectSolver, NonlinearRunOnce, LinearRunOnce, view_model, BalanceComp
 
+import openmdao.api as om
 
-class MotorSizeComp(ExplicitComponent):
+class MotorSizeComp(om.ExplicitComponent):
 
     def setup(self):
         self.add_input('radius_motor', 0.078225, units='m', desc='outer radius of motor')
@@ -103,7 +102,7 @@ class MotorSizeComp(ExplicitComponent):
     #     J['w_t', 'b_t'] = -(2*pi*rot_or*B_g)/(n_slots*k*b_t**2)
 
 
-class MotorMassComp(ExplicitComponent):
+class MotorMassComp(om.ExplicitComponent):
 
     def setup(self):
         self.add_input('rho', 8110.2, units='kg/m**3', desc='density of hiperco-50')

@@ -2,8 +2,8 @@ from __future__ import absolute_import
 
 import numpy as np
 from math import pi
-from openmdao.api import Problem, IndepVarComp, ExplicitComponent, ExecComp
-from openmdao.api import NewtonSolver, Group, DirectSolver, NonlinearRunOnce, LinearRunOnce, view_model, BalanceComp, ScipyOptimizeDriver
+
+import openmdao.api as om
 
 # from ..size_comp import MotorSizeComp
 from electromagnetics.fields_comp import GapFieldsComp, CartersComp, GapEquivalentComp
@@ -11,9 +11,8 @@ from electromagnetics.performance_comp import TorqueComp, EfficiencyComp
 
 
 
-class EmGroup(Group):
+class EmGroup(om.Group):
     def setup(self):
-        ivc = IndepVarComp()
 
         self.add_subsystem(name='carters',
                            subsys=CartersComp(),

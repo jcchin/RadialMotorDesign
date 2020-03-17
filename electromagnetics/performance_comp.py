@@ -4,10 +4,10 @@
 from __future__ import absolute_import
 import numpy as np
 from math import pi
-from openmdao.api import Problem, IndepVarComp, ExplicitComponent, ExecComp
-from openmdao.api import NewtonSolver, Group, DirectSolver, NonlinearRunOnce, LinearRunOnce, view_model, BalanceComp, ScipyOptimizeDriver
 
-class TorqueComp(ExplicitComponent):
+import openmdao.api as om
+
+class TorqueComp(om.ExplicitComponent):
 
     def setup(self):
        self.add_input('B_g', 1, units='T', desc='air gap flux density')    
@@ -68,7 +68,7 @@ class TorqueComp(ExplicitComponent):
     #     self.add_input('')
 
 
-class EfficiencyComp(ExplicitComponent):
+class EfficiencyComp(om.ExplicitComponent):
     def setup(self):
         # self.add_input('I', 30, units='A', desc='RMS current')
         self.add_input('Tq', 25, units='N*m', desc='torque') 
