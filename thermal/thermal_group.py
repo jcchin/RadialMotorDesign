@@ -29,29 +29,16 @@ motor_loss_data = np.array([
 class ThermalGroup(om.Group):
     def setup(self):
 
-        # self.add_subsystem(name='losses',
-        #                    subsys=LossesComp(),
-        #                    promotes_inputs=['rho_a', 'alpha', 'mu_a', 'muf_b', 'D_b', 'F_b', 'rpm', 'alpha', 'n_m', 'k', 'rot_or', 'rot_ir', 'stack_length', 'gap',
-        #                                     'mu_a', 'muf_b', 'D_b', 'F_b'],
-        #                    promotes_outputs=['L_core','L_emag', 'L_ewir', 'L_airg', 'L_airf', 'L_bear',
-        #                                      'L_total'])
-
-        # self.add_subsystem(name='coreloss',
-        #                    subsys=CoreLossComp(),
-        #                    promotes_inputs=['K_h', 'K_e', 'f_e', 'K_h_alpha', 'K_h_beta', 'B_pk'],
-        #                    promotes_outputs=['P_h', 'P_e'])
-
-
         motor_interp = om.MetaModelStructuredComp(method='scipy_slinear')
     
         rpm_data = np.array([200, 600, 1000, 1800, 2200, 3000, 3400, 4200, 5000, 5400])  #  1400, 2600,  3800, 4600
         current_data = np.array([10, 14.4, 18.9, 23.3, 27.8, 32.2, 36.7, 41.1, 45.6, 50])
         
         motor_interp.add_input('rpm', 5400, training_data= rpm_data, units='rpm' )
-        motor_interp.add_input('I', 50, training_data=current_data, units='A')
+        motor_interp.add_input('I_peak', 50, training_data=current_data, units='A')
         motor_interp.add_output('AC_power_factor', 0.5, training_data=motor_loss_data)
         self.add_subsystem('ac_power_factor_interp', motor_interp, 
-                            promotes_inputs=['rpm', 'I'], promotes_outputs=['AC_power_factor'])
+                            promotes_inputs=['rpm', 'I_peak'], promotes_outputs=['AC_power_factor'])
 
         self.add_subsystem(name='copperloss', 
                            subsys=WindingLossComp(),
@@ -65,15 +52,3 @@ class ThermalGroup(om.Group):
                            promotes_inputs=['alpha_stein', 'B_pk', 'f_e', 'beta_stein', 'k_stein', 'motor_mass'],
                            promotes_outputs = ['P_steinmetz'])
 
-
-        self.driver = om.DOEDriver(om.FullFactorialGenerator(num_samples=5))
-        self.driver.add_recorder(om.SqliteRecorder("cases.sql"))
-
-        prob.setup()
-        prob.run_driver()
-        prob.cleanup()
-        
-        cr = om.CaseReader("cases.sql")
-        cases = cr.list_cases('driver')
-        
-        print(len(cases))

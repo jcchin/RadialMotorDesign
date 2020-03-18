@@ -31,12 +31,15 @@ if __name__ == "__main__":
     # -------------------------------------------------------------------------
     #                              
     # -------------------------------------------------------------------------
-    ind.add_output('radius_motor', 0.078225, units='m', desc='Motor outer radius')      # Ref motor = 0.078225
+    ind.add_output('radius_motor', 0.078225, units='m', desc='Motor outer radius')  
+        # Ref motor = 0.078225
     ind.add_output('DES:rpm', 5400, units='rpm', desc='Rotation speed')  
-    ind.add_output('DES:I', 34.35, units='A', desc='RMS Current')
+    ind.add_output('DES:I', 35.35, units='A', desc='RMS Current')
+    ind.add_output('DES:I_peak', 35.35*2**0.5, units='A', desc='peak current')
 
-    ind.add_output('OD:rpm', 5400, units='rpm', desc='Rotation speed')  
-    ind.add_output('OD:I', 34.35, units='A', desc='RMS Current')
+    ind.add_output('OD:rpm', 5000, units='rpm', desc='Rotation speed')  
+    ind.add_output('OD:I', 35.35, units='A', desc='RMS Current')
+    ind.add_output('OD:I_peak', 35.35*2**0.5, units='A', desc='peak current')
 
     ind.add_output('stack_length', 0.0345, units='m', desc='Stack Length')              # Ref motor = 0.0345
 
@@ -85,8 +88,8 @@ if __name__ == "__main__":
     def motor_spec_connect(motor_path): 
 
         p.model.connect('radius_motor', f'{motor_path}.radius_motor')
-        p.model.connect('rpm', f'{motor_path}.rpm')
-        p.model.connect('I', f'{motor_path}.I')
+        # p.model.connect('DES:rpm', f'{motor_path}.rpm')
+        # p.model.connect('DES:I', f'{motor_path}.I')
         # p.model.connect('V', f'{motor_path}.V')
         p.model.connect('stack_length', f'{motor_path}.stack_length')
 
@@ -134,10 +137,18 @@ if __name__ == "__main__":
 
     p.model.add_subsystem('DESIGN', Motor())
     motor_spec_connect('DESIGN')
+    p.model.connect('DES:rpm', 'DESIGN.rpm')
+    p.model.connect('DES:I', 'DESIGN.I')
+    p.model.connect('DES:I_peak', 'DESIGN.I_peak')
 
     p.model.add_subsystem('OD1', Motor(design=False))
     motor_spec_connect('OD1')
     p.model.connect('DESIGN.rot_or', 'OD1.rot_or')
+    p.model.connect('OD:rpm', 'OD1.rpm')
+    p.model.connect('OD:I', 'OD1.I')
+    p.model.connect('OD:I_peak', 'OD1.I_peak')
+    # for loop data to array
+
 
     p.setup()
 
@@ -146,13 +157,41 @@ if __name__ == "__main__":
     p['DESIGN.rot_or'] = 8. # initial guess
 
     p.run_model()
+
+#----------------------------------------------------------
+
+    # prob = om.Problem()
+    # model = p.model
     
+    # model.add_subsystem('p1', om.IndepVarComp('x', 0.), promotes=['*'])
+    # model.add_subsystem('p2', om.IndepVarComp('y', 0.), promotes=['*'])
+    model.add_subsystem('comp', Motor(design=False))
+    
+    model.add_design_var('OD:rpm', lower=4000, upper=5400)
+    # model.add_design_var('OD:I', lower=5, upper=35.35)
+    model.add_design_var('OD:I_peak', lower=40, upper=50)
+    model.add_objective('comp.Eff')
+    
+    p.driver = om.DOEDriver(om.FullFactorialGenerator(levels=3))
+    p.driver.add_recorder(om.SqliteRecorder("cases.sql"))
+    
+    p.setup()
+    p.run_driver()
+    p.cleanup()
+    
+    cr = om.CaseReader("cases.sql")
+    cases = cr.list_cases('driver')
+    
+    print('DOEDRIVER WORKED!!!!!!!!!!!!!!!!!')
+    print('The Length of Cases is: ', len(cases))
+#----------------------------------------------------------
+
     print_motor(p, 'DESIGN')
     print()
     print()
     print_motor(p, 'OD1')
 
-    # print('l core ..................................', p.get_val('L_core'))
+
 
     # p.model.list_outputs(residuals=True)
     # p.check_partials(compact_print=True)

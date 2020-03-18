@@ -14,8 +14,8 @@ class Motor(om.Group):
     def setup(self): 
 
         self.add_subsystem('thermal_properties', ThermalGroup(), promotes_inputs=[ 'B_pk', 'alpha_stein', 'beta_stein', 'k_stein', 'rpm', 
-                                                                                   'resistivity_wire', 'stack_length', 'n_slots', 'n_strands', 
-                                                                                   'n_m', 'mu_o', 'n_turns', 'T_coeff_cu', 'I', 'T_windings', 'r_strand', 'mu_r'],
+                                                                                   'resistivity_wire', 'stack_length', 'n_slots', 'n_strands','motor_mass', 
+                                                                                   'n_m', 'mu_o', 'n_turns', 'T_coeff_cu', 'I', 'I_peak', 'T_windings', 'r_strand', 'mu_r'],
                                                                                    # 'K_h_alpha', 'K_h_beta', 'K_h', 'K_e', D_b', 'F_b', 'alpha', 'gap', 'k', 'mu_a', 'muf_b', 'n_m', 'rho_a', 'rot_ir', 'rot_or', 'rpm', 'stack_length'],
                                                                   promotes_outputs=[
                                                                                     # 'L_core','L_emag', 'L_ewir', 'L_airg', 'L_airf', 'L_bear','L_total',

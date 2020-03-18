@@ -70,9 +70,7 @@ class TorqueComp(om.ExplicitComponent):
 
 class EfficiencyComp(om.ExplicitComponent):
     def setup(self):
-        # self.add_input('I', 30, units='A', desc='RMS current')
         self.add_input('Tq', 25, units='N*m', desc='torque') 
-        # self.add_input('V', 385, units='V', desc='RMS voltage')
         self.add_input('rpm', 5000, units='rpm', desc='Rotational Speed')
         self.add_input('P_wire', 500, units='W', desc='copper losses')
         self.add_input('P_steinmetz', 500, units='W', desc='iron losses')        
@@ -94,7 +92,7 @@ class EfficiencyComp(om.ExplicitComponent):
 
         omega = rpm*(2*pi/60)  # mechanical rad/s
 
-        outputs['P_in']  = (Tq*omega) + P_wire + P_steinmetz         #I*V*np.sqrt(2) # Tq * omega * total_losses
+        outputs['P_in']  = (Tq*omega) + P_wire + P_steinmetz       
         outputs['P_out'] = Tq*omega
 
         outputs['Eff'] =  outputs['P_out'] / outputs['P_in']
