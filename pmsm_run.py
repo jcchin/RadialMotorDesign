@@ -32,8 +32,12 @@ if __name__ == "__main__":
     #                              
     # -------------------------------------------------------------------------
     ind.add_output('radius_motor', 0.078225, units='m', desc='Motor outer radius')      # Ref motor = 0.078225
-    ind.add_output('rpm', 5400, units='rpm', desc='Rotation speed')  
-    ind.add_output('I', 34.35, units='A', desc='RMS Current')
+    ind.add_output('DES:rpm', 5400, units='rpm', desc='Rotation speed')  
+    ind.add_output('DES:I', 34.35, units='A', desc='RMS Current')
+
+    ind.add_output('OD:rpm', 5400, units='rpm', desc='Rotation speed')  
+    ind.add_output('OD:I', 34.35, units='A', desc='RMS Current')
+
     ind.add_output('stack_length', 0.0345, units='m', desc='Stack Length')              # Ref motor = 0.0345
 
     ind.add_output('n_turns', 12, desc='Number of wire turns')
@@ -78,7 +82,7 @@ if __name__ == "__main__":
     ind.add_output('k', 0.94, desc='Stacking factor assumption')
     ind.add_output('gap', 0.0010, units='m', desc='Air gap distance, Need to calculate effective air gap, using Carters Coeff')
 
-    def connect(motor_path): 
+    def motor_spec_connect(motor_path): 
 
         p.model.connect('radius_motor', f'{motor_path}.radius_motor')
         p.model.connect('rpm', f'{motor_path}.rpm')
@@ -129,24 +133,24 @@ if __name__ == "__main__":
         p.model.connect('gap', f'{motor_path}.gap')
 
     p.model.add_subsystem('DESIGN', Motor())
-    connect('DESIGN')
-    # p.model.add_subsystem('OFF_DESIGN', Motor(design=False))
+    motor_spec_connect('DESIGN')
+
+    p.model.add_subsystem('OD1', Motor(design=False))
+    motor_spec_connect('OD1')
+    p.model.connect('DESIGN.rot_or', 'OD1.rot_or')
 
     p.setup()
-    p.final_setup()
-    #p.check_partials(compact_print=True)
-    # p.model.list_outputs(implicit=True)
-    # p.set_solver_print(2)
-    # view_model(p)
-    # quit()
-
 
     p['radius_motor'] = 0.086
+
     p['DESIGN.rot_or'] = 8. # initial guess
+
     p.run_model()
     
     print_motor(p, 'DESIGN')
-    # print_motor(p, 'OFF_DESIGN')
+    print()
+    print()
+    print_motor(p, 'OD1')
 
     # print('l core ..................................', p.get_val('L_core'))
 
