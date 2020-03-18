@@ -71,19 +71,23 @@ class Motor(om.Group):
 
 def print_motor(prob, motor_path=''): 
 
+    print('***'*30)
+    print(f'* Data for motor: {motor_path}')
+    print('***'*30)
+
     if motor_path: 
         motor_path += "."
 
     # p.model.run_apply_nonlinear()
     print('-----------GEOMETRY---------------')
     # print('Rotor Inner Diameter..............', 2 * p.get_val('rot_ir', units='mm'))
-    print('Rotor Inner radius................',     prob.get_val(f'{motor_path}rot_ir', units='mm'))
-
+    print('Rotor Inner Radius................',     prob.get_val(f'{motor_path}rot_ir', units='mm'))
     # print('Rotor Yoke Thickness..............',  prob.get_val('w_ry', units='mm'))
     # print('Magnet Thickness..................',  prob.get_val('t_mag', units='mm'))
 
     # print('Rotor outer Diameter..............',  2 * prob.get_val('rot_or', units='mm'))
-    print('Rotor outer Radius................',      prob.get_val(f'{motor_path}rot_or', units='mm'))
+    # print('Rotor Outer Radius................',      prob.get_val(f'{motor_path}rot_or', units='mm'))
+    print('Rotor Outer Radius................',     prob.get_val(f'{motor_path}em_properties.torque.rot_or', units='mm'))
 
     # print('Stator Inner Diameter.............', 2 *  prob.get_val('sta_ir', units='mm'))
     print('Stator Inner Radius...............',      prob.get_val(f'{motor_path}sta_ir', units='mm'))
