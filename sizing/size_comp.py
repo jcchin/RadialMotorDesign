@@ -120,6 +120,7 @@ class MotorMassComp(om.ExplicitComponent):
         self.add_output('mag_mass', 0.5, units='kg', desc='mass of magnets')
         self.add_output('sta_mass', 25, units='kg', desc='mass of stator')
         self.add_output('rot_mass', 1.0, units='kg', desc='weight of rotor')
+        self.add_output('motor_mass', 2, units='kg', desc='total mass of motor')
         
         self.declare_partials('*','*', method='fd')
 
@@ -140,6 +141,7 @@ class MotorMassComp(om.ExplicitComponent):
         outputs['sta_mass'] = rho * stack_length * ((pi * radius_motor**2)-(pi * (sta_ir+s_d)**2)+(n_slots*(w_t*s_d)))
         outputs['rot_mass'] = (pi*(rot_or - t_mag)**2 - pi*rot_ir**2) * rho * stack_length
         outputs['mag_mass'] = (((pi*rot_or**2) - (pi*(rot_or-t_mag)**2))) * rho_mag * stack_length
+        outputs['motor_mass'] = outputs['sta_mass'] + outputs['rot_mass'] + outputs['mag_mass']
 
     # def compute_partials(self,inputs,J):
 

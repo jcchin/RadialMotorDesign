@@ -98,12 +98,3 @@ class EfficiencyComp(om.ExplicitComponent):
         outputs['P_out'] = Tq*omega
 
         outputs['Eff'] =  outputs['P_out'] / outputs['P_in']
-
-
-# def EffMap():
-
-#   while rpm < 5000:
-#     P_in  = (Tq*omega) + P_cu + P_steinmetz
-#     P_out =  Tq*omega
-#     Eff = P_out / P_in
-

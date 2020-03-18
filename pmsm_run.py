@@ -36,8 +36,8 @@ if __name__ == "__main__":
     #                              
     # -------------------------------------------------------------------------
     ind.add_output('radius_motor', 0.078225, units='m', desc='Motor outer radius')      # Ref motor = 0.078225
-    ind.add_output('rpm', 5400, units='rpm', desc='Rotation speed')  
-    ind.add_output('I', 34.35, units='A', desc='RMS Current')
+    ind.add_output('rpm', 4000, units='rpm', desc='Rotation speed')  
+    ind.add_output('I', 34.35, units='A', desc='RMS Current')                           # 34.35 == 50 peak
     ind.add_output('V', 385, units='V', desc='RMS voltage')  
     ind.add_output('stack_length', 0.0345, units='m', desc='Stack Length')              # Ref motor = 0.0345
 
@@ -96,8 +96,9 @@ if __name__ == "__main__":
     ind.add_output('gap', 0.0010, units='m', desc='Air gap distance, Need to calculate effective air gap, using Carters Coeff')
 
 
-    model.add_subsystem('thermal_properties', ThermalGroup(), promotes_inputs=[ 'B_pk', 'alpha_stein', 'beta_stein', 'k_stein', 'rpm', 
-                                                                               'resistivity_wire', 'stack_length', 'n_slots', 'n_strands', 
+    model.add_subsystem('thermal_properties', ThermalGroup(), 
+                                                              promotes_inputs=[ 'B_pk', 'alpha_stein', 'beta_stein', 'k_stein', 'rpm', 
+                                                                               'resistivity_wire', 'stack_length', 'n_slots', 'n_strands','motor_mass', 
                                                                                'n_m', 'mu_o', 'n_turns', 'T_coeff_cu', 'I', 'T_windings', 'r_strand', 'mu_r'],
                                                                                # 'K_h_alpha', 'K_h_beta', 'K_h', 'K_e', D_b', 'F_b', 'alpha', 'gap', 'k', 'mu_a', 'muf_b', 'n_m', 'rho_a', 'rot_ir', 'rot_or', 'rpm', 'stack_length'],
                                                               promotes_outputs=[
@@ -120,7 +121,7 @@ if __name__ == "__main__":
                                                                 'rho', 'radius_motor', 'n_slots', 'sta_ir', 'w_t', 'stack_length',
                                                                 's_d', 'rot_or', 'rot_ir', 't_mag', 'rho_mag'],
                                                  promotes_outputs=['J', 'w_ry', 'w_sy', 'w_t', 'sta_ir', 'rot_ir', 's_d',
-                                                                 'mag_mass', 'sta_mass', 'rot_mass', 'slot_area', 'w_slot'])
+                                                                 'mag_mass', 'sta_mass', 'rot_mass', 'slot_area', 'w_slot', 'motor_mass'])
 
 
 
@@ -151,9 +152,15 @@ if __name__ == "__main__":
     ls = newton.linesearch = om.BoundsEnforceLS()
     ls.options['print_bound_enforce'] = True
 
+
+ 
+
+
+    #______________________________________________________#
+
     p.setup()
     p.final_setup()
-    #p.check_partials(compact_print=True)
+    # p.check_partials(compact_print=True)
     # p.model.list_outputs(implicit=True)
     # p.set_solver_print(2)
     # view_model(p)
@@ -164,6 +171,15 @@ if __name__ == "__main__":
     p['balance.rot_or_state'] = 8.
     p.run_model()
     # p.model.run_apply_nonlinear()
+
+
+
+
+
+
+#------------------------- Print Statements ------------------------------#
+
+
     print('-----------GEOMETRY---------------')
     # print('Rotor Inner Diameter..............', 2 * p.get_val('rot_ir', units='mm'))
     print('Rotor Inner radius................',     p.get_val('rot_ir', units='mm'))
@@ -195,16 +211,16 @@ if __name__ == "__main__":
     print('Mass of Stator....................',  p.get_val('sta_mass', units='kg'))
     print('Mass of Rotor.....................',  p.get_val('rot_mass', units='kg'))
     print('Mass of Magnets...................',  p.get_val('mag_mass', units='kg')) 
-    print('Mass of Motor.....................',  p.get_val('mag_mass', units='kg') + p.get_val('rot_mass', units='kg') + p.get_val('sta_mass', units='kg'))   
+    print('Mass of Motor.....................',  p.get_val('motor_mass'))
     
 
     print('--------------LOSSES-------------')
     print('Current Density.........',   p.get_val('J'))
-    print('Iron losses.............',   p.get_val('P_steinmetz') * p.get_val('sta_mass'))
+    print('Iron losses.............',   p.get_val('P_steinmetz'))
     print('DC Winding  Losses......',   p.get_val('P_dc'))
     print('AC Winding  Losses......',   p.get_val('P_ac'))
     print('TOTAL Winding  Losses...',   p.get_val('P_wire'))
-    print('Total Losses............',   p.get_val('P_steinmetz') * p.get_val('sta_mass') + p.get_val('P_wire'))
+    print('Total Losses............',   p.get_val('P_steinmetz') + p.get_val('P_wire'))
     print('Overall Efficiency......',   p.get_val('Eff'))
     # print('Skin Depth..............',   p.get_val('skin_depth', units='mm'))
     # print('Temp Dependent Resistivity.......', p.get_val('temp_resistivity', units='ohm*m'))

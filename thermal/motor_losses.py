@@ -9,7 +9,6 @@ from thermal.ACpowerFactor import ACDC
 class WindingLossComp(om.ExplicitComponent):
     # Future: Can include litz wire design from "Simplified Desigh Method for Litz Wire" C.R. Sullivan, R.Y. Zhang
 
-
     def setup(self):
         self.add_input('resistivity_wire', 1.724e-8, units='ohm*m', desc='resisitivity of Cu at 20 degC')
         self.add_input('stack_length', 0.035, units='m', desc='axial length of stator')
@@ -19,8 +18,6 @@ class WindingLossComp(om.ExplicitComponent):
         self.add_input('T_coeff_cu', 0.00393, desc='temperature coefficient for copper')
         self.add_input('rpm', 5400, units='rpm', desc='Rotation speed')
         self.add_input('n_m', 20, desc='Number of magnets')
-        # self.add_input('T_calc', 150, units='C', desc='average winding temp used for calculations')
-        # self.add_input('T_ref_wire', 20, units='C', desc='temperature R_dc is measured at')
         self.add_input('I', 30, units='A', desc='RMS current into motor')
         self.add_input('T_windings', 150, units='C', desc='operating temperature of windings')
         self.add_input('r_strand', 0.0005, units='m', desc='radius of one strand of litz wire')
@@ -51,8 +48,6 @@ class WindingLossComp(om.ExplicitComponent):
         T_windings = inputs['T_windings']
         T_coeff_cu = inputs['T_coeff_cu']
         resistivity_wire = inputs['resistivity_wire']
-        # T_calc = inputs['T_calc']
-        # T_ref_wire = inputs['T_ref_wire']
         I = inputs['I']
         stack_length = inputs['stack_length']
         n_slots = inputs['n_slots']
@@ -61,13 +56,14 @@ class WindingLossComp(om.ExplicitComponent):
 
         outputs['f_e']              = n_m / 2 * rpm / 60                                            # Eqn 1.5 "Brushless PM Motor Design" by D. Hansleman
         outputs['r_litz']           = (np.sqrt(n_strands) * 1.154 * r_strand*2)/2                   # New England Wire
-        outputs['L_wire']           = (n_slots/3 * n_turns) * (stack_length*2 + .0354)              
+        outputs['L_wire']           = (n_slots/3 * n_turns) * (stack_length*2 + .017*2)              
         outputs['temp_resistivity'] = (resistivity_wire * (1 + T_coeff_cu*(T_windings-20)))         # Eqn 4.14 "Brushless PM Motor Design" by D. Hansleman
         outputs['R_dc']             = outputs['temp_resistivity'] * outputs['L_wire'] / ((np.pi*(r_strand)**2)*41)
         outputs['skin_depth']       = np.sqrt( outputs['temp_resistivity'] / (np.pi * outputs['f_e'] * mu_r * mu_o) )
         outputs['A_cu']             = n_turns * n_strands * 2 * np.pi * r_strand**2
+
         outputs['P_dc']             = (I*np.sqrt(2))**2 * (outputs['R_dc']) *3/2
-        outputs['P_ac']             = inputs['AC_power_factor'] * outputs['P_dc']
+        outputs['P_ac']             = inputs['AC_power_factor']* outputs['P_dc']
         outputs['P_wire']           = outputs['P_dc'] + outputs['P_ac']
 
 
@@ -79,18 +75,24 @@ class SteinmetzLossComp(om.ExplicitComponent):
         self.add_input('alpha_stein', 1.286, desc='Alpha coefficient for steinmetz, constant')
         self.add_input('beta_stein', 1.76835, desc='Beta coefficient for steinmentz, dependent on freq')  
         self.add_input('k_stein', 0.0044, desc='k constant for steinmentz')
+        self.add_input('motor_mass', 2, units='kg', desc='total mass of back-iron')
         self.add_output('P_steinmetz', 400, units='W', desc='Simplified steinmetz losses')
 
         self.declare_partials('*' , '*', method='fd')
 
     def compute(self, inputs, outputs):
         f_e = inputs['f_e']
+        # f_e_eff = inputs['f_e_eff']
         B_pk = inputs['B_pk']
         alpha_stein = inputs['alpha_stein']
         beta_stein = inputs['beta_stein']
         k_stein = inputs['k_stein']
+        motor_mass = inputs['motor_mass']
 
-        outputs['P_steinmetz'] = k_stein * f_e**alpha_stein * B_pk**beta_stein
+        outputs['P_steinmetz'] = k_stein * f_e**alpha_stein * B_pk**beta_stein * motor_mass
+        # outputs['P_steinmetz_eff'] = k_stein * f_e_eff**alpha_stein * B_pk**beta_stein * motor_mass
+
+#-----------------------------------------------------------------------------------------------------------------------------------
 
 # class LossesComp(ExplicitComponent):
 #     def setup(self):
