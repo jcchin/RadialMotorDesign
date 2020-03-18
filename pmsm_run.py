@@ -19,11 +19,7 @@ from math import pi
 
 import openmdao.api as om
 
-from electromagnetics.em_group import EmGroup
-from thermal.thermal_group import ThermalGroup
-from sizing.size_group import SizeGroup
-
-
+from motor import Motor, print_motor
 
 if __name__ == "__main__":
     p = om.Problem()
@@ -36,9 +32,8 @@ if __name__ == "__main__":
     #                              
     # -------------------------------------------------------------------------
     ind.add_output('radius_motor', 0.078225, units='m', desc='Motor outer radius')      # Ref motor = 0.078225
-    ind.add_output('rpm', 4000, units='rpm', desc='Rotation speed')  
-    ind.add_output('I', 34.35, units='A', desc='RMS Current')                           # 34.35 == 50 peak
-    ind.add_output('V', 385, units='V', desc='RMS voltage')  
+    ind.add_output('rpm', 5400, units='rpm', desc='Rotation speed')  
+    ind.add_output('I', 34.35, units='A', desc='RMS Current')
     ind.add_output('stack_length', 0.0345, units='m', desc='Stack Length')              # Ref motor = 0.0345
 
     ind.add_output('n_turns', 12, desc='Number of wire turns')
@@ -58,23 +53,11 @@ if __name__ == "__main__":
     ind.add_output('Hc_20', -1046, units='kA/m', desc='Intrinsic Coercivity at 20 degC')     
     ind.add_output('Br_20', 1.39, units='T', desc='remnance flux density at 20 degC')           
     ind.add_output('k_sat', 1, desc='Saturation factor of the magnetic circuit due to the main (linkage) magnetic flux')
-    ind.add_output('K_h', 0.007379032537)
-    ind.add_output('K_e', 9.2630137e6)
-    ind.add_output('K_h_alpha', 1.152932586)
-    ind.add_output('K_h_beta', 1.72240394)             
-    ind.add_output('alpha', 1.27, desc='core loss constant') 
-    ind.add_output('mu_a', 1.81e-5, units='(m**2)/s', desc='air dynamic viscosity')
-    ind.add_output('muf_b', .3, desc='bearing friction coefficient')
-    ind.add_output('D_b', .01, units='m', desc='bearing bore diameter')
-    ind.add_output('F_b', 100, units='N', desc='bearing load')          #coupled with motor mass
-    ind.add_output('rho_a', 1.225, units='kg/m**3', desc='air density')
-    ind.add_output('H_c', 1353000, units='A/m', desc='Intrinsic Coercivity of magnets constant')           
-    ind.add_output('B_r',  1.39, units='T', desc='Remanence magnetic flux')                
     ind.add_output('mu_o',  0.4*pi*10**-6, units='H/m', desc='permeability of free space')   
     ind.add_output('mu_r',  1.0, units='H/m', desc='relative magnetic permeability of ferromagnetic materials')
     ind.add_output('rho', 8110.2, units='kg/m**3', desc='Density of Hiperco-50')  
     ind.add_output('rho_mag', 7500, units='kg/m**3', desc='Density of Magnets')
-    ind.add_output('rho_wire', 8940, units='kg/m**3', desc='Density of wire: Cu=8940')
+    # ind.add_output('rho_wire', 8940, units='kg/m**3', desc='Density of wire: Cu=8940')
     ind.add_output('resistivity_wire', 1.724e-8, units='ohm*m', desc='resisitivity of Cu at 20 degC') 
     ind.add_output('T_coeff_cu', 0.00393, desc='temperature coeff of copper')
     # ind.add_output('T_ref_wire', 20.0, units='C', desc='reference temperature at which winding resistivity is measured')
@@ -95,149 +78,75 @@ if __name__ == "__main__":
     ind.add_output('k', 0.94, desc='Stacking factor assumption')
     ind.add_output('gap', 0.0010, units='m', desc='Air gap distance, Need to calculate effective air gap, using Carters Coeff')
 
+    def connect(motor_path): 
 
-    model.add_subsystem('thermal_properties', ThermalGroup(), 
-                                                              promotes_inputs=[ 'B_pk', 'alpha_stein', 'beta_stein', 'k_stein', 'rpm', 
-                                                                               'resistivity_wire', 'stack_length', 'n_slots', 'n_strands','motor_mass', 
-                                                                               'n_m', 'mu_o', 'n_turns', 'T_coeff_cu', 'I', 'T_windings', 'r_strand', 'mu_r'],
-                                                                               # 'K_h_alpha', 'K_h_beta', 'K_h', 'K_e', D_b', 'F_b', 'alpha', 'gap', 'k', 'mu_a', 'muf_b', 'n_m', 'rho_a', 'rot_ir', 'rot_or', 'rpm', 'stack_length'],
-                                                              promotes_outputs=[
-                                                                                # 'L_core','L_emag', 'L_ewir', 'L_airg', 'L_airf', 'L_bear','L_total',
-                                                                                'A_cu', 'r_litz', 'P_steinmetz', 'P_dc', 'P_ac', 'P_wire', 'L_wire', 'R_dc', 'skin_depth', 'temp_resistivity', 'f_e'])
+        p.model.connect('radius_motor', f'{motor_path}.radius_motor')
+        p.model.connect('rpm', f'{motor_path}.rpm')
+        p.model.connect('I', f'{motor_path}.I')
+        # p.model.connect('V', f'{motor_path}.V')
+        p.model.connect('stack_length', f'{motor_path}.stack_length')
 
+        p.model.connect('n_turns', f'{motor_path}.n_turns')
+        p.model.connect('n_slots', f'{motor_path}.n_slots')
+        p.model.connect('n_m', f'{motor_path}.n_m')
 
-    model.add_subsystem('em_properties', EmGroup(), promotes_inputs=['T_coef_rem_mag', 'T_mag', 'I', 'rpm', 'mu_r', 'g_eq', 't_mag', 'Br_20',
-                                                                     'gap', 'sta_ir', 'n_slots', 'l_slot_opening', 't_mag',
-                                                                     'carters_coef', 'k_sat', 'mu_o', 'P_wire', 'P_steinmetz',
-                                                                     'B_g', 'n_m', 'n_turns', 'stack_length', 'rot_or', 's_d', 'w_t', 'slot_area', 't_mag', 'w_slot'], 
-                                                    promotes_outputs=['P_in', 'P_out', 'B_g', 
-                                                                      'mech_angle', 't_1', 'carters_coef',
-                                                                      'g_eq', 'g_eq_q', 'Br', 'Eff', 
-                                                                      'Tq', 'rot_volume', 'stator_surface_current'])
-    
-   
-    model.add_subsystem('geometry', SizeGroup(), promotes_inputs=['gap', 'B_g', 'k', 'b_ry', 'n_m',
-                                                                'b_sy', 'b_t', 'n_turns', 'I', 'k_wb',
-                                                                'rho', 'radius_motor', 'n_slots', 'sta_ir', 'w_t', 'stack_length',
-                                                                's_d', 'rot_or', 'rot_ir', 't_mag', 'rho_mag'],
-                                                 promotes_outputs=['J', 'w_ry', 'w_sy', 'w_t', 'sta_ir', 'rot_ir', 's_d',
-                                                                 'mag_mass', 'sta_mass', 'rot_mass', 'slot_area', 'w_slot', 'motor_mass'])
+        p.model.connect('t_mag', f'{motor_path}.t_mag')
+        p.model.connect('r_strand', f'{motor_path}.r_strand')
+        p.model.connect('n_strands', f'{motor_path}.n_strands')
+      
+        p.model.connect('T_windings', f'{motor_path}.T_windings')
+        p.model.connect('T_mag', f'{motor_path}.T_mag')
 
+        # -------------------------------------------------------------------------
+        #                        Material Properties and Constants
+        # -------------------------------------------------------------------------
+        p.model.connect('Hc_20', f'{motor_path}.Hc_20')
+        p.model.connect('Br_20', f'{motor_path}.Br_20')
+        p.model.connect('k_sat', f'{motor_path}.k_sat')
+        p.model.connect('mu_o', f'{motor_path}.mu_o')
+        p.model.connect('mu_r', f'{motor_path}.mu_r')
+        p.model.connect('rho', f'{motor_path}.rho')
+        p.model.connect('rho_mag', f'{motor_path}.rho_mag')
+        # p.model.connect('rho_wire', f'{motor_path}.rho_wire')
+        p.model.connect('resistivity_wire', f'{motor_path}.resistivity_wire')
+        p.model.connect('T_coeff_cu', f'{motor_path}.T_coeff_cu')
+        # p.model.connect('T_ref_wire', f'{motor_path}.T_ref_wire')
+        p.model.connect('alpha_stein', f'{motor_path}.alpha_stein')
+        p.model.connect('beta_stein', f'{motor_path}.beta_stein')
+        p.model.connect('k_stein', f'{motor_path}.k_stein')
+        p.model.connect('T_coef_rem_mag', f'{motor_path}.T_coef_rem_mag')
 
+        # -------------------------------------------------------------------------
 
-    bal = om.BalanceComp()
-    bal.add_balance('rot_or_state', val=0.05, units='cm', eq_units='A/mm**2', lower=1e-4)#, use_mult=True, mult_val=0.5)
-    tgt = om.IndepVarComp(name='J_tgt', val=10.47, units='A/mm**2')
+        p.model.connect('b_ry', f'{motor_path}.b_ry')
+        p.model.connect('b_sy', f'{motor_path}.b_sy')
+        p.model.connect('b_t', f'{motor_path}.b_t')
+        p.model.connect('B_pk', f'{motor_path}.B_pk')
+        p.model.connect('k_wb', f'{motor_path}.k_wb')
 
-    model.add_subsystem(name='target', subsys=tgt, promotes_outputs=['J_tgt'])
-    model.add_subsystem(name='balance', subsys=bal)
+        p.model.connect('l_slot_opening', f'{motor_path}.l_slot_opening')
+        p.model.connect('k', f'{motor_path}.k')
+        p.model.connect('gap', f'{motor_path}.gap')
 
-    model.connect('balance.rot_or_state', 'rot_or')
-    model.connect('J_tgt', 'balance.rhs:rot_or_state')
-    model.connect('J', 'balance.lhs:rot_or_state')
-
-
-    model.linear_solver = om.DirectSolver()
-
-    newton = model.nonlinear_solver = om.NewtonSolver()
-    newton.options['maxiter'] = 15
-    newton.options['iprint'] = 2
-    newton.options['solve_subsystems'] = True
-
-    # ls = newton.linesearch = om.ArmijoGoldsteinLS()
-    # ls.options['maxiter'] = 3
-    # ls.options['iprint'] = 2
-    # ls.options['print_bound_enforce'] = True
-
-    ls = newton.linesearch = om.BoundsEnforceLS()
-    ls.options['print_bound_enforce'] = True
-
-
- 
-
-
-    #______________________________________________________#
+    p.model.add_subsystem('DESIGN', Motor())
+    connect('DESIGN')
+    # p.model.add_subsystem('OFF_DESIGN', Motor(design=False))
 
     p.setup()
     p.final_setup()
-    # p.check_partials(compact_print=True)
+    #p.check_partials(compact_print=True)
     # p.model.list_outputs(implicit=True)
     # p.set_solver_print(2)
     # view_model(p)
     # quit()
 
 
-    p['radius_motor'] = 0.086;
-    p['balance.rot_or_state'] = 8.
+    p['radius_motor'] = 0.086
+    p['DESIGN.rot_or'] = 8. # initial guess
     p.run_model()
-    # p.model.run_apply_nonlinear()
-
-
-
-
-
-
-#------------------------- Print Statements ------------------------------#
-
-
-    print('-----------GEOMETRY---------------')
-    # print('Rotor Inner Diameter..............', 2 * p.get_val('rot_ir', units='mm'))
-    print('Rotor Inner radius................',     p.get_val('rot_ir', units='mm'))
-
-    # print('Rotor Yoke Thickness..............',  p.get_val('w_ry', units='mm'))
-    # print('Magnet Thickness..................',  p.get_val('t_mag', units='mm'))
-
-    # print('Rotor outer Diameter..............',  2 * p.get_val('rot_or', units='mm'))
-    print('Rotor outer Radius................',      p.get_val('balance.rot_or_state', units='mm'))
-
-    # print('Stator Inner Diameter.............', 2 *  p.get_val('sta_ir', units='mm'))
-    print('Stator Inner Radius...............',      p.get_val('sta_ir', units='mm'))
-
-    print('Slot Depth........................',  p.get_val('s_d', units='mm'))
-    print('Stator Yoke Thickness.............',  p.get_val('w_sy', units='mm'))
-
-    # print('Motor Outer Diameter..............', 2 *  p.get_val('mass.radius_motor', units='mm'))
-    print('Motor Outer Radius................',      p.get_val('radius_motor', units='mm'))
-
-    print('Tooth Width.......................',  p.get_val('w_t', units='mm'))
-    print('Radius of litz wire ..............', p.get_val('r_litz', units='m'))
-    print('Length of Windings................',  p.get_val('L_wire', units='m'))
-    print('Slot Area.........................', p.get_val('slot_area', units='m**2'))
-    print('Slot Width........................', p.get_val('w_slot'))
-    print('Copper area in one slot...........', p.get_val('A_cu', units='m**2'))
-    print('Copper Slot Fill Percentage.......', p.get_val('A_cu') / p.get_val('slot_area'))
-
-    print('--------------MASS----------------')
-    print('Mass of Stator....................',  p.get_val('sta_mass', units='kg'))
-    print('Mass of Rotor.....................',  p.get_val('rot_mass', units='kg'))
-    print('Mass of Magnets...................',  p.get_val('mag_mass', units='kg')) 
-    print('Mass of Motor.....................',  p.get_val('motor_mass'))
     
-
-    print('--------------LOSSES-------------')
-    print('Current Density.........',   p.get_val('J'))
-    print('Iron losses.............',   p.get_val('P_steinmetz'))
-    print('DC Winding  Losses......',   p.get_val('P_dc'))
-    print('AC Winding  Losses......',   p.get_val('P_ac'))
-    print('TOTAL Winding  Losses...',   p.get_val('P_wire'))
-    print('Total Losses............',   p.get_val('P_steinmetz') + p.get_val('P_wire'))
-    print('Overall Efficiency......',   p.get_val('Eff'))
-    # print('Skin Depth..............',   p.get_val('skin_depth', units='mm'))
-    # print('Temp Dependent Resistivity.......', p.get_val('temp_resistivity', units='ohm*m'))
-
-    print('--------------EM PERF-------------')
-    print('Power In  ........................',  p.get_val('P_in'))
-    print('Power out  .......................',  p.get_val('P_out'))
-    print('Electrical Frequency..............',  p.get_val('f_e'))
-    print('Torque............................',  p['Tq'])
-
-    print('--------------FIELDS--------------')
-    print('Air gap flux density .............',  p.get_val('B_g'))   
-    # print('Air gap field intensity ..........',  p.get_val('H_g'))  
-    print('Equivalent air gap ...............',  p.get_val('g_eq', units='mm'))
-    print('Carters Coefficient ..............',  p.get_val('carters_coef'))
-    print('Ks1 ..............................',  p.get_val('stator_surface_current'))
-    print('Mu_r for magnet...................',  p.get_val('Br'))
+    print_motor(p, 'DESIGN')
+    # print_motor(p, 'OFF_DESIGN')
 
     # print('l core ..................................', p.get_val('L_core'))
 
