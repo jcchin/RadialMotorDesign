@@ -22,7 +22,7 @@ class Motor(om.Group):
                                                                                     'A_cu', 'r_litz', 'P_steinmetz', 'P_dc', 'P_ac', 'P_wire', 'L_wire', 'R_dc', 'skin_depth', 'temp_resistivity', 'f_e'])
 
 
-        self.add_subsystem('em_properties', EmGroup(), promotes_inputs=['T_coef_rem_mag', 'T_mag', 'I', 'rpm', 'mu_r', 'g_eq', 't_mag', 'Br_20',
+        self.add_subsystem('em_properties', EmGroup(), promotes_inputs=['T_coef_rem_mag', 'T_mag', 'I', 'rpm', 'mu_r', 'g_eq', 't_mag', 'Br_20', 'Hc_20',
                                                                          'gap', 'sta_ir', 'n_slots', 'l_slot_opening', 't_mag',
                                                                          'carters_coef', 'k_sat', 'mu_o', 'P_wire', 'P_steinmetz',
                                                                          'B_g', 'n_m', 'n_turns', 'stack_length', 'rot_or', 's_d', 'w_t', 'slot_area', 't_mag', 'w_slot'], 
@@ -67,3 +67,69 @@ class Motor(om.Group):
 
         ls = newton.linesearch = om.BoundsEnforceLS()
         ls.options['print_bound_enforce'] = True
+
+
+def print_motor(prob, motor_path=''): 
+
+    if motor_path: 
+        motor_path += "."
+
+    # p.model.run_apply_nonlinear()
+    print('-----------GEOMETRY---------------')
+    # print('Rotor Inner Diameter..............', 2 * p.get_val('rot_ir', units='mm'))
+    print('Rotor Inner radius................',     prob.get_val(f'{motor_path}rot_ir', units='mm'))
+
+    # print('Rotor Yoke Thickness..............',  prob.get_val('w_ry', units='mm'))
+    # print('Magnet Thickness..................',  prob.get_val('t_mag', units='mm'))
+
+    # print('Rotor outer Diameter..............',  2 * prob.get_val('rot_or', units='mm'))
+    print('Rotor outer Radius................',      prob.get_val(f'{motor_path}rot_or', units='mm'))
+
+    # print('Stator Inner Diameter.............', 2 *  prob.get_val('sta_ir', units='mm'))
+    print('Stator Inner Radius...............',      prob.get_val(f'{motor_path}sta_ir', units='mm'))
+
+    print('Slot Depth........................',  prob.get_val(f'{motor_path}s_d', units='mm'))
+    print('Stator Yoke Thickness.............',  prob.get_val(f'{motor_path}w_sy', units='mm'))
+
+    # print('Motor Outer Diameter..............', 2 *  prob.get_val(f'{motor_path}mass.radius_motor', units='mm'))
+    print('Motor Outer Radius................',      prob.get_val(f'{motor_path}geometry.mass.radius_motor', units='mm'))
+
+    print('Tooth Width.......................',  prob.get_val(f'{motor_path}w_t', units='mm'))
+    print('Radius of litz wire ..............', prob.get_val(f'{motor_path}r_litz', units='m'))
+    print('Length of Windings................',  prob.get_val(f'{motor_path}L_wire', units='m'))
+    print('Slot Area.........................', prob.get_val(f'{motor_path}slot_area', units='m**2'))
+    print('Slot Width........................', prob.get_val(f'{motor_path}w_slot'))
+    print('Copper area in one slot...........', prob.get_val(f'{motor_path}A_cu', units='m**2'))
+    print('Copper Slot Fill Percentage.......', prob.get_val(f'{motor_path}A_cu') / prob.get_val(f'{motor_path}slot_area'))
+
+    print('--------------MASS----------------')
+    print('Mass of Stator....................',  prob.get_val(f'{motor_path}sta_mass', units='kg'))
+    print('Mass of Rotor.....................',  prob.get_val(f'{motor_path}rot_mass', units='kg'))
+    print('Mass of Magnets...................',  prob.get_val(f'{motor_path}mag_mass', units='kg')) 
+    print('Mass of Motor.....................',  prob.get_val(f'{motor_path}mag_mass', units='kg') + prob.get_val(f'{motor_path}rot_mass', units='kg') + prob.get_val(f'{motor_path}sta_mass', units='kg'))   
+    
+
+    print('--------------LOSSES-------------')
+    print('Current Density.........',   prob.get_val(f'{motor_path}J'))
+    print('Iron losses.............',   prob.get_val(f'{motor_path}P_steinmetz') * prob.get_val(f'{motor_path}sta_mass'))
+    print('DC Winding  Losses......',   prob.get_val(f'{motor_path}P_dc'))
+    print('AC Winding  Losses......',   prob.get_val(f'{motor_path}P_ac'))
+    print('TOTAL Winding  Losses...',   prob.get_val(f'{motor_path}P_wire'))
+    print('Total Losses............',   prob.get_val(f'{motor_path}P_steinmetz') * prob.get_val(f'{motor_path}sta_mass') + prob.get_val(f'{motor_path}P_wire'))
+    print('Overall Efficiency......',   prob.get_val(f'{motor_path}Eff'))
+    # print('Skin Depth..............',   prob.get_val(f'{motor_path}skin_depth', units='mm'))
+    # print('Temp Dependent Resistivity.......', prob.get_val(f'{motor_path}temp_resistivity', units='ohm*m'))
+
+    print('--------------EM PERF-------------')
+    print('Power In  ........................',  prob.get_val(f'{motor_path}P_in'))
+    print('Power out  .......................',  prob.get_val(f'{motor_path}P_out'))
+    print('Electrical Frequency..............',  prob.get_val(f'{motor_path}f_e'))
+    print('Torque............................',  prob.get_val(f'{motor_path}Tq'))
+
+    print('--------------FIELDS--------------')
+    print('Air gap flux density .............',  prob.get_val(f'{motor_path}B_g'))   
+    # print('Air gap field intensity ..........',  prob.get_val(f'{motor_path}H_g'))  
+    print('Equivalent air gap ...............',  prob.get_val(f'{motor_path}g_eq', units='mm'))
+    print('Carters Coefficient ..............',  prob.get_val(f'{motor_path}carters_coef'))
+    print('Ks1 ..............................',  prob.get_val(f'{motor_path}stator_surface_current'))
+    print('Mu_r for magnet...................',  prob.get_val(f'{motor_path}Br'))
