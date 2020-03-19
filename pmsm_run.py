@@ -35,11 +35,9 @@ if __name__ == "__main__":
         # Ref motor = 0.078225
     ind.add_output('DES:rpm', 5400, units='rpm', desc='Rotation speed')  
     ind.add_output('DES:I', 35.35, units='A', desc='RMS Current')
-    ind.add_output('DES:I_peak', 35.35*2**0.5, units='A', desc='peak current')
 
-    ind.add_output('OD:rpm', 5000, units='rpm', desc='Rotation speed')  
+    ind.add_output('OD:rpm', 5400, units='rpm', desc='Rotation speed')  
     ind.add_output('OD:I', 35.35, units='A', desc='RMS Current')
-    ind.add_output('OD:I_peak', 35.35*2**0.5, units='A', desc='peak current')
 
     ind.add_output('stack_length', 0.0345, units='m', desc='Stack Length')              # Ref motor = 0.0345
 
@@ -88,9 +86,6 @@ if __name__ == "__main__":
     def motor_spec_connect(motor_path): 
 
         p.model.connect('radius_motor', f'{motor_path}.radius_motor')
-        # p.model.connect('DES:rpm', f'{motor_path}.rpm')
-        # p.model.connect('DES:I', f'{motor_path}.I')
-        # p.model.connect('V', f'{motor_path}.V')
         p.model.connect('stack_length', f'{motor_path}.stack_length')
 
         p.model.connect('n_turns', f'{motor_path}.n_turns')
@@ -135,63 +130,75 @@ if __name__ == "__main__":
         p.model.connect('k', f'{motor_path}.k')
         p.model.connect('gap', f'{motor_path}.gap')
 
+    # On-Design Function, to size the motor
     p.model.add_subsystem('DESIGN', Motor())
     motor_spec_connect('DESIGN')
     p.model.connect('DES:rpm', 'DESIGN.rpm')
     p.model.connect('DES:I', 'DESIGN.I')
-    p.model.connect('DES:I_peak', 'DESIGN.I_peak')
 
+    # Off-Design Function to analyze motor
     p.model.add_subsystem('OD1', Motor(design=False))
     motor_spec_connect('OD1')
-    p.model.connect('DESIGN.rot_or', 'OD1.rot_or')
+    p.model.connect('DESIGN.rot_or', 'OD1.rot_or')  # Rotor Outer Radius connected to hold geometries constant in Off-Design
     p.model.connect('OD:rpm', 'OD1.rpm')
     p.model.connect('OD:I', 'OD1.I')
-    p.model.connect('OD:I_peak', 'OD1.I_peak')
-    # for loop data to array
 
+    #ODEDriver used for Off-Design Analysis by varying RPM and I
+    p.model.add_design_var('OD:rpm', lower=200, upper=5200)
+    p.model.add_design_var('OD:I', lower=10, upper=32.24)
+    p.model.add_objective('OD1.Eff')
 
-    p.setup()
-
-    p['radius_motor'] = 0.086
-
-    p['DESIGN.rot_or'] = 8. # initial guess
-
-    p.run_model()
-
-#----------------------------------------------------------
-
-    # prob = om.Problem()
-    # model = p.model
-    
-    # model.add_subsystem('p1', om.IndepVarComp('x', 0.), promotes=['*'])
-    # model.add_subsystem('p2', om.IndepVarComp('y', 0.), promotes=['*'])
-    model.add_subsystem('comp', Motor(design=False))
-    
-    model.add_design_var('OD:rpm', lower=4000, upper=5400)
-    # model.add_design_var('OD:I', lower=5, upper=35.35)
-    model.add_design_var('OD:I_peak', lower=40, upper=50)
-    model.add_objective('comp.Eff')
-    
-    p.driver = om.DOEDriver(om.FullFactorialGenerator(levels=3))
+    steps=3
+    p.driver = om.DOEDriver(om.FullFactorialGenerator(levels=steps))
     p.driver.add_recorder(om.SqliteRecorder("cases.sql"))
-    
+    p.driver.recording_options['record_objectives'] = True
+    p.driver.recording_options['record_constraints'] = True
+    p.driver.recording_options['record_desvars'] = True
+
     p.setup()
+
+
+    p['radius_motor'] = 0.086   # Set the desired radius of the motor, application specific
+    p['DESIGN.rot_or'] = 8.     # initial guess
+
+    # p.run_model()
     p.run_driver()
     p.cleanup()
-    
-    cr = om.CaseReader("cases.sql")
-    cases = cr.list_cases('driver')
-    
-    print('DOEDRIVER WORKED!!!!!!!!!!!!!!!!!')
-    print('The Length of Cases is: ', len(cases))
-#----------------------------------------------------------
 
-    print_motor(p, 'DESIGN')
-    print()
-    print()
-    print_motor(p, 'OD1')
+    cr = om.CaseReader("cases.sql")  
+
+    # What Information was recorded #
+    cases = cr.get_cases()    
+
+    # Accessing That Information #
+    system_cases = cr.list_cases('driver')
+    case = cr.get_case(system_cases[1])
+
+    case_outputs = case.list_outputs(prom_name=True, print_arrays=True)
+    print(case_outputs[0][1]['value'])
 
 
+
+    # print('\n'.join(driver_cases))
+
+    # objs = case.get_objectives()
+    # cons = case.get_constraints()
+    # dvs = case.get_design_vars()
+    # rsps = case.get_responses()
+
+    # print(sorted(case.outputs.keys()))
+    # print((sorted(objs.keys()), sorted(cons.keys()), sorted(dvs.keys())))
+    # print(objs['OD1.Eff'])
+
+    # print_motor(p, 'DESIGN')
+    # print()
+    # print()
+    # print_motor(p, 'OD1')
 
     # p.model.list_outputs(residuals=True)
     # p.check_partials(compact_print=True)
+
+    # objective = cases.get_objectives(cases, scaled=False, use_indices=False)
+
+    
+

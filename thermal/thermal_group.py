@@ -27,7 +27,11 @@ motor_loss_data = np.array([
 
 
 class ThermalGroup(om.Group):
+
     def setup(self):
+
+        self.add_subsystem('comp', om.ExecComp('I_peak= I*2**0.5'), promotes_inputs=['I'], promotes_outputs=['I_peak'])
+
 
         motor_interp = om.MetaModelStructuredComp(method='scipy_slinear')
     
