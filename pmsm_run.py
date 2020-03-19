@@ -33,11 +33,9 @@ if __name__ == "__main__":
     # -------------------------------------------------------------------------
     ind.add_output('radius_motor', 0.078225, units='m', desc='Motor outer radius')  
         # Ref motor = 0.078225
-    ind.add_output('DES:rpm', 5400, units='rpm', desc='Rotation speed')  
-    ind.add_output('DES:I', 35.35, units='A', desc='RMS Current')
 
-    ind.add_output('OD:rpm', 5400, units='rpm', desc='Rotation speed')  
-    ind.add_output('OD:I', 35.35, units='A', desc='RMS Current')
+    ind.add_output('rpm', 5400, units='rpm', desc='Rotation speed')  
+    ind.add_output('I', 35.35, units='A', desc='RMS Current')
 
     ind.add_output('stack_length', 0.0345, units='m', desc='Stack Length')              # Ref motor = 0.0345
 
@@ -133,19 +131,19 @@ if __name__ == "__main__":
     # On-Design Function, to size the motor
     p.model.add_subsystem('DESIGN', Motor())
     motor_spec_connect('DESIGN')
-    p.model.connect('DES:rpm', 'DESIGN.rpm')
-    p.model.connect('DES:I', 'DESIGN.I')
+    p.model.connect('rpm', 'DESIGN.rpm')
+    p.model.connect('I', 'DESIGN.I')
 
     # Off-Design Function to analyze motor
     p.model.add_subsystem('OD1', Motor(design=False))
     motor_spec_connect('OD1')
     p.model.connect('DESIGN.rot_or', 'OD1.rot_or')  # Rotor Outer Radius connected to hold geometries constant in Off-Design
-    p.model.connect('OD:rpm', 'OD1.rpm')
-    p.model.connect('OD:I', 'OD1.I')
+    p.model.connect('rpm', 'OD1.rpm')
+    p.model.connect('I', 'OD1.I')
 
     #ODEDriver used for Off-Design Analysis by varying RPM and I
-    p.model.add_design_var('OD:rpm', lower=200, upper=5200)
-    p.model.add_design_var('OD:I', lower=10, upper=32.24)
+    p.model.add_design_var('rpm', lower=200, upper=5200)
+    p.model.add_design_var('I', lower=10, upper=32.24)
     p.model.add_objective('OD1.Eff')
 
     steps=3
@@ -154,6 +152,7 @@ if __name__ == "__main__":
     p.driver.recording_options['record_objectives'] = True
     p.driver.recording_options['record_constraints'] = True
     p.driver.recording_options['record_desvars'] = True
+    p.driver.recording_options['record_inputs'] = True
 
     p.setup()
 
@@ -166,9 +165,18 @@ if __name__ == "__main__":
     p.cleanup()
 
     cr = om.CaseReader("cases.sql")  
-
-    # What Information was recorded #
     system_cases = cr.list_cases('driver')
+    key_case = cr.get_case(system_cases[0])
+    dvs = key_case.get_design_vars()
+    objs = key_case.get_objectives()
+    cons = key_case.get_constraints()
+
+    # Print the sorted key names
+    print(('Objectives: ', sorted(objs.keys()), 'Constraints: ', sorted(cons.keys()), 'Design Vars: ', sorted(dvs.keys())))
+
+    # Print values of variables
+    print(('The values of rpm are: ', dvs['rpm'][0]))
+
 
     eff_val=[]
     rpm_val=[]
@@ -178,13 +186,12 @@ if __name__ == "__main__":
     for i in range(0, len(system_cases)):
         case_array = cr.get_case(i)
         eff_val.append(case_array.outputs['OD1.Eff'][0])
-        print(cr.get_case(i).get_design_vars([i][0]))
-        # rpm_val.append(case_array.design_vars['OD:rpm'][0])
-        # I_val.append(case_array.design_var['OD:I'][0])
+        rpm_val.append(case_array['rpm'][0])
+        I_val.append(case_array['I'][0])
 
     print('The eff_val array is : ', eff_val)
-    # print('The rpm_val array is : ', rpm_val)
-    # print('The I_val array is : ', I_val)
+    print('The rpm_val array is : ', rpm_val)
+    print('The I_val array is : ', I_val)
 
         
 
