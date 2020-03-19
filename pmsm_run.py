@@ -168,16 +168,33 @@ if __name__ == "__main__":
     cr = om.CaseReader("cases.sql")  
 
     # What Information was recorded #
-    cases = cr.get_cases()    
+    system_cases = cr.list_cases('driver')
+
+    eff_val=[]
+    rpm_val=[]
+    I_val=[]
+
+
+    for i in range(0, len(system_cases)):
+        case_array = cr.get_case(i)
+        eff_val.append(case_array.outputs['OD1.Eff'][0])
+        print(cr.get_case(i).get_design_vars([i][0]))
+        # rpm_val.append(case_array.design_vars['OD:rpm'][0])
+        # I_val.append(case_array.design_var['OD:I'][0])
+
+    print('The eff_val array is : ', eff_val)
+    # print('The rpm_val array is : ', rpm_val)
+    # print('The I_val array is : ', I_val)
+
+        
+
 
     # Accessing That Information #
-    system_cases = cr.list_cases('driver')
+   
     case = cr.get_case(system_cases[1])
 
-    case_outputs = case.list_outputs(prom_name=True, print_arrays=True)
-    print(case_outputs[0][1]['value'])
-
-
+    # case_outputs = case.list_outputs(prom_name=True, print_arrays=True)
+    # print(case_outputs[0][1]['value'])
 
     # print('\n'.join(driver_cases))
 
