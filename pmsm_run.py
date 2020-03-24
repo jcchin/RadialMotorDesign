@@ -1,5 +1,4 @@
 # Keep systems of equations up to date
-# Efficiency plot needs to be finished
 # Magnet losses need to be completed
 # Eff inputs and outputs should match up with ccblade and zappy
 # need to add torque/speed curve and print out plot
@@ -85,6 +84,7 @@ if __name__ == "__main__":
 
         p.model.connect('radius_motor', f'{motor_path}.radius_motor')
         p.model.connect('stack_length', f'{motor_path}.stack_length')
+        p.model.connect('rpm', f'{motor_path}.rpm')
         p.model.connect('n_turns', f'{motor_path}.n_turns')
         p.model.connect('n_slots', f'{motor_path}.n_slots')
         p.model.connect('n_m', f'{motor_path}.n_m')
@@ -120,14 +120,14 @@ if __name__ == "__main__":
     # On-Design Function, to size the motor
     p.model.add_subsystem('DESIGN', Motor())
     motor_spec_connect('DESIGN')
-    p.model.connect('rpm', 'DESIGN.rpm')
+    # p.model.connect('rpm', 'DESIGN.rpm')
     p.model.connect('I', 'DESIGN.I')
 
     # Off-Design Function to analyze motor
     p.model.add_subsystem('OD1', Motor(design=False))
     motor_spec_connect('OD1')
     p.model.connect('DESIGN.rot_or', 'OD1.rot_or')  # Rotor Outer Radius connected to hold geometries constant in Off-Design
-    p.model.connect('rpm', 'OD1.rpm')
+    # p.model.connect('rpm', 'OD1.rpm')
     p.model.connect('I', 'OD1.I')
 
     #ODEDriver used for Off-Design Analysis by varying RPM and I
@@ -135,7 +135,7 @@ if __name__ == "__main__":
     p.model.add_design_var('I', lower=10, upper=34.355)
     p.model.add_objective('OD1.Eff')
 
-    steps=30   # number of levels for the full factorial generator
+    steps=3   # number of levels for the full factorial generator
     p.driver = om.DOEDriver(om.FullFactorialGenerator(levels=steps))
     p.driver.add_recorder(om.SqliteRecorder("cases.sql"))
     p.driver.recording_options['record_objectives'] = True
@@ -147,7 +147,7 @@ if __name__ == "__main__":
 
 
     p['radius_motor'] = 0.086   # Set the desired radius of the motor, application specific
-    p['DESIGN.rot_or'] = 8.     # initial guess
+    p['DESIGN.rot_or'] = 8    # initial guess
 
     # p.run_model()
     p.run_driver()
@@ -186,7 +186,7 @@ if __name__ == "__main__":
     print_motor(p, 'DESIGN')
     print()
     print()
-    # print_motor(p, 'OD1')
+    print_motor(p, 'OD1')
 
     # p.model.list_outputs(residuals=True)
     # p.check_partials(compact_print=True)
@@ -202,11 +202,11 @@ X, Y = np.meshgrid(rpm_val, I_val)
 z = eff_val
 a_ratio = 5400/34.355
 
-levels = np.array([.90, .93, .95, .955, .96, .965, .968, .97])
-contours = plt.contour(X, Y, z, levels, colors='Black')
+# levels = np.array([.90, .93, .95, .955, .96, .965, .968, .97])
+contours = plt.contour(X, Y, z, colors='Black') #levels,
 plt.clabel(contours, inline=True, fontsize=10)
 # plt.imshow(z, aspect=a_ratio, extent=[200, 5400, 10, 34.35],  origin='lower', cmap='Reds') 
-plt.colorbar()
+# plt.colorbar()
 
 plt.xlabel('RPM')
 plt.ylabel('Current')
