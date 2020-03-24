@@ -11,16 +11,21 @@ class TorqueComp(om.ExplicitComponent):
 
     def setup(self):
        self.add_input('B_g', 1, units='T', desc='air gap flux density')    
-       self.add_input('n_m', 16, desc='number of magnets')
-       self.add_input('n_turns', 16, desc='number of wire turns')
+       self.add_input('n_m', 20, desc='number of magnets')
+       self.add_input('n_turns', 12, desc='number of wire turns')
+       self.add_input('I', 35, units='A', desc='RMS current')       
+       self.add_input('rot_or', 0.060, units='m', desc='rotor outer radius')
+       self.add_input('sta_ir', 0.060, units='m', desc='stator inner radius')
+       self.add_input('P_shaft', 14000, units='W', desc='output power') 
+       self.add_input('rpm', 5000, units='rpm', desc='Rotational Speed')
        self.add_input('stack_length', .0345, units='m', desc='stack length')
-       self.add_input('I', 30, units='A', desc='RMS current')       
-       self.add_input('rot_or', .025, units='m', desc='rotor outer radius')
-       self.add_input('sta_ir', 0.25, units='m', desc='stator inner radius')
 
-       self.add_output('Tq', 25, units='N*m', desc='torque')
+       self.add_output('Tq_shaft', 25, units='N*m', desc='torque')
        self.add_output('rot_volume', 0.2, units='m**3', desc='rotor volume')
        self.add_output('stator_surface_current', 51860, units='A/m', desc='specific electrical loading')
+       self.add_output('omega', 1000, units='Hz', desc='mechanical rad/s')
+       self.add_output('Tq_max', 30, units='N*m', desc='max torque available')
+       
        #self.declare_partials('Tq', ['n_m','n','B_g','stack_length','rot_or','i'])
 
        self.declare_partials('*','*', method='fd')
@@ -29,16 +34,18 @@ class TorqueComp(om.ExplicitComponent):
        n_m=inputs['n_m']
        n_turns= inputs['n_turns']
        B_g= inputs['B_g']
-       stack_length= inputs['stack_length']
        rot_or = inputs['rot_or']
        I = inputs['I']
        sta_ir = inputs['sta_ir']
+       rpm = inputs['rpm']
+       P_shaft = inputs['P_shaft']
+       stack_length = inputs['stack_length']
 
-       outputs['rot_volume'] = (np.pi * rot_or**2 * stack_length)
+       outputs['omega'] = rpm*2*pi/60
        outputs['stator_surface_current'] = 6 * 0.75*96/(2*sta_ir*np.pi) * I*np.sqrt(2)    # 0.75 represents the winding factor. This low value is required to match SEL from motor-cad
-
-       # outputs['Tq'] = outputs['rot_volume'] * B_g* outputs['stator_surface_current'] * np.cos(0)   # Lipo, Pg. 372 # 6==constant; 0.933==winding factor; 96==turns per phase; 50==I peak; 1==cos(epsilon) when epsilon=0
-       outputs['Tq'] = 2*n_m*n_turns*B_g*rot_or*stack_length*I      # Eqn 4.11, pg 79, from D.Hansleman book
+       outputs['Tq_shaft'] = P_shaft/outputs['omega']
+       outputs['Tq_max'] = stack_length*2*n_m*n_turns*B_g*rot_or*I    # Eqn 4.11, pg 79, from D.Hansleman book
+       outputs['rot_volume'] = (np.pi * rot_or**2 * stack_length)
 
     # def compute_partials(self,inputs,J):
     #    n_m=inputs['n_m']
@@ -70,29 +77,27 @@ class TorqueComp(om.ExplicitComponent):
 
 class EfficiencyComp(om.ExplicitComponent):
     def setup(self):
-        self.add_input('Tq', 25, units='N*m', desc='torque') 
-        self.add_input('rpm', 5000, units='rpm', desc='Rotational Speed')
         self.add_input('P_wire', 500, units='W', desc='copper losses')
-        self.add_input('P_steinmetz', 500, units='W', desc='iron losses')        
+        self.add_input('P_steinmetz', 500, units='W', desc='iron losses')  
+        self.add_input('P_shaft', 14000, units='W', desc='output power') 
+        self.add_input('Tq_shaft', 30, units='N*m', desc='torque') 
+        self.add_input('omega', 1000, units='Hz', desc='mechanical rad/s')  
+        self.add_input('rpm', 5000, units='rpm', desc='speed of prop')   
 
         self.add_output('P_in', 15, units='kW', desc='input power')
-        self.add_output('P_out', 15, units='kW', desc='output power')
-        self.add_output('Eff', 0.95, desc='efficiency of motor')
+        self.add_output('Eff', 0.90, desc='efficiency of motor')
         
         self.declare_partials('*','*', method='fd')
 
 
     def compute(self, inputs, outputs):
-        # I = inputs['I']
-        Tq = inputs['Tq']
-        # V = inputs['V']
         rpm = inputs['rpm']
         P_wire = inputs['P_wire']
         P_steinmetz =inputs['P_steinmetz']
+        P_shaft = inputs['P_shaft']
+        Tq_shaft = inputs['Tq_shaft']
+        omega = inputs['omega']
 
-        omega = rpm*(2*pi/60)  # mechanical rad/s
+        outputs['P_in']  = (Tq_shaft*omega) + P_wire + P_steinmetz       
 
-        outputs['P_in']  = (Tq*omega) + P_wire + P_steinmetz       
-        outputs['P_out'] = Tq*omega
-
-        outputs['Eff'] =  outputs['P_out'] / outputs['P_in']
+        outputs['Eff'] =  P_shaft / outputs['P_in']

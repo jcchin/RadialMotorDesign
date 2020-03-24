@@ -8,11 +8,11 @@ def ACDC(speed, current):
 
     motor_interp = om.MetaModelStructuredComp(method='scipy_slinear')
     
-    rpm_data = np.array([200, 600, 1000, 1800, 2200, 3000, 3400, 4200, 5000, 5401])  #  1400, 2600,  3800, 4600
+    rpm_data = np.array([200, 600, 1000, 1800, 2200, 3000, 3400, 4200, 5000, 5400])  #  1400, 2600,  3800, 4600
     current_data = np.array([10, 14.4, 18.9, 23.3, 27.8, 32.2, 36.7, 41.1, 45.6, 50])
     
     
-    motor_interp.add_input('x', 5401, training_data= rpm_data, units='rpm' )
+    motor_interp.add_input('x', 5400, training_data= rpm_data, units='rpm' )
     motor_interp.add_input('y', 50, training_data=current_data, units='A')
     
     

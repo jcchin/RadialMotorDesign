@@ -16,7 +16,7 @@ class WindingLossComp(om.ExplicitComponent):
         self.add_input('n_turns', 12, desc='number of winding turns')
         self.add_input('n_strands', 41, desc='number of strands in litz wire')
         self.add_input('T_coeff_cu', 0.00393, desc='temperature coefficient for copper')
-        self.add_input('rpm', 5400, units='rpm', desc='Rotation speed')
+        self.add_input('rpm', 4000, units='rpm', desc='Rotation speed')
         self.add_input('n_m', 20, desc='Number of magnets')
         self.add_input('I', 30, units='A', desc='RMS current into motor')
         self.add_input('T_windings', 150, units='C', desc='operating temperature of windings')

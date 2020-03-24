@@ -157,7 +157,6 @@ class MotorMassComp(om.ExplicitComponent):
         s_d=inputs['s_d']
         rot_ir=inputs['rot_ir']
         rot_or=inputs['rot_or']
-        stack_length=inputs['stack_length']
         t_mag=inputs['t_mag']
         rho_mag=inputs['rho_mag']
 

@@ -31,12 +31,18 @@ if __name__ == "__main__":
     # -------------------------------------------------------------------------
     #                              
     # -------------------------------------------------------------------------
+    ind.add_output('DES:P_shaft', 14.000, units='kW', desc='shaft power out of the motor')
+    ind.add_output('OD:P_shaft', 1.000, units='kW', desc='shaft power out of the motor')
+
+    ind.add_output('DES:stack_length', 0.0345, units='m', desc='axial length of the motor')
+    
     ind.add_output('radius_motor', 0.078225, units='m', desc='Motor outer radius')  # Ref motor = 0.078225
 
-    ind.add_output('rpm', 5400, units='rpm', desc='Rotation speed')  
-    ind.add_output('I', 35.35, units='A', desc='RMS Current')
+    ind.add_output('DES:rpm', 5400, units='rpm', desc='Rotation speed')
+    ind.add_output('OD:rpm', 1000, units='rpm', desc='Rotation speed')  
 
-    ind.add_output('stack_length', 0.0345, units='m', desc='Stack Length')              # Ref motor = 0.0345
+    ind.add_output('DES:I', 34.5, units='A', desc='RMS Current')
+    ind.add_output('OD:I', 34.5, units='A', desc='RMS Current')
 
     ind.add_output('n_turns', 12, desc='Number of wire turns')
     ind.add_output('n_slots', 24, desc='Number of Slots')
@@ -74,25 +80,31 @@ if __name__ == "__main__":
     ind.add_output('b_sy', 2.4, units='T', desc='Stator yoke flux density')             # FEA
     ind.add_output('b_t', 3.0, units='T', desc='Tooth Flux Density')                    # FEA
     ind.add_output('B_pk', 2.4, units='T', desc='Peak flux density for Hiperco-50')     # FEA
-    ind.add_output('k_wb', 0.58, desc='bare wire fill factor')                             # Ref motor = 0.58
+    ind.add_output('k_wb', 0.58, desc='copper fill factor')                             # Ref motor = 0.58
 
     ind.add_output('l_slot_opening', .00325, units='m', desc='length of the slot opening')  # Ref motor = .00325
     ind.add_output('k', 0.94, desc='Stacking factor assumption')
     ind.add_output('gap', 0.0010, units='m', desc='Air gap distance, Need to calculate effective air gap, using Carters Coeff')
 
     def motor_spec_connect(motor_path): 
+        # p.model.connect('P_shaft', f'{motor_path}.P_shaft')
 
+        # p.model.connect('stack_length', f'{motor_path}.stack_length')
         p.model.connect('radius_motor', f'{motor_path}.radius_motor')
-        p.model.connect('stack_length', f'{motor_path}.stack_length')
-        p.model.connect('rpm', f'{motor_path}.rpm')
         p.model.connect('n_turns', f'{motor_path}.n_turns')
         p.model.connect('n_slots', f'{motor_path}.n_slots')
         p.model.connect('n_m', f'{motor_path}.n_m')
+
         p.model.connect('t_mag', f'{motor_path}.t_mag')
         p.model.connect('r_strand', f'{motor_path}.r_strand')
         p.model.connect('n_strands', f'{motor_path}.n_strands')
+      
         p.model.connect('T_windings', f'{motor_path}.T_windings')
         p.model.connect('T_mag', f'{motor_path}.T_mag')
+
+        # -------------------------------------------------------------------------
+        #                        Material Properties and Constants
+        # -------------------------------------------------------------------------
         p.model.connect('Hc_20', f'{motor_path}.Hc_20')
         p.model.connect('Br_20', f'{motor_path}.Br_20')
         p.model.connect('k_sat', f'{motor_path}.k_sat')
@@ -108,40 +120,47 @@ if __name__ == "__main__":
         p.model.connect('beta_stein', f'{motor_path}.beta_stein')
         p.model.connect('k_stein', f'{motor_path}.k_stein')
         p.model.connect('T_coef_rem_mag', f'{motor_path}.T_coef_rem_mag')
+
+        # -------------------------------------------------------------------------
+
         p.model.connect('b_ry', f'{motor_path}.b_ry')
         p.model.connect('b_sy', f'{motor_path}.b_sy')
         p.model.connect('b_t', f'{motor_path}.b_t')
         p.model.connect('B_pk', f'{motor_path}.B_pk')
         p.model.connect('k_wb', f'{motor_path}.k_wb')
+
         p.model.connect('l_slot_opening', f'{motor_path}.l_slot_opening')
         p.model.connect('k', f'{motor_path}.k')
         p.model.connect('gap', f'{motor_path}.gap')
 
     # On-Design Function, to size the motor
-    p.model.add_subsystem('DESIGN', Motor())
+    p.model.add_subsystem('DESIGN', Motor(design=True))
     motor_spec_connect('DESIGN')
-    # p.model.connect('rpm', 'DESIGN.rpm')
-    p.model.connect('I', 'DESIGN.I')
+    p.model.connect('DES:rpm', 'DESIGN.rpm')
+    p.model.connect('DES:I', 'DESIGN.I')
+    p.model.connect('DES:stack_length', 'DESIGN.stack_length')
+    p.model.connect('DES:P_shaft', 'DESIGN.P_shaft')
 
-    # Off-Design Function to analyze motor
     p.model.add_subsystem('OD1', Motor(design=False))
     motor_spec_connect('OD1')
-    p.model.connect('DESIGN.rot_or', 'OD1.rot_or')  # Rotor Outer Radius connected to hold geometries constant in Off-Design
-    # p.model.connect('rpm', 'OD1.rpm')
-    p.model.connect('I', 'OD1.I')
+    p.model.connect('DESIGN.rot_or', 'OD1.rot_or')
+    p.model.connect('OD:rpm', 'OD1.rpm')
+    p.model.connect('OD:I', 'OD1.I')
+    p.model.connect('DES:stack_length', 'OD1.stack_length') # DES to OD1 to make sure it stays constant
+    p.model.connect('OD:P_shaft', 'OD1.P_shaft')
 
-    #ODEDriver used for Off-Design Analysis by varying RPM and I
-    p.model.add_design_var('rpm', lower=200, upper=5400)
-    p.model.add_design_var('I', lower=10, upper=34.355)
-    p.model.add_objective('OD1.Eff')
+    # #ODEDriver used for Off-Design Analysis by varying RPM and I
+    # p.model.add_design_var('OD:rpm', lower=200, upper=5400)
+    # p.model.add_design_var('OD:I', lower=10, upper=34.355)
+    # p.model.add_objective('OD1.Eff')
 
-    steps=3   # number of levels for the full factorial generator
-    p.driver = om.DOEDriver(om.FullFactorialGenerator(levels=steps))
-    p.driver.add_recorder(om.SqliteRecorder("cases.sql"))
-    p.driver.recording_options['record_objectives'] = True
-    p.driver.recording_options['record_constraints'] = True
-    p.driver.recording_options['record_desvars'] = True
-    p.driver.recording_options['record_inputs'] = True
+    # steps=3   # number of levels for the full factorial generator
+    # p.driver = om.DOEDriver(om.FullFactorialGenerator(levels=steps))
+    # p.driver.add_recorder(om.SqliteRecorder("cases.sql"))
+    # p.driver.recording_options['record_objectives'] = True
+    # p.driver.recording_options['record_constraints'] = True
+    # p.driver.recording_options['record_desvars'] = True
+    # p.driver.recording_options['record_inputs'] = True
 
     p.setup()
 
@@ -149,68 +168,53 @@ if __name__ == "__main__":
     p['radius_motor'] = 0.086   # Set the desired radius of the motor, application specific
     p['DESIGN.rot_or'] = 8    # initial guess
 
-    # p.run_model()
-    p.run_driver()
-    p.cleanup()
+    p.run_model()
+    # p.run_driver()
+    # p.cleanup()
 
-    # Case Recorder for the Motor off design case
-    cr = om.CaseReader("cases.sql")  
-    system_cases = cr.list_cases('driver')
-    #
-
-
-    # Print the sorted key names
-    # key_case = cr.get_case(system_cases[0])
-    # dvs = key_case.get_design_vars()
-    # objs = key_case.get_objectives()
-    # print(('Objectives: ', sorted(objs.keys()), 'Constraints: ', sorted(cons.keys()), 'Design Vars: ', sorted(dvs.keys())))
-
-    # Print values of variables
-    # print(('The values of rpm are: ', dvs['rpm'][0]))
-
-
-    eff_val=[]
-    rpm_val=[]
-    I_val=[]
-    I_array=[]
-
-    # Save off arrays from the .sql file for the efficiency mapping
-    for i in range(0, len(system_cases)):
-        case_array = cr.get_case(i)
-        eff_val.append(case_array.outputs['OD1.Eff'][0])
-        rpm_val.append(case_array['rpm'][0])
-        I_val.append(case_array['I'][0])
-
-
-        
+    # Print Motor Stats
     print_motor(p, 'DESIGN')
     print()
     print()
     print_motor(p, 'OD1')
-
     # p.model.list_outputs(residuals=True)
     # p.check_partials(compact_print=True)
 
+    # Case Recorder for the Motor off design case
+#     cr = om.CaseReader("cases.sql")  
+#     system_cases = cr.list_cases('driver')
 
-# Reshape arrays to a useable format for meshgrid
-eff_val = np.array([eff_val[i:i + steps] for i in range(0, len(eff_val), steps)])
-rpm_val = np.array(rpm_val[:steps])
-I_val = I_val[::steps]
+#     eff_val=[]
+#     rpm_val=[]
+#     I_val=[]
+#     I_array=[]
 
-# Begin plotting the efficiency map
-X, Y = np.meshgrid(rpm_val, I_val)
-z = eff_val
-a_ratio = 5400/34.355
+#     # Save off arrays from the .sql file for the efficiency mapping
+#     for i in range(0, len(system_cases)):
+#         case_array = cr.get_case(i)
+#         eff_val.append(case_array.outputs['OD1.Eff'][0])
+#         rpm_val.append(case_array['OD:rpm'][0])
+#         I_val.append(case_array['OD:I'][0])
 
-# levels = np.array([.90, .93, .95, .955, .96, .965, .968, .97])
-contours = plt.contour(X, Y, z, colors='Black') #levels,
-plt.clabel(contours, inline=True, fontsize=10)
-# plt.imshow(z, aspect=a_ratio, extent=[200, 5400, 10, 34.35],  origin='lower', cmap='Reds') 
-# plt.colorbar()
+# # Printing Eff Plot: Reshape arrays to a useable format for meshgrid
+# eff_val = np.array([eff_val[i:i + steps] for i in range(0, len(eff_val), steps)])
+# rpm_val = np.array(rpm_val[:steps])
+# I_val = I_val[::steps]
 
-plt.xlabel('RPM')
-plt.ylabel('Current')
-plt.title('Efficiency Plot')
-plt.savefig("Efficiency_Plot.pdf")
+# # Begin plotting the efficiency map
+# X, Y = np.meshgrid(rpm_val, I_val)
+# z = eff_val
+# a_ratio = 5400/34.355
+
+# # levels = np.array([.90, .93, .95, .955, .96, .965, .968, .97])
+# contours = plt.contour(X, Y, z, colors='Black') #levels,
+# plt.clabel(contours, inline=True, fontsize=10)
+# # plt.imshow(z, aspect=a_ratio, extent=[200, 5400, 10, 34.35],  origin='lower', cmap='Reds') 
+# # plt.colorbar()
+
+# plt.xlabel('RPM')
+# plt.ylabel('Current')
+# plt.title('Efficiency Plot')
+# plt.savefig("Efficiency_Plot.pdf")
     
 

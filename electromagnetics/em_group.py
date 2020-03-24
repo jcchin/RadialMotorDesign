@@ -31,13 +31,13 @@ class EmGroup(om.Group):
 
         self.add_subsystem(name='torque',
                            subsys=TorqueComp(),
-                           promotes_inputs=['n_m', 'n_turns', 'B_g', 'stack_length', 'rot_or', 'I', 'sta_ir'],
-                           promotes_outputs=['Tq', 'rot_volume', 'stator_surface_current'])
+                           promotes_inputs=['B_g', 'n_m', 'n_turns', 'I', 'rot_or', 'sta_ir',  'P_shaft', 'rpm', 'stack_length'],
+                           promotes_outputs=['rot_volume', 'stator_surface_current', 'Tq_shaft', 'Tq_max', 'omega'])
 
         self.add_subsystem(name='motor_efficiency', 
                            subsys=EfficiencyComp(),
-                           promotes_inputs=['Tq', 'rpm','P_wire', 'P_steinmetz'],
-                           promotes_outputs=['P_in', 'P_out', 'Eff'])
+                           promotes_inputs=['P_wire', 'P_steinmetz', 'P_shaft', 'Tq_shaft', 'omega', 'rpm'],
+                           promotes_outputs=['P_in', 'Eff'])
 
 
 
