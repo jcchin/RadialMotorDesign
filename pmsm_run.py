@@ -36,13 +36,13 @@ if __name__ == "__main__":
 
     ind.add_output('DES:stack_length', 0.0345, units='m', desc='axial length of the motor')
     
-    ind.add_output('radius_motor', 0.078225, units='m', desc='Motor outer radius')  # Ref motor = 0.078225
-
     ind.add_output('DES:rpm', 5400, units='rpm', desc='Rotation speed')
     ind.add_output('OD:rpm', 1000, units='rpm', desc='Rotation speed')  
 
     ind.add_output('DES:I', 34.5, units='A', desc='RMS Current')
     ind.add_output('OD:I', 34.5, units='A', desc='RMS Current')
+
+    ind.add_output('radius_motor', 0.078225, units='m', desc='Motor outer radius')  # Ref motor = 0.078225
 
     ind.add_output('n_turns', 12, desc='Number of wire turns')
     ind.add_output('n_slots', 24, desc='Number of Slots')
