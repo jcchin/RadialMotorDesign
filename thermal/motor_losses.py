@@ -6,7 +6,6 @@ from math import pi
 
 import openmdao.api as om
 
-from thermal.ACpowerFactor import ACDC
 
 class WindingLossComp(om.ExplicitComponent):
     def initialize(self):

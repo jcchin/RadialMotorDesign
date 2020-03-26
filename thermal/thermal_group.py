@@ -33,7 +33,7 @@ class ThermalGroup(om.Group):
     def setup(self):
         nn = self.options['num_nodes']
 
-        self.add_subsystem('comp', om.ExecComp('I_peak= I*2**0.5'), promotes_inputs=['I'], promotes_outputs=['I_peak'])
+        self.add_subsystem('comp', om.ExecComp('I_peak= I*2**0.5', I={'value': np.ones(nn)}), promotes_inputs=['I'], promotes_outputs=['I_peak'])
 
 
         motor_interp = om.MetaModelStructuredComp(method='scipy_slinear')
@@ -41,7 +41,7 @@ class ThermalGroup(om.Group):
         rpm_data = np.array([200, 600, 1000, 1800, 2200, 3000, 3400, 4200, 5000, 5400])  #  1400, 2600,  3800, 4600
         current_data = np.array([10, 14.4, 18.9, 23.3, 27.8, 32.2, 36.7, 41.1, 45.6, 50])
         
-        motor_interp.add_input('rpm', 5400, training_data= rpm_data, units='rpm' )
+        motor_interp.add_input('rpm', 5400*np.ones(nn), training_data= rpm_data, units='rpm' )
         motor_interp.add_input('I_peak', 50, training_data=current_data, units='A')
         motor_interp.add_output('AC_power_factor', 0.5, training_data=motor_loss_data)
         self.add_subsystem('ac_power_factor_interp', motor_interp, 

@@ -5,4 +5,5 @@
 /notes.aux
 /torque.py
 /demag_curves.py
+/thermal/ACpowerFactor.py
 *.pyc
