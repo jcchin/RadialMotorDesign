@@ -9,18 +9,20 @@ class Motor(om.Group):
 
     def initialize(self): 
         self.options.declare('design', default=True, types=bool)
+        self.options.declare('num_nodes', types=int)
 
 
     def setup(self): 
+        nn = self.options['num_nodes']
 
-        self.add_subsystem('thermal_properties', ThermalGroup(), promotes_inputs=[ 'B_pk', 'alpha_stein', 'beta_stein', 'k_stein', 'rpm', 
+        self.add_subsystem('thermal_properties', ThermalGroup(num_nodes=nn), promotes_inputs=[ 'B_pk', 'alpha_stein', 'beta_stein', 'k_stein', 'rpm', 
                                                                                    'resistivity_wire', 'stack_length', 'n_slots', 'n_strands','motor_mass', 
                                                                                    'n_m', 'mu_o', 'f_e', 'n_turns', 'T_coeff_cu', 'I', 'T_windings', 'r_strand', 'mu_r'],
                                                                   promotes_outputs=['A_cu', 'r_litz', 'P_steinmetz', 'P_dc', 'P_ac', 'P_wire', 'L_wire', 'R_dc',
                                                                                     'skin_depth', 'temp_resistivity', 'f_e'])
 
 
-        self.add_subsystem('em_properties', EmGroup(), promotes_inputs=['n_slots', 'l_slot_opening', 'w_slot', 's_d',             
+        self.add_subsystem('em_properties', EmGroup(num_nodes=nn), promotes_inputs=['n_slots', 'l_slot_opening', 'w_slot', 's_d',             
                                                                         'w_t', 'slot_area', 'T_coef_rem_mag', 'T_mag',            
                                                                         'gap', 'carters_coef', 'k_sat', 'mu_o', 'stack_length',                  
                                                                         'Hc_20', 'Br_20', 'Br', 'mu_r', 'g_eq', 't_mag',          
@@ -41,7 +43,7 @@ class Motor(om.Group):
 
         if self.options['design']: 
 
-            bal = om.BalanceComp()
+            bal = om.BalanceComp(num_nodes=nn)
             bal.add_balance('rot_or', val=0.05, units='cm', eq_units='A/mm**2', lower=1e-4)#, use_mult=True, mult_val=0.5)
             tgt = om.IndepVarComp(name='J_tgt', val=10.47, units='A/mm**2')
 

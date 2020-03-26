@@ -24,23 +24,23 @@ from motor import Motor, print_motor
 if __name__ == "__main__":
     p = om.Problem()
     model = p.model
+    nn = 1
 
     ind = model.add_subsystem('indeps', om.IndepVarComp(), promotes=['*'])
-
 
     # -------------------------------------------------------------------------
     #                              
     # -------------------------------------------------------------------------
     ind.add_output('DES:P_shaft', 14.000, units='kW', desc='shaft power out of the motor')
-    ind.add_output('OD:P_shaft', 1.000, units='kW', desc='shaft power out of the motor')
+    ind.add_output('OD:P_shaft', 1.000*np.ones(nn), units='kW', desc='shaft power out of the motor')
 
     ind.add_output('DES:stack_length', 0.0345, units='m', desc='axial length of the motor')
     
     ind.add_output('DES:rpm', 5400, units='rpm', desc='Rotation speed')
-    ind.add_output('OD:rpm', 1000, units='rpm', desc='Rotation speed')  
+    ind.add_output('OD:rpm', 1000*np.ones(nn), units='rpm', desc='Rotation speed')  
 
     ind.add_output('DES:I', 34.5, units='A', desc='RMS Current')
-    ind.add_output('OD:I', 34.5, units='A', desc='RMS Current')
+    ind.add_output('OD:I', 34.5*np.ones(nn), units='A', desc='RMS Current')
 
     ind.add_output('radius_motor', 0.078225, units='m', desc='Motor outer radius')  # Ref motor = 0.078225
 
@@ -134,14 +134,14 @@ if __name__ == "__main__":
         p.model.connect('gap', f'{motor_path}.gap')
 
     # On-Design Function, to size the motor
-    p.model.add_subsystem('DESIGN', Motor(design=True))
+    p.model.add_subsystem('DESIGN', Motor(num_nodes=nn, design=True))
     motor_spec_connect('DESIGN')
     p.model.connect('DES:rpm', 'DESIGN.rpm')
     p.model.connect('DES:I', 'DESIGN.I')
     p.model.connect('DES:stack_length', 'DESIGN.stack_length')
     p.model.connect('DES:P_shaft', 'DESIGN.P_shaft')
 
-    p.model.add_subsystem('OD1', Motor(design=False))
+    p.model.add_subsystem('OD1', Motor(num_nodes=nn, design=False))
     motor_spec_connect('OD1')
     p.model.connect('DESIGN.rot_or', 'OD1.rot_or')
     p.model.connect('OD:rpm', 'OD1.rpm')

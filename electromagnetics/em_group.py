@@ -12,7 +12,11 @@ from electromagnetics.performance_comp import TorqueComp, EfficiencyComp
 
 
 class EmGroup(om.Group):
+    def initialize(self):
+        self.options.declare('num_nodes', types=int)
+
     def setup(self):
+        nn = self.options['num_nodes']
 
         self.add_subsystem(name='carters',
                            subsys=CartersComp(),
@@ -30,12 +34,12 @@ class EmGroup(om.Group):
                            promotes_outputs=['B_g', 'H_g'])
 
         self.add_subsystem(name='torque',
-                           subsys=TorqueComp(),
+                           subsys=TorqueComp(num_nodes=nn),
                            promotes_inputs=['B_g', 'n_m', 'n_turns', 'I', 'rot_or', 'sta_ir',  'P_shaft', 'rpm', 'stack_length'],
                            promotes_outputs=['rot_volume', 'stator_surface_current', 'Tq_shaft', 'Tq_max', 'omega'])
 
         self.add_subsystem(name='motor_efficiency', 
-                           subsys=EfficiencyComp(),
+                           subsys=EfficiencyComp(num_nodes=nn),
                            promotes_inputs=['P_wire', 'P_steinmetz', 'P_shaft', 'Tq_shaft', 'omega', 'rpm'],
                            promotes_outputs=['P_in', 'Eff'])
 

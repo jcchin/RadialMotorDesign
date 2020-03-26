@@ -1,3 +1,5 @@
+# Temp of magnet is assumed steady state through all analysis.
+
 from __future__ import absolute_import
 import numpy as np
 from math import pi
@@ -5,6 +7,7 @@ from math import pi
 import openmdao.api as om
 
 class CartersComp(om.ExplicitComponent):
+
     def setup(self):
         self.add_input('gap', 0.001, units='m', desc='Air Gap - Mechanical Clearance')
         self.add_input('sta_ir', 1, units='m', desc='Inner diameter of the stator')  # Gieras - pg.217 - Vairable Table
@@ -44,7 +47,7 @@ class CartersComp(om.ExplicitComponent):
         outputs['Br']  = Br_20*(1+(T_coef_rem_mag)/100 * (T_mag-20))        # -0.12 == T_coef_remanence_flux_density, 90 == mag op temp
         outputs['mech_angle'] = (4/np.pi)*(((0.5*l_slot_opening/g)*np.arctan(0.5*l_slot_opening/g))-(np.log(np.sqrt(1+((0.5*l_slot_opening/g)**2)))))
         outputs['t_1'] = (np.pi*sta_ir)/n_slots
-        outputs['carters_coef'] = 2.0727# (1 - (w_slot/(w_slot + w_t)) + ((4*(g+t_mag/outputs['Br'])/(np.pi*(w_slot + w_t))) * np.log(1 + (np.pi*w_slot/(4*(g+t_mag/outputs['Br']))))))**-1      #2.07269
+        outputs['carters_coef'] = 1 - (w_slot/(w_slot + w_t)) + ((4*(g+t_mag/outputs['Br'])/(np.pi*(w_slot + w_t))) * np.log(1 + (np.pi*w_slot/(4*(g+t_mag/outputs['Br'])))))**-1      #2.07269
 
 
 class GapEquivalentComp(om.ExplicitComponent):

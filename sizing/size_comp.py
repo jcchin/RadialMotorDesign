@@ -31,10 +31,13 @@ class MotorSizeComp(om.ExplicitComponent):
         self.add_output('slot_area', 0.0002, units='m**2', desc='area of one slot')
         self.add_output('w_slot', .01, units='m', desc='width of a slot')
 
+
         self.declare_partials('*','*', method='fd')
         #self.declare_partials('w_t', ['rot_or','B_g','n_slots','k','b_t'])
         #self.declare_partials('w_sy', ['rot_or', 'B_g', 'n_m', 'k', 'b_sy'])
         #self.declare_partials('w_ry', ['rot_or', 'B_g', 'n_m', 'k', 'b_ry'])
+
+        # self.declare_partials(of='J', wrt='I', , rows=r, cols=c)
 
     def compute(self,inputs,outputs):
         radius_motor = inputs['radius_motor']  # .0765
