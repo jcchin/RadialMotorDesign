@@ -23,10 +23,10 @@ class TorqueComp(om.ExplicitComponent):
        self.add_input('rpm', 5000*np.ones(nn), units='rpm', desc='Rotational Speed')
        self.add_input('stack_length', .0345, units='m', desc='stack length')
 
-       self.add_output('omega', 1000*np.ones(nn), units='Hz', desc='mechanical rad/s')     
+       self.add_output('omega', 900*np.ones(nn), units='Hz', desc='mechanical rad/s')     
        self.add_output('Tq_shaft', 25*np.ones(nn), units='N*m', desc='torque')
-       self.add_output('rot_volume', 0.2, units='m**3', desc='rotor volume')
-       self.add_output('stator_surface_current', 51860, units='A/m', desc='specific electrical loading')
+       self.add_output('rot_volume', .02, units='m**3', desc='rotor volume')
+       self.add_output('stator_surface_current', 50, units='A/m', desc='specific electrical loading')
        self.add_output('Tq_max', 30*np.ones(nn), units='N*m', desc='max torque available')
        
        # r = c = np.arange(nn)  # for scalar variables only
@@ -90,10 +90,10 @@ class EfficiencyComp(om.ExplicitComponent):
     def setup(self):
         nn = self.options['num_nodes']
         self.add_input('P_wire', 500*np.ones(nn), units='W', desc='copper losses')
-        self.add_input('P_steinmetz', 500*np.ones(nn), units='W', desc='iron losses')  
+        self.add_input('P_steinmetz', 200*np.ones(nn), units='W', desc='iron losses')  
         self.add_input('P_shaft', 14000*np.ones(nn), units='W', desc='output power') 
         self.add_input('Tq_shaft', 30*np.ones(nn), units='N*m', desc='torque') 
-        self.add_input('omega', 1000*np.ones(nn), units='Hz', desc='mechanical rad/s')  
+        self.add_input('omega', 400*np.ones(nn), units='Hz', desc='mechanical rad/s')  
         self.add_input('rpm', 5000*np.ones(nn), units='rpm', desc='speed of prop')   
 
         self.add_output('P_in', 15*np.ones(nn), units='kW', desc='input power')

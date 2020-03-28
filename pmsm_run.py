@@ -61,7 +61,7 @@ if __name__ == "__main__":
     ind.add_output('Hc_20', -1046, units='kA/m', desc='Intrinsic Coercivity at 20 degC')     
     ind.add_output('Br_20', 1.39, units='T', desc='remnance flux density at 20 degC')           
     ind.add_output('k_sat', 1, desc='Saturation factor of the magnetic circuit due to the main (linkage) magnetic flux')
-    ind.add_output('mu_o',  0.4*pi*10**-6, units='H/m', desc='permeability of free space')   
+    ind.add_output('mu_o',  1.2566e-6, units='H/m', desc='permeability of free space')   
     ind.add_output('mu_r',  1.0, units='H/m', desc='relative magnetic permeability of ferromagnetic materials')
     ind.add_output('rho', 8110.2, units='kg/m**3', desc='Density of Hiperco-50')  
     ind.add_output('rho_mag', 7500, units='kg/m**3', desc='Density of Magnets')
@@ -166,7 +166,7 @@ if __name__ == "__main__":
 
 
     p['radius_motor'] = 0.086   # Set the desired radius of the motor, application specific
-    p['DESIGN.rot_or'] = 8    # initial guess
+    p['DESIGN.rot_or'] = 6.8    # initial guess
 
     p.run_model()
     # p.run_driver()

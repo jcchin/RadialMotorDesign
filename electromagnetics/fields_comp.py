@@ -10,8 +10,8 @@ class CartersComp(om.ExplicitComponent):
 
     def setup(self):
         self.add_input('gap', 0.001, units='m', desc='Air Gap - Mechanical Clearance')
-        self.add_input('sta_ir', 1, units='m', desc='Inner diameter of the stator')  # Gieras - pg.217 - Vairable Table
-        self.add_input('n_slots', 1, desc='Number of slots')  # 's_1' in Gieras's book
+        self.add_input('sta_ir', .07, units='m', desc='Inner diameter of the stator')  # Gieras - pg.217 - Vairable Table
+        self.add_input('n_slots', 20, desc='Number of slots')  # 's_1' in Gieras's book
         self.add_input('l_slot_opening', .002, units='m', desc='Width of the stator slot opening')  # Gieras
         self.add_input('w_slot', .015, units='m', desc='width of one slot')
         self.add_input('s_d', 0.015, units='m', desc='slot depth')
@@ -53,14 +53,14 @@ class CartersComp(om.ExplicitComponent):
 class GapEquivalentComp(om.ExplicitComponent):
     def setup(self):
         self.add_input('gap', 0.001, units='m', desc='Air Gap - Mechanical Clearance')
-        self.add_input('carters_coef', 1,  desc='Carters Coefficient')  # Gieras - pg.563 - (A.27)
+        self.add_input('carters_coef', 2,  desc='Carters Coefficient')  # Gieras - pg.563 - (A.27)
         self.add_input('k_sat', 1,  desc='Saturation factor of the magnetic circuit due to the main (linkage) magnetic flux')  # Gieras - pg.73 - (2.48) - Typically ~1
         self.add_input('t_mag', 0.0044, units='m', desc='Magnet thickness')  # 'h_m' in Gieras's book
-        self.add_input('mu_o', 0.4*pi*10**-6, units='H/m', desc='Magnetic Permeability of Free Space')  #CONSTANT
+        self.add_input('mu_o', 1.2566e-6, units='H/m', desc='Magnetic Permeability of Free Space')  #CONSTANT
         self.add_input('mu_r', 1, units='H/m', desc='Relative recoil permeability')  # Gieras - pg.48 - (2.5)
 
-        self.add_output('g_eq', 1, units='m', desc='Equivalent aig gap')  # Gieras - pg.180
-        self.add_output('g_eq_q', 1, units='m', desc='Equivalent air gap q-axis')  # Gieras - pg.180
+        self.add_output('g_eq', .001, units='m', desc='Equivalent aig gap')  # Gieras - pg.180
+        self.add_output('g_eq_q', .001, units='m', desc='Equivalent air gap q-axis')  # Gieras - pg.180
 
         self.declare_partials('*','*', method='fd')
 
@@ -82,7 +82,7 @@ class GapFieldsComp(om.ExplicitComponent):
     self.add_input('mu_r', 1.04, units='H/m', desc='relative magnetic permeability of ferromagnetic materials')
     self.add_input('g_eq', .001, units='m', desc='air gap')
     self.add_input('t_mag', 0.0045, units='m', desc='magnet height')
-    self.add_input('Hc_20', 1500000, units='A/m', desc='Intrinsic Coercivity at 20 degC')
+    self.add_input('Hc_20', -1046, units='A/m', desc='Intrinsic Coercivity at 20 degC')
     self.add_input('Br', 1, units = 'T', desc='temp dependent renmance flux density of an N48H magnet')
     self.add_input('Br_20', 1.39, units='T', desc='remnance flux density at 20 degC')
     
