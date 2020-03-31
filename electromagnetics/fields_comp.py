@@ -1,4 +1,5 @@
 # Temp of magnet is assumed steady state through all analysis.
+# Carters is calculated only with dB, appropriate for n48H magnet
 
 from __future__ import absolute_import
 import numpy as np
@@ -10,44 +11,55 @@ class CartersComp(om.ExplicitComponent):
 
     def setup(self):
         self.add_input('gap', 0.001, units='m', desc='Air Gap - Mechanical Clearance')
-        self.add_input('sta_ir', .07, units='m', desc='Inner diameter of the stator')  # Gieras - pg.217 - Vairable Table
-        self.add_input('n_slots', 20, desc='Number of slots')  # 's_1' in Gieras's book
-        self.add_input('l_slot_opening', .002, units='m', desc='Width of the stator slot opening')  # Gieras
         self.add_input('w_slot', .015, units='m', desc='width of one slot')
-        self.add_input('s_d', 0.015, units='m', desc='slot depth')
         self.add_input('w_t', .0045, units='m', desc='tooth width')
-        self.add_input('slot_area', .0002, units='m**2', desc='cross sectional area of one slot')
         self.add_input('t_mag', .0044, units='m', desc='radial thickness of magnet')
         self.add_input('Br_20', 1.39, units='T', desc='remnance flux density at 20 degC')
         self.add_input('T_mag', 100, units='C', desc='operating temperature of magnet')
         self.add_input('T_coef_rem_mag', -0.12,  desc=' Temperature coefficient of the remnance flux density for N48H magnets')
         
-        # 'mech_angle' in calculated in rad
         self.add_output('Br', 1, units = 'T', desc='temp dependent renmance flux density of an N48H magnet')
-        self.add_output('mech_angle', 1, units='rad', desc='Mechanical angle')  # Gieras - pg.563 - (A.28) - LOWER CASE GAMMA
-        self.add_output('t_1', 1, units='m', desc='Slot Pitch')  # Gieras - pg.218
         self.add_output('carters_coef', 1,  desc='How much the air gap must be increased to account for slots')  # Gieras - pg.563 - (A.27)
 
-        self.declare_partials('*','*', method='fd')
+        # self.declare_partials('*','*', method='fd')
+        self.declare_partials('Br', ['Br_20', 'T_coef_rem_mag', 'T_mag'])
+        self.declare_partials('carters_coef', ['w_slot', 'w_t', 'gap', 't_mag', 'Br_20', 'T_coef_rem_mag', 'T_mag'])
 
     def compute(self, inputs, outputs):
         g = inputs['gap']
-        sta_ir = inputs['sta_ir'] * 2
-        n_slots = inputs['n_slots']
-        l_slot_opening = inputs['l_slot_opening']
         w_slot = inputs['w_slot']
-        s_d = inputs['s_d']
         w_t = inputs['w_t']
-        slot_area = inputs['slot_area']
+        t_mag = inputs['t_mag']
+        Br_20 = inputs['Br_20']
+        T_mag = inputs['T_mag']
+        T_coef_rem_mag = inputs['T_coef_rem_mag']
+
+
+        outputs['Br']  = Br_20*(1+T_coef_rem_mag/100 * (T_mag-20)) 
+        outputs['carters_coef'] = (1 - w_slot/(w_slot + w_t)) + ((4*(g+t_mag/outputs['Br'])/(np.pi*(w_slot + w_t))) * np.log(1 + (np.pi*w_slot/(4*(g+t_mag/outputs['Br'])))))**-1 
+
+    def compute_partials(self, inputs, J):
+        g = inputs['gap']
+        w_slot = inputs['w_slot']
+        w_t = inputs['w_t']
         t_mag = inputs['t_mag']
         Br_20 = inputs['Br_20']
         T_coef_rem_mag = inputs['T_coef_rem_mag']
         T_mag = inputs['T_mag']
 
-        outputs['Br']  = Br_20*(1+(T_coef_rem_mag)/100 * (T_mag-20))        # -0.12 == T_coef_remanence_flux_density, 90 == mag op temp
-        outputs['mech_angle'] = (4/np.pi)*(((0.5*l_slot_opening/g)*np.arctan(0.5*l_slot_opening/g))-(np.log(np.sqrt(1+((0.5*l_slot_opening/g)**2)))))
-        outputs['t_1'] = (np.pi*sta_ir)/n_slots
-        outputs['carters_coef'] = 1 - (w_slot/(w_slot + w_t)) + ((4*(g+t_mag/outputs['Br'])/(np.pi*(w_slot + w_t))) * np.log(1 + (np.pi*w_slot/(4*(g+t_mag/outputs['Br'])))))**-1      #2.07269
+        # Remnant flux density
+        J['Br', 'Br_20'] = (1+(T_coef_rem_mag)/100 * (T_mag-20))  
+        J['Br', 'T_coef_rem_mag'] = Br_20/100*(T_mag-20)
+        J['Br', 'T_mag'] = Br_20*T_coef_rem_mag/100
+
+        # # Carters Coefficient
+        J['carters_coef', 'w_slot'] = -((w_slot/(w_slot + w_t)**2 - (w_slot + w_t)**(-1) + (g + w_t/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag)))/((g + t_mag/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag)))*(1 + (pi*w_slot)/(4*(g + t_mag/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag)))))*(w_slot - w_t)) - (4*(g + w_t/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag)))*np.log(1 + (pi*w_slot)/(4*(g + t_mag/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag))))))/(pi*(w_slot - w_t)**2))/(1 - w_slot/(w_slot + w_t) + (4*(g + w_t/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag)))*np.log(1 + (pi*w_slot)/(4*(g + t_mag/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag))))))/(pi*(w_slot - w_t)))**2)
+        J['carters_coef', 'w_t'] = -((w_slot/(w_slot + w_t)**2 + (4*np.log(1 + (pi*w_slot)/(4*(g + t_mag/(Br_20*(1 + T_coef_rem_mag/100)*(-20*+T_mag))))))/(Br_20*(1 + T_coef_rem_mag/100)*(-20*+T_mag)*pi*(w_slot - w_t)) + (4*(g + w_t/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag)))*np.log(1 + (pi*w_slot)/(4*(g + t_mag/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag))))))/(pi*(w_slot - w_t)**2))/(1 - w_slot/(w_slot + w_t) + (4*(g + w_t/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag)))*np.log(1 + (pi*w_slot)/(4*(g + t_mag/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag))))))/(pi*(w_slot - w_t)))**2)
+        J['carters_coef', 'gap'] = -((-((w_slot*(g + w_t/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag))))/((g + t_mag/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag)))**2*(1 + (pi*w_slot)/(4*(g + t_mag/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag)))))*(w_slot - w_t))) + (4*np.log(1 + (pi*w_slot)/(4*(g + t_mag/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag))))))/(pi*(w_slot - w_t)))/(1 - w_slot/(w_slot + w_t) + (4*(g + w_t/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag)))*np.log(1 + (pi*w_slot)/(4*(g + t_mag/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag))))))/(pi*(w_slot - w_t)))**2)
+        J['carters_coef', 't_mag'] = (w_slot*(g + w_t/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag))))/(Br_20*(1 + T_coef_rem_mag/100)*(g + t_mag/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag)))**2*(-20 + T_mag)*(1 + (pi*w_slot)/(4*(g + t_mag/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag)))))*(w_slot - w_t)*(1 - w_slot/(w_slot + w_t) + (4*(g + w_t/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag)))*np.log(1 + (pi*w_slot)/(4*(g + t_mag/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag))))))/(pi*(w_slot - w_t)))**2)
+        J['carters_coef', 'Br_20'] = -(((t_mag*w_slot*(g + w_t/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag))))/(Br_20**2*(1 + T_coef_rem_mag/100)*(g + t_mag/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag)))**2*(-20 + T_mag)*(1 + (pi*w_slot)/(4*(g + t_mag/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag)))))*(w_slot - w_t)) - (4*w_t*np.log(1 + (pi*w_slot)/(4*(g + t_mag/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag))))))/(Br_20**2*(1 + T_coef_rem_mag/100)*(-20 + T_mag)*pi*(w_slot - w_t)))/(1 - w_slot/(w_slot + w_t) + (4*(g + w_t/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag)))*np.log(1 + (pi*w_slot)/(4*(g + t_mag/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag))))))/(pi*(w_slot - w_t)))**2)
+        J['carters_coef', 'T_coef_rem_mag'] = -(((t_mag*w_slot*(g + w_t/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag))))/(100*Br_20*(1 + T_coef_rem_mag/100)**2*(g + t_mag/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag)))**2*(-20 + T_mag)*(1 + (pi*w_slot)/(4*(g + t_mag/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag)))))*(w_slot - w_t)) - (w_t*np.log(1 + (pi*w_slot)/(4*(g + t_mag/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag))))))/(25*Br_20*(1 + T_coef_rem_mag/100)**2*(-20 + T_mag)*pi*(w_slot - w_t)))/(1 - w_slot/(w_slot + w_t) + (4*(g + w_t/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag)))*np.log(1 + (pi*w_slot)/(4*(g + t_mag/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag))))))/(pi*(w_slot - w_t)))**2)
+        J['carters_coef', 'T_mag'] = -(((t_mag*w_slot*(g + w_t/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag))))/(Br_20*(1 + T_coef_rem_mag/100)*(g + t_mag/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag)))**2*(-20 + T_mag)**2*(1 + (pi*w_slot)/(4*(g + t_mag/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag)))))*(w_slot - w_t)) - (4*w_t*np.log(1 + (pi*w_slot)/(4*(g + t_mag/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag))))))/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag)**2*pi*(w_slot - w_t)))/(1 - w_slot/(w_slot + w_t) + (4*(g + w_t/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag)))*np.log(1 + (pi*w_slot)/(4*(g + t_mag/(Br_20*(1 + T_coef_rem_mag/100)*(-20 + T_mag))))))/(pi*(w_slot - w_t)))**2)
 
 
 class GapEquivalentComp(om.ExplicitComponent):

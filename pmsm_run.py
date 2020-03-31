@@ -82,7 +82,7 @@ if __name__ == "__main__":
     ind.add_output('B_pk', 2.4, units='T', desc='Peak flux density for Hiperco-50')     # FEA
     ind.add_output('k_wb', 0.58, desc='copper fill factor')                             # Ref motor = 0.58
 
-    ind.add_output('l_slot_opening', .00325, units='m', desc='length of the slot opening')  # Ref motor = .00325
+    # ind.add_output('l_slot_opening', .00325, units='m', desc='length of the slot opening')  # Ref motor = .00325
     ind.add_output('k', 0.94, desc='Stacking factor assumption')
     ind.add_output('gap', 0.0010, units='m', desc='Air gap distance, Need to calculate effective air gap, using Carters Coeff')
 
@@ -129,7 +129,7 @@ if __name__ == "__main__":
         p.model.connect('B_pk', f'{motor_path}.B_pk')
         p.model.connect('k_wb', f'{motor_path}.k_wb')
 
-        p.model.connect('l_slot_opening', f'{motor_path}.l_slot_opening')
+        # p.model.connect('l_slot_opening', f'{motor_path}.l_slot_opening')
         p.model.connect('k', f'{motor_path}.k')
         p.model.connect('gap', f'{motor_path}.gap')
 

@@ -18,7 +18,7 @@ class MotorSizeComp(om.ExplicitComponent):
         self.add_input('b_t', 2.4, units='T', desc='flux density of tooth')
         self.add_input('n_slots', 20, desc='Number of slots')
         self.add_input('n_turns', 12, desc='number of wire turns')
-        self.add_input('I', 30, units='A', desc='RMS current')
+        self.add_input('I', 30, units='A', desc='RMS current')  # Imax
         self.add_input('k_wb', 0.65, desc='bare wire slot fill factor')
 
         self.add_output('w_ry', .004, units='m', desc='width of stator yoke')
@@ -31,7 +31,7 @@ class MotorSizeComp(om.ExplicitComponent):
         self.add_output('w_slot', .015, units='m', desc='width of a slot')
         self.add_output('J', units='A/mm**2', desc='Current density')
 
-        self.declare_partials('*','*', method='fd')
+        # self.declare_partials('*','*', method='fd')
         self.declare_partials('w_ry', ['rot_or', 'B_g', 'n_m', 'k', 'b_ry'])
         self.declare_partials('w_sy', ['rot_or', 'B_g', 'n_m', 'k', 'b_sy'])
         self.declare_partials('w_t', ['rot_or','B_g','n_slots','k','b_t'])
@@ -61,7 +61,7 @@ class MotorSizeComp(om.ExplicitComponent):
         outputs['w_ry'] = (pi*rot_or*B_g)/(n_m*k*b_ry) 
         outputs['w_sy'] = (pi*rot_or*B_g)/(n_m*k*b_sy)
         outputs['w_t'] = (2*pi*rot_or*B_g) / (n_slots*k*b_t) 
-        outputs['s_d'] = radius_motor - rot_or - gap - outputs['w_sy']
+        outputs['s_d'] = radius_motor - rot_or - gap - ((pi*rot_or*B_g)/(n_m*k*b_sy))
         outputs['rot_ir'] = (rot_or- t_mag) - outputs['w_ry'] 
         outputs['sta_ir'] = rot_or + gap
         outputs['slot_area'] = pi/n_slots*((radius_motor**2 - (2*radius_motor*pi*rot_or*B_g)/(n_m*k*b_sy) + ((pi*rot_or*B_g)/(n_m*k*b_sy))**2) -  (rot_or**2 + 2*rot_or*gap + gap**2 ))   - ( 1.05*(2*pi*rot_or*B_g)/(n_slots*k*b_t) * (radius_motor - rot_or - gap - (pi*rot_or*B_g)/(n_m*k*b_sy)) )
@@ -119,9 +119,9 @@ class MotorSizeComp(om.ExplicitComponent):
         J['rot_ir', 'rot_or'] = (1 - t_mag) - (pi*B_g)/(n_m*k*b_ry) 
         J['rot_ir', 't_mag'] = (rot_or- 1) - (pi*rot_or*B_g)/(n_m*k*b_ry)   
         J['rot_ir', 'B_g'] = (rot_or- t_mag) - (pi*rot_or)/(n_m*k*b_ry) 
-        J['s_d', 'n_m'] = radius_motor - rot_or - gap + (pi*rot_or*B_g)/(n_m**2*k*b_ry)
-        J['s_d', 'k'] = radius_motor - rot_or - gap + (pi*rot_or*B_g)/(n_m*k**2*b_ry)
-        J['s_d', 'b_ry'] = radius_motor - rot_or - gap + (pi*rot_or*B_g)/(n_m*k*b_ry**2)
+        J['rot_ir', 'n_m'] = radius_motor - rot_or - gap + (pi*rot_or*B_g)/(n_m**2*k*b_ry)
+        J['rot_ir', 'k'] = radius_motor - rot_or - gap + (pi*rot_or*B_g)/(n_m*k**2*b_ry)
+        J['rot_ir', 'b_ry'] = radius_motor - rot_or - gap + (pi*rot_or*B_g)/(n_m*k*b_ry**2)
 
         # Stator Inner Radius
         J['sta_ir', 'rot_or'] =  1 + gap

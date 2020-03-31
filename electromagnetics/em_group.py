@@ -20,8 +20,9 @@ class EmGroup(om.Group):
 
         self.add_subsystem(name='carters',
                            subsys=CartersComp(),
-                           promotes_inputs=['gap', 'sta_ir', 'n_slots', 'l_slot_opening', 'w_slot', 's_d', 'w_t', 'slot_area', 't_mag', 'Br_20', 'T_coef_rem_mag', 'T_mag'],
-                           promotes_outputs=['Br', 'mech_angle', 't_1', 'carters_coef'])
+                           promotes_inputs=['gap', 'w_slot', 'w_t', 
+                           't_mag', 'Br_20', 'T_coef_rem_mag', 'T_mag'],  #  'l_slot_opening',
+                           promotes_outputs=['Br', 'carters_coef'])       #'mech_angle', 't_1',
 
         self.add_subsystem(name='equivalent_gap',
                            subsys=GapEquivalentComp(),

@@ -33,7 +33,7 @@ class ThermalGroup(om.Group):
     def setup(self):
         nn = self.options['num_nodes']
 
-        self.add_subsystem('comp', om.ExecComp('I_peak= I*2**0.5', I={'value': np.ones(nn)}), promotes_inputs=['I'], promotes_outputs=['I_peak'])
+        self.add_subsystem('comp', om.ExecComp('I_peak= I*2**0.5', I={'value': np.ones(nn), 'units':'A'}), promotes_inputs=['I'], promotes_outputs=['I_peak'])
 
 
         motor_interp = om.MetaModelStructuredComp(method='scipy_slinear')
