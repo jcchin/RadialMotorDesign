@@ -24,13 +24,13 @@ class Motor(om.Group):
 
         self.add_subsystem('em_properties', EmGroup(num_nodes=nn), promotes_inputs=['w_slot',             
                                                                         'w_t', 'T_coef_rem_mag', 'T_mag',            
-                                                                        'gap', 'carters_coef', 'k_sat', 'mu_o', 'stack_length',                  
-                                                                        'Hc_20', 'Br_20', 'Br', 'mu_r', 'g_eq', 't_mag',          
+                                                                        'gap', 'carters_coef', 'k_sat', 'stack_length',                  
+                                                                        'Br', 'mu_r', 'g_eq', 't_mag',          
                                                                         'B_g', 'n_m', 'n_turns', 'I', 'rot_or', 'sta_ir', 'rpm',  
                                                                         'P_wire', 'P_steinmetz', 'P_shaft', 'Tq_shaft', 'omega'],       #  'l_slot_opening',  
                                                         promotes_outputs=['Br', 'carters_coef', 'Tq_shaft', 'Tq_max',             
-                                                                          'g_eq', 'g_eq_q','omega', 'P_in', 'Eff',                               
-                                                                          'B_g', 'H_g', 'rot_volume', 'stator_surface_current'])        # 'mech_angle', 't_1',                                                   
+                                                                          'g_eq','omega', 'P_in', 'Eff',                               
+                                                                          'B_g', 'rot_volume', 'stator_surface_current'])        # 'mech_angle', 't_1',                                                   
                                                                                                                                      
         
         self.add_subsystem('geometry', SizeGroup(), promotes_inputs=['gap', 'B_g', 'k', 'b_ry', 'n_m',

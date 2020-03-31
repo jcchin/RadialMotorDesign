@@ -26,13 +26,13 @@ class EmGroup(om.Group):
 
         self.add_subsystem(name='equivalent_gap',
                            subsys=GapEquivalentComp(),
-                           promotes_inputs=['gap', 'carters_coef', 'k_sat', 't_mag', 'mu_o', 'mu_r'],
-                           promotes_outputs=['g_eq', 'g_eq_q'])
+                           promotes_inputs=['gap', 'carters_coef', 'k_sat'],
+                           promotes_outputs=['g_eq'])
 
         self.add_subsystem(name='gap_fields',
                            subsys=GapFieldsComp(),
-                           promotes_inputs=['Hc_20', 'Br_20', 'Br', 'mu_r', 'g_eq', 't_mag'],       
-                           promotes_outputs=['B_g', 'H_g'])
+                           promotes_inputs=['Br', 'mu_r', 'g_eq', 't_mag'],       
+                           promotes_outputs=['B_g'])
 
         self.add_subsystem(name='torque',
                            subsys=TorqueComp(num_nodes=nn),

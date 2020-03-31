@@ -105,8 +105,8 @@ if __name__ == "__main__":
         # -------------------------------------------------------------------------
         #                        Material Properties and Constants
         # -------------------------------------------------------------------------
-        p.model.connect('Hc_20', f'{motor_path}.Hc_20')
-        p.model.connect('Br_20', f'{motor_path}.Br_20')
+        # p.model.connect('Hc_20', f'{motor_path}.Hc_20')
+        # p.model.connect('Br_20', f'{motor_path}.Br_20')
         p.model.connect('k_sat', f'{motor_path}.k_sat')
         p.model.connect('mu_o', f'{motor_path}.mu_o')
         p.model.connect('mu_r', f'{motor_path}.mu_r')
