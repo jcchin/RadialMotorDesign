@@ -26,11 +26,11 @@ class Motor(om.Group):
                                                                         'w_t', 'T_coef_rem_mag', 'T_mag',            
                                                                         'gap', 'carters_coef', 'k_sat', 'stack_length',                  
                                                                         'Br', 'mu_r', 'g_eq', 't_mag',          
-                                                                        'B_g', 'n_m', 'n_turns', 'I', 'rot_or', 'sta_ir', 'rpm',  
+                                                                        'B_g', 'n_m', 'n_turns', 'I', 'rot_or',  'rpm',  
                                                                         'P_wire', 'P_steinmetz', 'P_shaft', 'Tq_shaft', 'omega'],       #  'l_slot_opening',  
                                                         promotes_outputs=['Br', 'carters_coef', 'Tq_shaft', 'Tq_max',             
                                                                           'g_eq','omega', 'P_in', 'Eff',                               
-                                                                          'B_g', 'rot_volume', 'stator_surface_current'])        # 'mech_angle', 't_1',                                                   
+                                                                          'B_g'])        # 'mech_angle', 't_1',                                                   
                                                                                                                                      
         
         self.add_subsystem('geometry', SizeGroup(), promotes_inputs=['gap', 'B_g', 'k', 'b_ry', 'n_m',
@@ -137,5 +137,4 @@ def print_motor(prob, motor_path=''):
     # print('Air gap field intensity ..........',  prob.get_val(f'{motor_path}H_g'))  
     print('Equivalent air gap ...............',  prob.get_val(f'{motor_path}g_eq', units='mm'))
     print('Carters Coefficient ..............',  prob.get_val(f'{motor_path}carters_coef'))
-    print('Ks1 ..............................',  prob.get_val(f'{motor_path}stator_surface_current'))
     print('Mu_r for magnet...................',  prob.get_val(f'{motor_path}Br'))

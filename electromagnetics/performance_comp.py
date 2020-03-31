@@ -25,62 +25,48 @@ class TorqueComp(om.ExplicitComponent):
 
        self.add_output('omega', 900*np.ones(nn), units='Hz', desc='mechanical rad/s')     
        self.add_output('Tq_shaft', 25*np.ones(nn), units='N*m', desc='torque')
-       self.add_output('rot_volume', .02*np.ones(nn), units='m**3', desc='rotor volume')
-       self.add_output('stator_surface_current', 50*np.ones(nn), units='A/m', desc='specific electrical loading')
-       self.add_output('Tq_max', 30*np.ones(nn), units='N*m', desc='max torque available')
+       self.add_output('Tq_max', 30*np.ones(nn), units='N*m', desc='max torque available')      
        
        r = c = np.arange(nn)  # for scalar variables only
-       # self.declare_partials('*','*', method='fd')
-       self.declare_partials('omega', ['rpm'], rows=r, cols=c)
+       self.declare_partials('omega', 'rpm', rows=r, cols=c)
        self.declare_partials('Tq_shaft', ['P_shaft', 'rpm'], rows=r, cols=c)
-       # self.declare_partials('Tq_max', ['stack_length', 'n_m', 'n_turns', 'B_g', 'rot_or', 'I'], rows=r, cols=c)
-       # self.declare_partials('rot_volume', ['rot_or', 'stack_length'])
-
-       
+       self.declare_partials('Tq_max', ['stack_length', 'n_m', 'n_turns', 'B_g', 'rot_or', 'I'], rows=r, cols=c)
 
     def compute(self,inputs,outputs):
-       n_m=inputs['n_m']
-       n_turns= inputs['n_turns']
-       B_g= inputs['B_g']
-       rot_or = inputs['rot_or']
-       I = inputs['I']
-       sta_ir = inputs['sta_ir']
-       rpm = inputs['rpm']
-       P_shaft = inputs['P_shaft']
-       stack_length = inputs['stack_length']
+        n_m=inputs['n_m']
+        n_turns= inputs['n_turns']
+        B_g= inputs['B_g']
+        rot_or = inputs['rot_or']
+        I = inputs['I']
+        rpm = inputs['rpm']
+        P_shaft = inputs['P_shaft']
+        stack_length = inputs['stack_length'] 
 
-       outputs['omega'] = rpm*2*pi/60 
-       # outputs['stator_surface_current'] = 6 * 0.75*96/(2*sta_ir*np.pi) * I*np.sqrt(2)    # 0.75 represents the winding factor. This low value is required to match SEL from motor-cad
-       outputs['Tq_shaft'] = P_shaft/(rpm*2*pi/60)
-       outputs['Tq_max'] = stack_length*2*n_m*n_turns*B_g*rot_or*I    # Eqn 4.11, pg 79, from D.Hansleman book
-       # outputs['rot_volume'] = (np.pi * rot_or**2 * stack_length)
+        outputs['omega'] = rpm*2*pi/60 
+        outputs['Tq_shaft'] = P_shaft/(rpm*2*pi/60)
+        outputs['Tq_max'] = stack_length*2*n_m*n_turns*B_g*rot_or*I    # Eqn 4.11, pg 79, from D.Hansleman book
 
-    # def compute_partials(self,inputs,J):
-    #    n_m=inputs['n_m']
-    #    n= inputs['n']
-    #    B_g= inputs['B_g']
-    #    stack_length= inputs['stack_length']
-    #    rot_or = inputs['rot_or']
-    #    i = inputs['i']
+    def compute_partials(self,inputs,J):
+        n_m=inputs['n_m']
+        n_turns= inputs['n_turns']
+        B_g= inputs['B_g']
+        rot_or = inputs['rot_or']
+        I = inputs['I']
+        rpm = inputs['rpm']
+        P_shaft = inputs['P_shaft']
+        stack_length = inputs['stack_length']
 
-    #    J['Tq','n_m'] = 2*n*B_g*stack_length*rot_or*i
-    #    J['Tq', 'n'] = 2*n_m*B_g*stack_length*rot_or*i
-    #    J['Tq', 'B_g'] = 2*n_m*n*stack_length*rot_or*i
-    #    J['Tq', 'stack_length'] = 2*n_m*n*B_g*rot_or*i
-    #    J['Tq', 'rot_or'] = 2*n_m*n*B_g*stack_length*i
-    #    J['Tq', 'i'] = 2*n_m*n*B_g*stack_length*rot_or
+        J['omega', 'rpm'] = 2*pi/60 
 
-    # class pmsm_torque(ExplicitComponent):
+        J['Tq_shaft', 'P_shaft'] = 1/(rpm*2*pi/60)
+        J['Tq_shaft', 'rpm'] = -P_shaft/(rpm**2*2*pi/60)
 
-    #   def setup(self):
-    #     self.add_input('n_phase', units=None, desc='number of phases')
-    #     self.add_input('pole_pairs', units=None, desc='number of pole pairs')
-    #     self.add_input('wind_fact', units='V', desc='winding factor')
-    #     self.add_input('n_turns_phase', units=None, desc='number of wire turns per phase')
-
-    #     self.add_output('torque_const', units=None, desc='torque constant')
-
-    #     self.add_input('')
+        J['Tq_max', 'stack_length'] = 2*n_m*n_turns*B_g*rot_or*I
+        J['Tq_max', 'n_m'] = stack_length*2*n_turns*B_g*rot_or*I
+        J['Tq_max', 'n_turns'] = stack_length*2*n_m*B_g*rot_or*I
+        J['Tq_max', 'B_g'] = stack_length*2*n_m*n_turns*rot_or*I
+        J['Tq_max', 'rot_or'] = stack_length*2*n_m*n_turns*B_g*I
+        J['Tq_max', 'I'] = stack_length*2*n_m*n_turns*B_g*rot_or
 
 
 class EfficiencyComp(om.ExplicitComponent):
@@ -99,18 +85,9 @@ class EfficiencyComp(om.ExplicitComponent):
         self.add_output('P_in', 15*np.ones(nn), units='kW', desc='input power')
         self.add_output('Eff', 0.90*np.ones(nn), desc='efficiency of motor')
         
-        r = c = np.arange(nn)  # for scalar variables only
-        self.declare_partials('*','*', method='fd')
-        self.declare_partials('P_in', ['Tq_shaft', 'omega'], rows=r, cols=c)
-        self.declare_partials(of='P_in', wrt='P_wire', rows=r, cols=c, val=1.0)
-        self.declare_partials(of='P_in', wrt='P_steinmetz', rows=r, cols=c, val=1.0)
-
-
-        self.declare_partials('Eff', ['P_shaft', 'Tq_shaft', 'omega'], rows=r, cols=c)
-        self.declare_partials(of='Eff', wrt='P_wire', rows=r, cols=c, val=1.0)
-        self.declare_partials(of='Eff', wrt='P_steinmetz', rows=r, cols=c, val=1.0)
-
-
+        r = c = np.arange(nn)
+        self.declare_partials('P_in', ['Tq_shaft', 'omega', 'P_wire', 'P_steinmetz'], rows=r, cols=c)
+        self.declare_partials('Eff', ['P_shaft', 'Tq_shaft', 'omega', 'P_wire', 'P_steinmetz'], rows=r, cols=c)
 
     def compute(self, inputs, outputs):
         rpm = inputs['rpm']
@@ -121,5 +98,23 @@ class EfficiencyComp(om.ExplicitComponent):
         omega = inputs['omega']
 
         outputs['P_in']  = (Tq_shaft*omega) + P_wire + P_steinmetz       
-
         outputs['Eff'] =  P_shaft / outputs['P_in']
+
+    def compute_partials(self, inputs, J):
+        rpm = inputs['rpm']
+        P_wire = inputs['P_wire']
+        P_steinmetz =inputs['P_steinmetz']
+        P_shaft = inputs['P_shaft']
+        Tq_shaft = inputs['Tq_shaft']
+        omega = inputs['omega']
+
+        J['P_in', 'Tq_shaft'] = omega  
+        J['P_in', 'omega'] = Tq_shaft
+        J['P_in', 'P_wire'] = 1
+        J['P_in', 'P_steinmetz'] = 1
+
+        J['Eff', 'P_shaft'] = 1 / ( (Tq_shaft*omega) + P_wire + P_steinmetz  )
+        J['Eff', 'Tq_shaft'] = -omega*P_shaft / ( (Tq_shaft*omega) + P_wire + P_steinmetz  )**2
+        J['Eff', 'omega'] = -Tq_shaft*P_shaft / ( (Tq_shaft*omega) + P_wire + P_steinmetz  )**2
+        J['Eff', 'P_wire'] = -P_shaft / ( (Tq_shaft*omega) + P_wire + P_steinmetz  )**2
+        J['Eff', 'P_steinmetz'] = -P_shaft / ( (Tq_shaft*omega) + P_wire + P_steinmetz  )**2
