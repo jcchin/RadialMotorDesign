@@ -57,7 +57,7 @@ class Motor(om.Group):
         self.linear_solver = om.DirectSolver()
 
         newton = self.nonlinear_solver = om.NewtonSolver()
-        newton.options['maxiter'] = 15
+        newton.options['maxiter'] = 25
         newton.options['iprint'] = 2
         newton.options['solve_subsystems'] = True
 

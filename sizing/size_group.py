@@ -20,4 +20,4 @@ class SizeGroup(om.Group):
                            subsys=MotorMassComp(),
                            promotes_inputs=['rho', 'radius_motor', 'n_slots', 'sta_ir', 'w_t', 'stack_length',
                                             's_d', 'rot_or', 'rot_ir', 't_mag', 'rho_mag'],
-                           promotes_outputs=['mag_mass', 'sta_mass', 'rot_mass', 'motor_mass'])
+                           promotes_outputs=['mag_mass', 'sta_mass', 'rot_mass'])

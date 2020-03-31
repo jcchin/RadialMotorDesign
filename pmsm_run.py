@@ -10,7 +10,6 @@
     # Material may matter, can do a cost / mass study
     # What voltage and current
     # What are geometry constraints: diameter, length
-    # Need to implement air gap calculation 
     # RPM from NDARC
 
 import numpy as np
@@ -87,9 +86,6 @@ if __name__ == "__main__":
     ind.add_output('gap', 0.0010, units='m', desc='Air gap distance, Need to calculate effective air gap, using Carters Coeff')
 
     def motor_spec_connect(motor_path): 
-        # p.model.connect('P_shaft', f'{motor_path}.P_shaft')
-
-        # p.model.connect('stack_length', f'{motor_path}.stack_length')
         p.model.connect('radius_motor', f'{motor_path}.radius_motor')
         p.model.connect('n_turns', f'{motor_path}.n_turns')
         p.model.connect('n_slots', f'{motor_path}.n_slots')
@@ -105,8 +101,6 @@ if __name__ == "__main__":
         # -------------------------------------------------------------------------
         #                        Material Properties and Constants
         # -------------------------------------------------------------------------
-        # p.model.connect('Hc_20', f'{motor_path}.Hc_20')
-        # p.model.connect('Br_20', f'{motor_path}.Br_20')
         p.model.connect('k_sat', f'{motor_path}.k_sat')
         p.model.connect('mu_o', f'{motor_path}.mu_o')
         p.model.connect('mu_r', f'{motor_path}.mu_r')
@@ -216,5 +210,6 @@ if __name__ == "__main__":
 # plt.ylabel('Current')
 # plt.title('Efficiency Plot')
 # plt.savefig("Efficiency_Plot.pdf")
-    
 
+# Testing Derivatives
+    

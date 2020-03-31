@@ -13,15 +13,15 @@ class TorqueComp(om.ExplicitComponent):
 
     def setup(self):
        nn = self.options['num_nodes']
-       self.add_input('B_g', 1*np.ones(nn), units='T', desc='air gap flux density')    
-       self.add_input('n_m', 20*np.ones(nn), desc='number of magnets')
-       self.add_input('n_turns', 12*np.ones(nn), desc='number of wire turns')
+       self.add_input('B_g', 1, units='T', desc='air gap flux density')    
+       self.add_input('n_m', 20, desc='number of magnets')
+       self.add_input('n_turns', 12, desc='number of wire turns')
        self.add_input('I', 35*np.ones(nn), units='A', desc='RMS current')       
-       self.add_input('rot_or', 0.060*np.ones(nn), units='m', desc='rotor outer radius')
-       self.add_input('sta_ir', 0.060*np.ones(nn), units='m', desc='stator inner radius')
+       self.add_input('rot_or', 0.060, units='m', desc='rotor outer radius')
+       self.add_input('sta_ir', 0.060, units='m', desc='stator inner radius')
        self.add_input('P_shaft', 14000*np.ones(nn), units='W', desc='output power') 
        self.add_input('rpm', 5000*np.ones(nn), units='rpm', desc='Rotational Speed')
-       self.add_input('stack_length', .0345*np.ones(nn), units='m', desc='stack length')
+       self.add_input('stack_length', .0345, units='m', desc='stack length')
 
        self.add_output('omega', 900*np.ones(nn), units='Hz', desc='mechanical rad/s')     
        self.add_output('Tq_shaft', 25*np.ones(nn), units='N*m', desc='torque')
