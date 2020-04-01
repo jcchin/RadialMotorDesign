@@ -27,7 +27,7 @@ class Motor(om.Group):
                                                                         'gap', 'carters_coef', 'k_sat', 'stack_length',                  
                                                                         'Br', 'mu_r', 'g_eq', 't_mag',          
                                                                         'B_g', 'n_m', 'n_turns', 'I', 'rot_or',  'rpm',  
-                                                                        'P_wire', 'P_steinmetz', 'P_shaft', 'Tq_shaft', 'omega'],       #  'l_slot_opening',  
+                                                                        'P_wire', 'P_steinmetz', 'sta_mass', 'P_shaft', 'Tq_shaft', 'omega'],       #  'l_slot_opening',  
                                                         promotes_outputs=['Br', 'carters_coef', 'Tq_shaft', 'Tq_max',             
                                                                           'g_eq','omega', 'P_in', 'Eff',                               
                                                                           'B_g'])        # 'mech_angle', 't_1',                                                   
@@ -37,7 +37,7 @@ class Motor(om.Group):
                                                                     'b_sy', 'b_t', 'n_turns', 'I', 'k_wb',
                                                                     'rho', 'radius_motor', 'n_slots', 'sta_ir', 'w_t', 'stack_length',
                                                                     's_d', 'rot_or', 'rot_ir', 't_mag', 'rho_mag'],
-                                                     promotes_outputs=['J', 'w_ry', 'w_sy', 'w_t', 'sta_ir', 'rot_ir', 's_d', 'motor_mass',
+                                                     promotes_outputs=['J', 'w_ry', 'w_sy', 'w_t', 'sta_ir', 'rot_ir', 's_d', 
                                                                      'mag_mass', 'sta_mass', 'rot_mass', 'slot_area', 'w_slot'])
 
 
@@ -111,7 +111,7 @@ def print_motor(prob, motor_path=''):
     print('Mass of Stator....................',  prob.get_val(f'{motor_path}sta_mass', units='kg'))
     print('Mass of Rotor.....................',  prob.get_val(f'{motor_path}rot_mass', units='kg'))
     print('Mass of Magnets...................',  prob.get_val(f'{motor_path}mag_mass', units='kg')) 
-    print('Mass of Motor.....................',  prob.get_val(f'{motor_path}motor_mass', units='kg') + prob.get_val(f'{motor_path}rot_mass', units='kg') + prob.get_val(f'{motor_path}sta_mass', units='kg'))   
+    print('Mass of Motor.....................',  prob.get_val(f'{motor_path}mag_mass', units='kg') + prob.get_val(f'{motor_path}rot_mass', units='kg') + prob.get_val(f'{motor_path}sta_mass', units='kg'))   
     
 
     print('--------------LOSSES-------------')
@@ -126,7 +126,7 @@ def print_motor(prob, motor_path=''):
     # print('Temp Dependent Resistivity.......', prob.get_val(f'{motor_path}temp_resistivity', units='ohm*m'))
 
     print('--------------EM PERF-------------')
-    print('Power In  ........................',  prob.get_val(f'{motor_path}P_in'))
+    print('Power Required....................',  prob.get_val(f'{motor_path}P_in'))
     # print('Power out  .......................',  prob.get_val(f'{motor_path}P_shaft'))
     print('Electrical Frequency..............',  prob.get_val(f'{motor_path}f_e'))
     print('Torque............................',  prob.get_val(f'{motor_path}Tq_shaft'))

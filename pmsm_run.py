@@ -143,7 +143,7 @@ if __name__ == "__main__":
     p.model.connect('DES:stack_length', 'OD1.stack_length') # DES to OD1 to make sure it stays constant
     p.model.connect('OD:P_shaft', 'OD1.P_shaft')
 
-    # #ODEDriver used for Off-Design Analysis by varying RPM and I
+    # #DOEDriver used for Off-Design Analysis by varying RPM and I
     # p.model.add_design_var('OD:rpm', lower=200, upper=5400)
     # p.model.add_design_var('OD:I', lower=10, upper=34.355)
     # p.model.add_objective('OD1.Eff')
@@ -211,5 +211,3 @@ if __name__ == "__main__":
 # plt.title('Efficiency Plot')
 # plt.savefig("Efficiency_Plot.pdf")
 
-# Testing Derivatives
-    

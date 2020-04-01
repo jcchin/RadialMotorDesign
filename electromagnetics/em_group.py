@@ -6,8 +6,8 @@ from math import pi
 import openmdao.api as om
 
 # from ..size_comp import MotorSizeComp
-from electromagnetics.fields_comp import GapFieldsComp, CartersComp, GapEquivalentComp
-from electromagnetics.performance_comp import TorqueComp, EfficiencyComp
+from fields_comp import GapFieldsComp, CartersComp, GapEquivalentComp
+from performance_comp import TorqueComp, EfficiencyComp
 
 
 
@@ -41,7 +41,7 @@ class EmGroup(om.Group):
 
         self.add_subsystem(name='motor_efficiency', 
                            subsys=EfficiencyComp(num_nodes=nn),
-                           promotes_inputs=['P_wire', 'P_steinmetz', 'P_shaft', 'Tq_shaft', 'omega', 'rpm'],
+                           promotes_inputs=['P_wire', 'P_steinmetz', 'P_shaft', 'Tq_shaft', 'omega', 'rpm', 'sta_mass'],
                            promotes_outputs=['P_in', 'Eff'])
 
 

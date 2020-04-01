@@ -57,6 +57,7 @@ class MotorSizeComp(om.ExplicitComponent):
         n_slots = inputs['n_slots']
         b_t = inputs['b_t']
         rot_or = inputs['rot_or']
+
         # variable for pi*rot_or*...
         # replace eqns with outputs
 
@@ -66,8 +67,10 @@ class MotorSizeComp(om.ExplicitComponent):
         outputs['s_d'] = radius_motor - rot_or - gap - ((pi*rot_or*B_g)/(n_m*k*b_sy))
         outputs['rot_ir'] = (rot_or- t_mag) - outputs['w_ry'] 
         outputs['sta_ir'] = rot_or + gap
-        outputs['slot_area'] = pi/n_slots*((radius_motor**2 - (2*radius_motor*pi*rot_or*B_g)/(n_m*k*b_sy) + ((pi*rot_or*B_g)/(n_m*k*b_sy))**2) -  (rot_or**2 + 2*rot_or*gap + gap**2 ))   - ( 1.05*(2*pi*rot_or*B_g)/(n_slots*k*b_t) * (radius_motor - rot_or - gap - (pi*rot_or*B_g)/(n_m*k*b_sy)) )
-        outputs['w_slot']    = ( pi/n_slots*((radius_motor**2 - (2*radius_motor*pi*rot_or*B_g)/(n_m*k*b_sy) + ((pi*rot_or*B_g)/(n_m*k*b_sy))**2) -  (rot_or**2 + 2*rot_or*gap + gap**2 ))   - ( (2*pi*rot_or*B_g)/(n_slots*k*b_t) * (radius_motor - rot_or - gap - (pi*rot_or*B_g)/(n_m*k*b_sy)) ) ) / (radius_motor - rot_or - gap - ((pi*rot_or*B_g)/(n_m*k*b_sy)))         #outputs['slot_area'] / outputs['s_d']
+        outputs['slot_area'] = pi/n_slots*((radius_motor**2 - (2*radius_motor*pi*rot_or*B_g)/(n_m*k*b_sy) + ((pi*rot_or*B_g)/(n_m*k*b_sy))**2) -  (rot_or**2 + 2*rot_or*gap + gap**2 ))  \
+         - ( 1.05*(2*pi*rot_or*B_g)/(n_slots*k*b_t) * (radius_motor - rot_or - gap - (pi*rot_or*B_g)/(n_m*k*b_sy)) )
+        outputs['w_slot']    = ( pi/n_slots*((radius_motor**2 - (2*radius_motor*pi*rot_or*B_g)/(n_m*k*b_sy) + ((pi*rot_or*B_g)/(n_m*k*b_sy))**2) -  (rot_or**2 + 2*rot_or*gap + gap**2 )) \
+          - ( (2*pi*rot_or*B_g)/(n_slots*k*b_t) * (radius_motor - rot_or - gap - (pi*rot_or*B_g)/(n_m*k*b_sy)) ) ) / (radius_motor - rot_or - gap - ((pi*rot_or*B_g)/(n_m*k*b_sy)))         #outputs['slot_area'] / outputs['s_d']
         outputs['J'] = 2*n_turns*I*(2.**0.5)/(k_wb*(outputs['slot_area'])*1E6)
 
     # def compute_partials(self, inputs, J):
@@ -129,42 +132,86 @@ class MotorSizeComp(om.ExplicitComponent):
     #     J['sta_ir', 'rot_or'] =  1 + gap
     #     J['sta_ir', 'gap'] =  rot_or + 1
 
-    #     # Slot Area
-        J['slot_area', 'n_slots'] = -(pi/n_slots**2)*((radius_motor**2 - (2*radius_motor*pi*rot_or*B_g)/(n_m*k*b_sy) + ((pi*rot_or*B_g)/(n_m*k*b_sy))**2) -  \
-                                    (rot_or**2 + 2*rot_or*gap + gap**2 )) - ((-2*pi*rot_or*B_g)/(n_slots**2 * k*b_t) * (radius_motor - rot_or - gap - (pi*rot_or*B_g)/(n_m*k*b_sy))) 
-    #     J['slot_area', 'radius_motor'] = pi/n_slots*(2*radius_motor - (2*pi*rot_or*B_g)/(n_m*k*b_sy)) -  (2*pi*rot_or*B_g)/(n_slots*k*b_t)
-    #     J['slot_area', 'rot_or'] = (pi/n_slots) * ((-2*radius_motor*pi*B_g)/(n_m*k*b_sy) + 2*rot_or*pi*B_g/(n_m*k*b_sy) - (2*rot_or + 2*gap)) - (2*pi*B_g/(n_slots*k*b_t) * (radius_motor - 2*rot_or - (2*pi*rot_or*B_g/(n_m*k*b_sy))))
-    #     J['slot_area', 'B_g'] = (pi/n_slots) * (2*radius_motor*pi*rot_or/(n_m*k*b_sy) + 2*B_g*(pi*rot_or/n_m/k/b_sy)**2  ) - (2*pi*rot_or/n_slots/k/b_t * (radius_motor - rot_or - gap - (2*pi*rot_or*B_g/n_m/k/b_sy)))
-    #     J['slot_area', 'n_m'] = (pi/n_slots) * ((2*radius_motor*pi*rot_or*B_g)/(n_m**2 *k*b_sy) - ((pi*rot_or*B_g)/(k*b_sy))**2 * n_m**-3) - ((2*pi**2*rot_or**2*B_g**2)/(n_slots*k**2*b_t*b_sy*n_m**2))
-    #     J['slot_area', 'k'] =   (pi/n_slots) * ((2*radius_motor*pi*rot_or*B_g)/(n_m*k**2 *b_sy) - ((pi*rot_or*B_g)/(n_m*b_sy))**2 * k**-3) - ((-2*pi*rot_or*B_g)/(n_slots*k**2 *b_t) * (radius_motor - rot_or - gap) - (4*pi**2 *rot_or**2 *B_g**2)/(n_m* k**3 *b_sy*b_t*n_slots))
-    #     J['slot_area', 'b_sy'] =  (pi/n_slots) * ((2*radius_motor*pi*rot_or*B_g)/(n_m*k *b_sy**2) - ((pi*rot_or*B_g)/(n_m*k))**2 * b_sy**-3) - ((2*pi*rot_or*B_g)/(n_slots*k*b_t) * ((pi*rot_or*B_g)/(n_m*k*b_sy**2)))
-    #     J['slot_area', 'gap'] = pi/n_slots*(-2*rot_or + 2*gap) - ((-2*pi*rot_or*B_g)/(n_slots*k*b_t))
-    #     J['slot_area', 'b_t'] = - ( (-2*pi*rot_or*B_g)/(n_slots*k *b_t**2) * (radius_motor - rot_or - gap) - (2*pi**2 *rot_or**2 *B_g**2)/(n_m* k**2 *b_sy*b_t**2 *n_slots))
+        # Slot Area
+        # J['slot_area', 'n_slots'] = -(pi/n_slots**2)*((radius_motor**2 - (2*radius_motor*pi*rot_or*B_g)/(n_m*k*b_sy) +                          \
+        #                             ((pi*rot_or*B_g)/(n_m*k*b_sy))**2) - (rot_or**2 + 2*rot_or*gap + gap**2 )) -                                \
+        #                             ((-2*pi*rot_or*B_g)/(n_slots**2 * k*b_t) * (radius_motor - rot_or - gap - (pi*rot_or*B_g)/(n_m*k*b_sy))) 
 
-    #     # Slot Width 
-    #     J['w_slot', 'n_slots'] = ((4*pi**2*B_g*rot_or)/(k*n_slots**3*b_t)) - ((pi*((pi**2*B_g**2*rot_or**2)/(k**2*n_m**2*b_sy**2) - (2*pi*B_g*radius_motor*rot_or)/(k*n_m*b_sy) + gap**2- 2*gap*rot_or + radius_motor**2 - rot_or)) / (n_slots**2 * ((-pi*B_g*rot_or)/(k*n_m*b_sy) - gap + radius_motor - rot_or))  )
-    #     J['w_slot', 'radius_motor'] = (( pi*(2*radius_motor - (2*pi*B_g*rot_or)/(k*n_m*b_sy)) )/( n_slots* ((-pi*B_g*rot_or)/(k*n_m*b_sy) - gap + radius_motor - rot_or))) - (pi*((pi**2*B_g**2*rot_or**2)/(k**2*n_m**2*b_sy**2) - (2*pi*B_g*radius_motor*rot_or)/(k*n_m*b_sy) + gap**2-2*gap*rot_or*radius_motor**2 - rot_or )/( n_slots *( (-pi*B_g*rot_or)/(k*n_m*b_sy) - gap + radius_motor - rot_or )**2 )  )
-    #     J['w_slot', 'rot_or'] = ((-pi*(-pi*B_g/(k*n_m*b_sy)-1) * ((pi**2*B_g**2*rot_or**2)/(k**2*n_m**2*b_sy**2) - (2*pi*B_g*radius_motor*rot_or)/(k*n_m*b_sy) + gap**2-2*gap*rot_or+radius_motor**2- rot_or)) / (n_slots*( (-pi*B_g*rot_or)/(k*n_m*b_sy)-gap+radius_motor- rot_or )**2)) + (pi*((2*pi**2*B_g*rot_or)/(k**2*n_m**2*b_sy**2) - ((2*pi*B_g*radius_motor)/(k*n_m*b_sy) -2*gap- n_slots ) ) / (  (n_slots*((-pi*B_g*rot_or)/(k*n_m*b_sy)-gap+radius_motor- rot_or) ))) - (2*pi**2*B_g)/(k*n_slots**2*b_t)  
-    #     J['w_slot', 'B_g'] = (pi**2*rot_or*(((pi*B_g*rot_or)/(k*n_m*b_sy))**2 - (2*pi*B_g*radius_motor*rot_or)/(n_m*k*b_sy) + gap**2 - 2*gap*rot_or + radius_motor**2 - rot_or)) / (k*n_slots*n_m*b_sy*((-pi*B_g*rot_or)/(k*n_m*b_sy) -gap+radius_motor-rot_or )**2)   +   ((2*pi*B_g*( ((pi*rot_or)/(k*n_m*b_sy))**2 - (2*pi*radius_motor*rot_or)/(B_g*k*n_m*b_sy)))/( n_slots*((-pi*B_g*rot_or)/(k*n_m*b_sy) - gap+radius_motor-rot_or )))   -   ((2*pi**2*rot_or)/(k*n_slots**2*b_t))
-    #     # J['w_slot', 'n_m'] = ((2*pi**2*/n_m*((B_g*radius_motor*rot_or)/(k*n_m*b_sy) - pi*((B_g*rot_or)/(k*n_m*b_sy))**2)) / n_slots*((-pi*B_g*rot_or)/(k*n_m*b_sy)-gap+radius_motor-rot_or)) - ((pi**2*B_g*rot_or*(((pi*B_g*rot_or)/(k*n_m*b_sy))**2 - (2*pi*B_g*radius_motor*rot_or)/(k*n_m*b_sy) + gap**2-2*gap*rot_or + radius_motor**2 - rot_or)) / (k*n_slots*n_m**2*b_sy*((-pi*B_g*rot_or)/(k*n_m*b_sy) - gap + radius_motor - rot_or)**2))
-    #     J['w_slot', 'k'] = -(pi**2*B_g*rot_or*( ((pi*B_g*rot_or)/(k*n_m*b_sy))**2 - (2*radius_motor*pi*B_g*rot_or)/(k*n_m*b_sy) + gap**2 - 2*gap*rot_or + radius_motor**2 - rot_or)) / (k**2*n_slots*n_m*b_sy*((-pi*B_g*rot_or)/(k*n_m*b_sy) -gap + radius_motor - rot_or)**2)  +  ((pi*((2*radius_motor*pi*B_g*rot_or)/(k**2*n_m*b_sy) - (2*pi**2*B_g**2*rot_or**2)/(k**3*n_m**2*b_sy**2))) / (n_slots*((-pi*B_g*rot_or)/(k*n_m*b_sy) - gap+radius_motor-rot_or))) + ((2*pi**2*B_g*rot_or)/(k**2*n_slots**2*b_t))
-    #     J['w_slot', 'b_sy'] = ((pi*((2*pi*B_g*radius_motor*rot_or)/(k*n_m*b_sy) - (2*pi**2*B_g**2*rot_or**2)/(k**2*n_m**2*b_sy**3))) / (n_slots*(  (-pi*B_g*rot_or)/(k*n_m*b_sy) - gap + radius_motor - rot_or  ))) - (  pi**2*B_g*rot_or*(  ((pi*B_g*rot_or)/(k*n_m*b_sy))**2 - (2*pi*B_g*radius_motor*rot_or)/(k*n_m*b_sy) + gap**2- 2*gap*rot_or+ radius_motor**2- rot_or  ) / ( k*n_slots*n_m*b_sy**2*( (-pi*B_g*rot_or)/(k*n_m*b_sy)-gap+radius_motor-rot_or )**2 )  )
-    #     J['w_slot', 'gap'] = ((pi*(  ((pi*B_g*rot_or)/(k*n_m*b_sy))**2 - (2*pi*B_g*rot_or*radius_motor)/(k*n_m*b_sy) + gap**2- 2*gap*rot_or+ radius_motor**2- rot_or  )) / (n_slots*(  (pi*B_g*rot_or)/(k*n_m*b_sy) - gap+ radius_motor- rot_or  )**2)) + (pi*(2*gap- 2*rot_or))/(n_slots*( (-pi*B_g*rot_or)/(k*n_m*b_sy) - gap+ radius_motor- rot_or))
-    #     J['w_slot', 'b_t'] = (2*pi**2*B_g*rot_or)/(k*n_slots**2*b_t**2)
+        # J['slot_area', 'radius_motor'] = pi/n_slots*(2*radius_motor - (2*pi*rot_or*B_g)/(n_m*k*b_sy)) -  (2*pi*rot_or*B_g)/(n_slots*k*b_t)
 
-    #     # Current density
-    #     J['J', 'n_turns'] = 2*I*(2.**0.5)/(k_wb*(pi/n_slots*((radius_motor**2 - (2*radius_motor*pi*rot_or*B_g)/(n_m*k*b_sy) + ((pi*rot_or*B_g)/(n_m*k*b_sy))**2) -  (rot_or**2 + 2*rot_or*gap + gap**2 ))   - ( 1.05*(2*pi*rot_or*B_g)/(n_slots*k*b_t) * (radius_motor - rot_or - gap - (pi*rot_or*B_g)/(n_m*k*b_sy)) ))*1E6)
-    #     J['J', 'I'] = 2*n_turns*(2.**0.5)/(k_wb*(pi/n_slots*((radius_motor**2 - (2*radius_motor*pi*rot_or*B_g)/(n_m*k*b_sy) + ((pi*rot_or*B_g)/(n_m*k*b_sy))**2) -  (rot_or**2 + 2*rot_or*gap + gap**2 ))   - ( 1.05*(2*pi*rot_or*B_g)/(n_slots*k*b_t) * (radius_motor - rot_or - gap - (pi*rot_or*B_g)/(n_m*k*b_sy)) ))*1E6)
-    #     J['J', 'k_wb'] = -2*n_turns*I*(2.**0.5)/(k_wb**2*(pi/n_slots*((radius_motor**2 - (2*radius_motor*pi*rot_or*B_g)/(n_m*k*b_sy) + ((pi*rot_or*B_g)/(n_m*k*b_sy))**2) -  (rot_or**2 + 2*rot_or*gap + gap**2 ))   - ( 1.05*(2*pi*rot_or*B_g)/(n_slots*k*b_t) * (radius_motor - rot_or - gap - (pi*rot_or*B_g)/(n_m*k*b_sy)) ))*1E6)
-    #     # J['J', 'n_slots'] = (2*sqrt{2}*I*k**2*n_m*b_t*n_turns*b_sy)/(rot_or*(pi*B_g**2*(pi*k*b_t + 6.59734*rot_or) + 2*B_g*k*(n*b_sy*(3.29867*g + 3.29867*rot_or) - radius_motor*(3.29867*n_m*b_sy + pi**2*b_t))) + pi*k**2*n_m*b_t*b_sy*(gap**2 - 2*gap*rot_or + m**2 - rot_or**2))
-    #     J['J', 'radius_motor'] = (5.65685*(3.29867*I*B_g*k**3*n_slots*n_m**2*rot_or*b_t*n_turns*b_sy**2 + 9.8696*I*B_g*k**3*n_slots*n_m*rot_or*b_t**2*n_turns*b_sy - pi*I*k**4*n_slots*radius_motor*n_m**2*b_t**2*n_turns*b_sy**2))/(9.8696*B_g**2*k*rot_or*b_t + 20.7262*B_g**2*rot_or**2 + 6.59734*B_g*gap*k*n_m*rot_or*b_sy - 6.59734*B_g*k*radius_motor*n_m*rot_or*b_sy - 19.7392*B_g*k*radius_motor*rot_or*b_t + 6.59734*B_g*k*n_m*rot_or**2*b_sy + pi*gap**2*k**2*n_m*b_t*b_sy - 6.28319*gap*k**2*n_m*rot_or*b_t*b_sy + pi*k**2*radius_motor**2*n_m*b_t*b_sy - pi*k**2*n_m*rot_or**2*b_t*b_sy)**2
-    #     J['J', 'rot_or'] = (1.80063*I*k**2*n_slots*n_m*b_t*n_turns*b_sy*(B_g**2*(-1.5708*k*b_t - 6.59734*rot_or) + B_g*k*(-1.05*gap*n_m*b_sy + 1.05*radius_motor*n_m*b_sy + pi*radius_motor*b_t - 2.1*n_m*rot_or*b_sy) + k**2*n_m*b_t*b_sy*(gap + rot_or)))/(B_g**2*rot_or*(-pi*k*b_t - 6.59734*rot_or) + B_g*k*rot_or*(-2.1*gap*n_m*b_sy + 2.1*radius_motor*n_m*b_sy + 6.28319*radius_motor*b_t - 2.1*n_m*rot_or*b_sy) + k**2*n_m*b_t*b_sy*(-gap**2 + 2*gap*rot_or - radius_motor**2 + rot_or**2))**2
-    #     J['J', 'B_g'] = -(1.89066*I*k**2*n_slots*n_m*rot_or*b_t*n_turns*b_sy*(B_g*(2.99199*k*b_t + 6.28319*rot_or) + k*(gap*n_m*b_sy - radius_motor*n_m*b_sy - 2.99199*radius_motor*b_t + n_m*rot_or*b_sy)))/(B_g**2*rot_or*(-pi*k*b_t - 6.59734*rot_or) + B_g*k*rot_or*(-2.1*gap*n_m*b_sy + 2.1*radius_motor*n_m*b_sy + 6.28319*radius_motor*b_t - 2.1*n_m*rot_or*b_sy) + k**2*n_m*b_t*b_sy*(-gap**2 + 2*gap*rot_or - radius_motor**2 + rot_or**2))**2
-    #     J['J', 'n_m'] = (2.82843*k**2*n_slots*b_t*b_sy*(9.8696*I*B_g**2*k*rot_or*b_t*n_turns + 20.7262*I*B_g**2*rot_or**2*n_turns - 19.7392*I*B_g*k*radius_motor*rot_or*b_t*n_turns))/(9.8696*B_g**2*k*rot_or*b_t + 20.7262*B_g**2*rot_or**2 + 6.59734*B_g*gap*k*n_m*rot_or*b_sy - 6.59734*B_g*k*radius_motor*n_m*rot_or*b_sy - 19.7392*B_g*k*radius_motor*rot_or*b_t + 6.59734*B_g*k*n_m*rot_or**2*b_sy + pi*gap**2*k**2*n_m*b_t*b_sy - 6.28319*gap*k**2*n_m*rot_or*b_t*b_sy + pi*k**2*radius_motor**2*n_m*b_t*b_sy - pi*k**2*n_m*rot_or**2*b_t*b_sy)**2
-    #     J['J', 'k'] = (2.82843*(9.8696*I*B_g**2*k**2*n_slots*n_m*rot_or*b_t**2*n_turns*b_sy + 41.4523*I*B_g**2*k*n_slots*n_m*rot_or**2*b_t*n_turns*b_sy + 6.59734*I*B_g*gap*k**2*n_slots*n_m**2*rot_or*b_t*n_turns*b_sy**2 - 6.59734*I*B_g*k**2*n_slots*radius_motor*n_m**2*rot_or*b_t*n_turns*b_sy**2 - 19.7392*I*B_g*k**2*n_slots*radius_motor*n_m*rot_or*b_t**2*n_turns*b_sy + 6.59734*I*B_g*k**2*n_slots*n_m**2*rot_or**2*b_t*n_turns*b_sy**2))/(9.8696*B_g**2*k*rot_or*b_t + 20.7262*B_g**2*rot_or**2 + 6.59734*B_g*gap*k*n_m*rot_or*b_sy - 6.59734*B_g*k*radius_motor*n_m*rot_or*b_sy - 19.7392*B_g*k*radius_motor*rot_or*b_t + 6.59734*B_g*k*n_m*rot_or**2*b_sy + pi*gap**2*k**2*n_m*b_t*b_sy - 6.28319*gap*k**2*n_m*rot_or*b_t*b_sy + pi*k**2*radius_motor**2*n_m*b_t*b_sy - pi*k**2*n_m*rot_or**2*b_t*b_sy)**2
-    #     J['J', 'b_sy'] = (2.82843*k**2*n_slots*n_m*b_t*(9.8696*I*B_g**2*k*rot_or*b_t*n_turns + 20.7262*I*B_g**2*rot_or**2*n_turns - 19.7392*I*B_g*k*radius_motor*rot_or*b_t*n_turns))/(9.8696*B_g**2*k*rot_or*b_t + 20.7262*B_g**2*rot_or**2 + 6.59734*B_g*gap*k*n_m*rot_or*b_sy - 6.59734*B_g*k*radius_motor*n_m*rot_or*b_sy - 19.7392*B_g*k*radius_motor*rot_or*b_t + 6.59734*B_g*k*n_m*rot_or**2*b_sy + pi*gap**2*k**2*n_m*b_t*b_sy - 6.28319*gap*k**2*n_m*rot_or*b_t*b_sy + pi*k**2*radius_motor**2*n_m*b_t*b_sy - pi*k**2*n_m*rot_or**2*b_t*b_sy)**2
-    #     J['J', 'gap'] = (1.80063*I*k**3*n_slots*n_m**2*b_t*n_turns*b_sy**2*(k*b_t*(rot_or - gap) - 1.05*B_g*rot_or))/(B_g**2*rot_or*(-pi*k*b_t - 6.59734*rot_or) + B_g*k*rot_or*(-2.1*gap*n_m*b_sy + 2.1*radius_motor*n_m*b_sy + 6.28319*radius_motor*b_t - 2.1*n_m*rot_or*b_sy) + k**2*n_m*b_t*b_sy*(-gap**2 + 2*gap*rot_or - radius_motor**2 + rot_or**2))**2
-    #     J['J', 'b_t'] = (I*B_g*k**2*n_slots*n_m*rot_or*n_turns*b_sy*(58.6225*B_g*rot_or + k*n_m*b_sy*(18.6601*gap - 18.6601*radius_motor + 18.6601*rot_or)))/(k*n_m*b_sy*(B_g*rot_or*(6.59734*gap - 6.59734*radius_motor + 6.59734*rot_or) + k*b_t*(pi*gap**2 - 6.28319*gap*rot_or + pi*radius_motor**2 - pi*rot_or**2)) + B_g*rot_or*(9.8696*B_g*k*b_t + 20.7262*B_g*rot_or - 19.7392*k*radius_motor*b_t))**2
+        
+        # J['slot_area', 'rot_or'] = (pi/n_slots) * ((-2*radius_motor*pi*B_g)/(n_m*k*b_sy) + 2*rot_or*pi*B_g/(n_m*k*b_sy) -                       \
+        #                            (2*rot_or + 2*gap)) - (2*pi*B_g/(n_slots*k*b_t) * (radius_motor - 2*rot_or - (2*pi*rot_or*B_g/(n_m*k*b_sy))))
+        
+        # J['slot_area', 'B_g'] = (pi/n_slots) * (2*radius_motor*pi*rot_or/(n_m*k*b_sy) + 2*B_g*(pi*rot_or/n_m/k/b_sy)**2  ) -                    \
+        #                         (2*pi*rot_or/n_slots/k/b_t * (radius_motor - rot_or - gap - (2*pi*rot_or*B_g/n_m/k/b_sy)))
+        
+        # J['slot_area', 'n_m'] = (pi/n_slots) * ((2*radius_motor*pi*rot_or*B_g)/(n_m**2 *k*b_sy) - ((pi*rot_or*B_g)/(k*b_sy))**2 * n_m**-3)      \
+        #                         - ((2*pi**2*rot_or**2*B_g**2)/(n_slots*k**2*b_t*b_sy*n_m**2))
+        
+        # J['slot_area', 'k'] =   (pi/n_slots) * ((2*radius_motor*pi*rot_or*B_g)/(n_m*k**2 *b_sy) - ((pi*rot_or*B_g)/(n_m*b_sy))**2 * k**-3) -    \
+        #                         ((-2*pi*rot_or*B_g)/(n_slots*k**2 *b_t) * (radius_motor - rot_or - gap) - (4*pi**2 *rot_or**2 *B_g**2)/(n_m* k**3 *b_sy*b_t*n_slots))
+        
+        # J['slot_area', 'b_sy'] =  (pi/n_slots) * ((2*radius_motor*pi*rot_or*B_g)/(n_m*k *b_sy**2) - ((pi*rot_or*B_g)/(n_m*k))**2 * b_sy**-3) -  \
+        #                           ((2*pi*rot_or*B_g)/(n_slots*k*b_t) * ((pi*rot_or*B_g)/(n_m*k*b_sy**2)))
+        
+        # J['slot_area', 'gap'] = pi/n_slots*(-2*rot_or + 2*gap) - ((-2*pi*rot_or*B_g)/(n_slots*k*b_t))
+        
+        # J['slot_area', 'b_t'] = - ( (-2*pi*rot_or*B_g)/(n_slots*k *b_t**2) * (radius_motor - rot_or - gap) - (2*pi**2 *rot_or**2 *B_g**2)\
+        #                           /(n_m* k**2 *b_sy*b_t**2 *n_slots))
+
+        # # Slot Width 
+        # J['w_slot', 'n_slots'] = ((4*pi**2*B_g*rot_or)/(k*n_slots**3*b_t)) - ((pi*((pi**2*B_g**2*rot_or**2)/(k**2*n_m**2*b_sy**2) - \
+        #                          (2*pi*B_g*radius_motor*rot_or)/(k*n_m*b_sy) + gap**2- 2*gap*rot_or + radius_motor**2 - rot_or)) /  \
+        #                          (n_slots**2 * ((-pi*B_g*rot_or)/(k*n_m*b_sy) - gap + radius_motor - rot_or))  )
+        
+        # J['w_slot', 'radius_motor'] = (( pi*(2*radius_motor - (2*pi*B_g*rot_or)/(k*n_m*b_sy)) )/( n_slots* ((-pi*B_g*rot_or)/(k*n_m*b_sy) \
+        #                               - gap + radius_motor - rot_or))) - (pi*((pi**2*B_g**2*rot_or**2)/(k**2*n_m**2*b_sy**2) - (2*pi*B_g*radius_motor*rot_or)/ \
+        #                               (k*n_m*b_sy) + gap**2-2*gap*rot_or*radius_motor**2 - rot_or)/( n_slots *((-pi*B_g*rot_or)/(k*n_m*b_sy) - gap + radius_motor - rot_or)**2))
+        
+        # J['w_slot', 'rot_or'] = ((-pi*(-pi*B_g/(k*n_m*b_sy)-1) * ((pi**2*B_g**2*rot_or**2)/(k**2*n_m**2*b_sy**2) - (2*pi*B_g*radius_motor*rot_or)/(k*n_m*b_sy)  \
+        #                         + gap**2-2*gap*rot_or+radius_motor**2- rot_or)) / (n_slots*( (-pi*B_g*rot_or)/(k*n_m*b_sy)-gap+radius_motor- rot_or )**2)) +    \
+        #                         (pi*((2*pi**2*B_g*rot_or)/(k**2*n_m**2*b_sy**2) - ((2*pi*B_g*radius_motor)/(k*n_m*b_sy) -2*gap- n_slots ) ) / (  (n_slots*((-pi*B_g*rot_or)  \
+        #                         /(k*n_m*b_sy)-gap+radius_motor- rot_or) ))) - (2*pi**2*B_g)/(k*n_slots**2*b_t)  
+        
+        # J['w_slot', 'B_g'] = (pi**2*rot_or*(((pi*B_g*rot_or)/(k*n_m*b_sy))**2 - (2*pi*B_g*radius_motor*rot_or)/(n_m*k*b_sy) + gap**2 - 2*gap*rot_or + \
+        #                      radius_motor**2 - rot_or)) / (k*n_slots*n_m*b_sy*((-pi*B_g*rot_or)/(k*n_m*b_sy) -gap+radius_motor-rot_or )**2)   +       \
+        #                      ((2*pi*B_g*( ((pi*rot_or)/(k*n_m*b_sy))**2 - (2*pi*radius_motor*rot_or)/(B_g*k*n_m*b_sy)))/( n_slots*((-pi*B_g*rot_or)/(k*n_m*b_sy) \
+        #                      - gap+radius_motor-rot_or )))   -   ((2*pi**2*rot_or)/(k*n_slots**2*b_t))
+        
+        # J['w_slot', 'n_m'] = ((2*pi**2*/n_m*((B_g*radius_motor*rot_or)/(k*n_m*b_sy) - pi*((B_g*rot_or)/(k*n_m*b_sy))**2)) / n_slots*((-pi*B_g*rot_or)/ \
+        #                      (k*n_m*b_sy)-gap+radius_motor-rot_or)) - ((pi**2*B_g*rot_or*(((pi*B_g*rot_or)/(k*n_m*b_sy))**2 - (2*pi*B_g*radius_motor*rot_or)\
+        #                      /(k*n_m*b_sy) + gap**2-2*gap*rot_or + radius_motor**2 - rot_or)) / (k*n_slots*n_m**2*b_sy*((-pi*B_g*rot_or)/(k*n_m*b_sy) - gap + radius_motor - rot_or)**2))
+        
+        # J['w_slot', 'k'] = -(pi**2*B_g*rot_or*( ((pi*B_g*rot_or)/(k*n_m*b_sy))**2 - (2*radius_motor*pi*B_g*rot_or)/(k*n_m*b_sy) + gap**2 - 2*gap*rot_or + \
+        #                     radius_motor**2 - rot_or)) / (k**2*n_slots*n_m*b_sy*((-pi*B_g*rot_or)/(k*n_m*b_sy) -gap + radius_motor - rot_or)**2)  +  \
+        #                     ((pi*((2*radius_motor*pi*B_g*rot_or)/(k**2*n_m*b_sy) - (2*pi**2*B_g**2*rot_or**2)/(k**3*n_m**2*b_sy**2))) / (n_slots*((-pi*B_g*rot_or)/\
+        #                     (k*n_m*b_sy) - gap+radius_motor-rot_or))) + ((2*pi**2*B_g*rot_or)/(k**2*n_slots**2*b_t))
+        
+        # J['w_slot', 'b_sy'] = ((pi*((2*pi*B_g*radius_motor*rot_or)/(k*n_m*b_sy) - (2*pi**2*B_g**2*rot_or**2)/(k**2*n_m**2*b_sy**3))) / (n_slots*(  \
+        #                       (-pi*B_g*rot_or)/(k*n_m*b_sy) - gap + radius_motor - rot_or  ))) - (  pi**2*B_g*rot_or*(  ((pi*B_g*rot_or)/(k*n_m*b_sy))**2 \
+        #                       - (2*pi*B_g*radius_motor*rot_or)/(k*n_m*b_sy) + gap**2- 2*gap*rot_or+ radius_motor**2- rot_or  ) / ( k*n_slots*n_m*b_sy**2*( \
+        #                         (-pi*B_g*rot_or)/(k*n_m*b_sy)-gap+radius_motor-rot_or )**2 )  )
+        
+        # J['w_slot', 'gap'] = ((pi*(  ((pi*B_g*rot_or)/(k*n_m*b_sy))**2 - (2*pi*B_g*rot_or*radius_motor)/(k*n_m*b_sy) + gap**2- 2*gap*rot_or+ \
+        #                      radius_motor**2- rot_or )) / (n_slots*(  (pi*B_g*rot_or)/(k*n_m*b_sy) - gap+ radius_motor- rot_or  )**2)) + \
+        #                      (pi*(2*gap- 2*rot_or))/(n_slots*( (-pi*B_g*rot_or)/(k*n_m*b_sy) - gap+ radius_motor- rot_or))
+        
+        # J['w_slot', 'b_t'] = (2*pi**2*B_g*rot_or)/(k*n_slots**2*b_t**2)
+
+        # # Current density
+        # J['J', 'n_turns'] = 2*I*(2.**0.5)/(k_wb*(pi/n_slots*((radius_motor**2 - (2*radius_motor*pi*rot_or*B_g)/(n_m*k*b_sy) + ((pi*rot_or*B_g)/(n_m*k*b_sy))**2) -  (rot_or**2 + 2*rot_or*gap + gap**2 ))   - ( 1.05*(2*pi*rot_or*B_g)/(n_slots*k*b_t) * (radius_motor - rot_or - gap - (pi*rot_or*B_g)/(n_m*k*b_sy)) ))*1E6)
+        # J['J', 'I'] = 2*n_turns*(2.**0.5)/(k_wb*(pi/n_slots*((radius_motor**2 - (2*radius_motor*pi*rot_or*B_g)/(n_m*k*b_sy) + ((pi*rot_or*B_g)/(n_m*k*b_sy))**2) -  (rot_or**2 + 2*rot_or*gap + gap**2 ))   - ( 1.05*(2*pi*rot_or*B_g)/(n_slots*k*b_t) * (radius_motor - rot_or - gap - (pi*rot_or*B_g)/(n_m*k*b_sy)) ))*1E6)
+        # J['J', 'k_wb'] = -2*n_turns*I*(2.**0.5)/(k_wb**2*(pi/n_slots*((radius_motor**2 - (2*radius_motor*pi*rot_or*B_g)/(n_m*k*b_sy) + ((pi*rot_or*B_g)/(n_m*k*b_sy))**2) -  (rot_or**2 + 2*rot_or*gap + gap**2 ))   - ( 1.05*(2*pi*rot_or*B_g)/(n_slots*k*b_t) * (radius_motor - rot_or - gap - (pi*rot_or*B_g)/(n_m*k*b_sy)) ))*1E6)
+        # # J['J', 'n_slots'] = (2*sqrt{2}*I*k**2*n_m*b_t*n_turns*b_sy)/(rot_or*(pi*B_g**2*(pi*k*b_t + 6.59734*rot_or) + 2*B_g*k*(n*b_sy*(3.29867*g + 3.29867*rot_or) - radius_motor*(3.29867*n_m*b_sy + pi**2*b_t))) + pi*k**2*n_m*b_t*b_sy*(gap**2 - 2*gap*rot_or + m**2 - rot_or**2))
+        # J['J', 'radius_motor'] = (5.65685*(3.29867*I*B_g*k**3*n_slots*n_m**2*rot_or*b_t*n_turns*b_sy**2 + 9.8696*I*B_g*k**3*n_slots*n_m*rot_or*b_t**2*n_turns*b_sy - pi*I*k**4*n_slots*radius_motor*n_m**2*b_t**2*n_turns*b_sy**2))/(9.8696*B_g**2*k*rot_or*b_t + 20.7262*B_g**2*rot_or**2 + 6.59734*B_g*gap*k*n_m*rot_or*b_sy - 6.59734*B_g*k*radius_motor*n_m*rot_or*b_sy - 19.7392*B_g*k*radius_motor*rot_or*b_t + 6.59734*B_g*k*n_m*rot_or**2*b_sy + pi*gap**2*k**2*n_m*b_t*b_sy - 6.28319*gap*k**2*n_m*rot_or*b_t*b_sy + pi*k**2*radius_motor**2*n_m*b_t*b_sy - pi*k**2*n_m*rot_or**2*b_t*b_sy)**2
+        # J['J', 'rot_or'] = (1.80063*I*k**2*n_slots*n_m*b_t*n_turns*b_sy*(B_g**2*(-1.5708*k*b_t - 6.59734*rot_or) + B_g*k*(-1.05*gap*n_m*b_sy + 1.05*radius_motor*n_m*b_sy + pi*radius_motor*b_t - 2.1*n_m*rot_or*b_sy) + k**2*n_m*b_t*b_sy*(gap + rot_or)))/(B_g**2*rot_or*(-pi*k*b_t - 6.59734*rot_or) + B_g*k*rot_or*(-2.1*gap*n_m*b_sy + 2.1*radius_motor*n_m*b_sy + 6.28319*radius_motor*b_t - 2.1*n_m*rot_or*b_sy) + k**2*n_m*b_t*b_sy*(-gap**2 + 2*gap*rot_or - radius_motor**2 + rot_or**2))**2
+        # J['J', 'B_g'] = -(1.89066*I*k**2*n_slots*n_m*rot_or*b_t*n_turns*b_sy*(B_g*(2.99199*k*b_t + 6.28319*rot_or) + k*(gap*n_m*b_sy - radius_motor*n_m*b_sy - 2.99199*radius_motor*b_t + n_m*rot_or*b_sy)))/(B_g**2*rot_or*(-pi*k*b_t - 6.59734*rot_or) + B_g*k*rot_or*(-2.1*gap*n_m*b_sy + 2.1*radius_motor*n_m*b_sy + 6.28319*radius_motor*b_t - 2.1*n_m*rot_or*b_sy) + k**2*n_m*b_t*b_sy*(-gap**2 + 2*gap*rot_or - radius_motor**2 + rot_or**2))**2
+        # J['J', 'n_m'] = (2.82843*k**2*n_slots*b_t*b_sy*(9.8696*I*B_g**2*k*rot_or*b_t*n_turns + 20.7262*I*B_g**2*rot_or**2*n_turns - 19.7392*I*B_g*k*radius_motor*rot_or*b_t*n_turns))/(9.8696*B_g**2*k*rot_or*b_t + 20.7262*B_g**2*rot_or**2 + 6.59734*B_g*gap*k*n_m*rot_or*b_sy - 6.59734*B_g*k*radius_motor*n_m*rot_or*b_sy - 19.7392*B_g*k*radius_motor*rot_or*b_t + 6.59734*B_g*k*n_m*rot_or**2*b_sy + pi*gap**2*k**2*n_m*b_t*b_sy - 6.28319*gap*k**2*n_m*rot_or*b_t*b_sy + pi*k**2*radius_motor**2*n_m*b_t*b_sy - pi*k**2*n_m*rot_or**2*b_t*b_sy)**2
+        # J['J', 'k'] = (2.82843*(9.8696*I*B_g**2*k**2*n_slots*n_m*rot_or*b_t**2*n_turns*b_sy + 41.4523*I*B_g**2*k*n_slots*n_m*rot_or**2*b_t*n_turns*b_sy + 6.59734*I*B_g*gap*k**2*n_slots*n_m**2*rot_or*b_t*n_turns*b_sy**2 - 6.59734*I*B_g*k**2*n_slots*radius_motor*n_m**2*rot_or*b_t*n_turns*b_sy**2 - 19.7392*I*B_g*k**2*n_slots*radius_motor*n_m*rot_or*b_t**2*n_turns*b_sy + 6.59734*I*B_g*k**2*n_slots*n_m**2*rot_or**2*b_t*n_turns*b_sy**2))/(9.8696*B_g**2*k*rot_or*b_t + 20.7262*B_g**2*rot_or**2 + 6.59734*B_g*gap*k*n_m*rot_or*b_sy - 6.59734*B_g*k*radius_motor*n_m*rot_or*b_sy - 19.7392*B_g*k*radius_motor*rot_or*b_t + 6.59734*B_g*k*n_m*rot_or**2*b_sy + pi*gap**2*k**2*n_m*b_t*b_sy - 6.28319*gap*k**2*n_m*rot_or*b_t*b_sy + pi*k**2*radius_motor**2*n_m*b_t*b_sy - pi*k**2*n_m*rot_or**2*b_t*b_sy)**2
+        # J['J', 'b_sy'] = (2.82843*k**2*n_slots*n_m*b_t*(9.8696*I*B_g**2*k*rot_or*b_t*n_turns + 20.7262*I*B_g**2*rot_or**2*n_turns - 19.7392*I*B_g*k*radius_motor*rot_or*b_t*n_turns))/(9.8696*B_g**2*k*rot_or*b_t + 20.7262*B_g**2*rot_or**2 + 6.59734*B_g*gap*k*n_m*rot_or*b_sy - 6.59734*B_g*k*radius_motor*n_m*rot_or*b_sy - 19.7392*B_g*k*radius_motor*rot_or*b_t + 6.59734*B_g*k*n_m*rot_or**2*b_sy + pi*gap**2*k**2*n_m*b_t*b_sy - 6.28319*gap*k**2*n_m*rot_or*b_t*b_sy + pi*k**2*radius_motor**2*n_m*b_t*b_sy - pi*k**2*n_m*rot_or**2*b_t*b_sy)**2
+        # J['J', 'gap'] = (1.80063*I*k**3*n_slots*n_m**2*b_t*n_turns*b_sy**2*(k*b_t*(rot_or - gap) - 1.05*B_g*rot_or))/(B_g**2*rot_or*(-pi*k*b_t - 6.59734*rot_or) + B_g*k*rot_or*(-2.1*gap*n_m*b_sy + 2.1*radius_motor*n_m*b_sy + 6.28319*radius_motor*b_t - 2.1*n_m*rot_or*b_sy) + k**2*n_m*b_t*b_sy*(-gap**2 + 2*gap*rot_or - radius_motor**2 + rot_or**2))**2
+        # J['J', 'b_t'] = (I*B_g*k**2*n_slots*n_m*rot_or*n_turns*b_sy*(58.6225*B_g*rot_or + k*n_m*b_sy*(18.6601*gap - 18.6601*radius_motor + 18.6601*rot_or)))/(k*n_m*b_sy*(B_g*rot_or*(6.59734*gap - 6.59734*radius_motor + 6.59734*rot_or) + k*b_t*(pi*gap**2 - 6.28319*gap*rot_or + pi*radius_motor**2 - pi*rot_or**2)) + B_g*rot_or*(9.8696*B_g*k*b_t + 20.7262*B_g*rot_or - 19.7392*k*radius_motor*b_t))**2
 
 
 class MotorMassComp(om.ExplicitComponent):
@@ -185,7 +232,6 @@ class MotorMassComp(om.ExplicitComponent):
         self.add_output('mag_mass', 0.5, units='kg', desc='mass of magnets')
         self.add_output('sta_mass', 1.0, units='kg', desc='mass of stator')
         self.add_output('rot_mass', 1.0, units='kg', desc='weight of rotor')
-        # self.add_output('motor_mass', 2.0, units='kg', desc='total mass of motor')
         
         self.declare_partials('*','*', method='fd')
 
@@ -205,7 +251,6 @@ class MotorMassComp(om.ExplicitComponent):
         outputs['sta_mass'] = rho * stack_length * ((pi * radius_motor**2)-(pi * (sta_ir+s_d)**2)+(n_slots*(w_t*s_d)))
         outputs['rot_mass'] = (pi*(rot_or - t_mag)**2 - pi*rot_ir**2) * rho * stack_length
         outputs['mag_mass'] = (((pi*rot_or**2) - (pi*(rot_or-t_mag)**2))) * rho_mag * stack_length
-        # outputs['motor_mass'] = outputs['sta_mass'] + outputs['rot_mass'] + outputs['mag_mass']
 
     def compute_partials(self,inputs,J):
         rho=inputs['rho']
@@ -214,26 +259,27 @@ class MotorMassComp(om.ExplicitComponent):
         sta_ir=inputs['sta_ir']
         w_t=inputs['w_t']
         stack_length=inputs['stack_length']
+        rho_mag=inputs['rho_mag']
+        t_mag=inputs['t_mag']
+        s_d=inputs['s_d']
+        rot_ir=inputs['rot_ir']
+        rot_or=inputs['rot_or']
 
         J['sta_mass', 'rho'] = stack_length * ((pi * radius_motor**2)-(pi * (sta_ir+s_d)**2)+(n_slots*(w_t*s_d)))
         J['sta_mass', 'stack_length'] = rho * ((pi * radius_motor**2)-(pi * (sta_ir+s_d)**2)+(n_slots*(w_t*s_d)))
         J['sta_mass', 'radius_motor'] = 2*rho * stack_length * (pi * radius_motor**3)
-        J['sta_mass', 'sta_ir'] = rho * stack_length * ((-(pi * (sta_ir+s_d)**2)+(n_slots*(w_t*s_d)))
-        J['sta_mass', 's_d'] = 
-        J['sta_mass', 'n_slots'] = 
-        J['sta_mass', 'w_t'] = 
+        J['sta_mass', 'sta_ir'] = -2*pi*rho*stack_length*(sta_ir+s_d)
+        J['sta_mass', 's_d'] = rho*stack_length*(-2*pi*(sta_ir+s_d) + n_slots*w_t)
+        J['sta_mass', 'n_slots'] = rho*stack_length*w_t*s_d
+        J['sta_mass', 'w_t'] = rho*stack_length*n_slots*s_d
 
-        J['rot_mass', 'rho'] = 
-        J['rot_mass', 't_mag'] = 
-        J['rot_mass', 'rot_ir'] = 
-        J['rot_mass', 'stack_length'] = 
+        J['rot_mass', 'rho'] = (pi*(rot_or - t_mag)**2 - pi*rot_ir**2) * stack_length
+        J['rot_mass', 'rot_or'] = (2*pi*(rot_or - t_mag)) * rho * stack_length #
+        J['rot_mass', 't_mag'] = (2*pi*(rot_or - t_mag)) * rho * stack_length #
+        J['rot_mass', 'rot_ir'] = -2*pi*rot_ir * rho * stack_length
+        J['rot_mass', 'stack_length'] = (pi*(rot_or - t_mag)**2 - pi*rot_ir**2) * rho
 
-        J['mag_mass', 'rot_or'] = 
-        J['mag_mass', 't_mag'] = 
-        J['mag_mass', 'rho_mag'] = 
-        J['mag_mass', 'stack_length'] = 
-
-        
-
-# ---------------------------------------      
- 
+        J['mag_mass', 'rot_or'] = (2*pi*rot_or - 2*pi*(rot_or-t_mag))*rho_mag*stack_length
+        J['mag_mass', 't_mag'] = (-2*pi*rho_mag*stack_length*(rot_or-t_mag))*rho_mag*stack_length
+        J['mag_mass', 'rho_mag'] = (((pi*rot_or**2) - (pi*(rot_or-t_mag)**2))) * stack_length
+        J['mag_mass', 'stack_length'] = (((pi*rot_or**2) - (pi*(rot_or-t_mag)**2))) * rho_mag

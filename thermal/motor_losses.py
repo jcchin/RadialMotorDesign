@@ -95,7 +95,7 @@ class SteinmetzLossComp(om.ExplicitComponent):
         self.add_input('beta_stein', 1.76835, desc='Beta coefficient for steinmentz, dependent on freq')  
         self.add_input('k_stein', 0.0044, desc='k constant for steinmentz')
         self.add_input('motor_mass', 2, units='kg', desc='total mass of back-iron')
-        self.add_output('P_steinmetz', 200*np.ones(nn), units='W', desc='Simplified steinmetz losses')
+        self.add_output('P_steinmetz', 200*np.ones(nn), units='W/kg', desc='Simplified steinmetz losses')
 
         r = c = np.arange(nn)  # for scalar variables only
         self.declare_partials('*' , '*', method='fd')
