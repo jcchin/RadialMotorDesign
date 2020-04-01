@@ -41,7 +41,7 @@ class EmGroup(om.Group):
 
         self.add_subsystem(name='motor_efficiency', 
                            subsys=EfficiencyComp(num_nodes=nn),
-                           promotes_inputs=['P_wire', 'P_steinmetz', 'P_shaft', 'Tq_shaft', 'omega', 'rpm', 'sta_mass'],
+                           promotes_inputs=['P_wire', 'P_steinmetz', 'P_shaft', 'Tq_shaft', 'omega', 'rpm'],
                            promotes_outputs=['P_in', 'Eff'])
 
 

@@ -56,6 +56,6 @@ class ThermalGroup(om.Group):
 
         self.add_subsystem(name = 'steinmetzloss',
                            subsys = SteinmetzLossComp(num_nodes=nn),
-                           promotes_inputs=['alpha_stein', 'B_pk', 'f_e', 'beta_stein', 'k_stein', 'motor_mass'],
+                           promotes_inputs=['alpha_stein', 'B_pk', 'f_e', 'beta_stein', 'k_stein', 'sta_mass'],
                            promotes_outputs = ['P_steinmetz'])
 

@@ -35,7 +35,7 @@ class TestEmGroup(unittest.TestCase):
         ivc.add_output('rpm', val=2000, units='rpm')
         ivc.add_output('stack_length', val=.0345, units='m')
         ivc.add_output('P_wire', val=396, units='W')
-        ivc.add_output('P_steinmetz', val=260, units='W/kg')
+        ivc.add_output('P_steinmetz', val=260, units='W')
 
         p.model.add_subsystem(name='ivc', subsys=ivc, promotes_outputs=['*'])
         p.model.add_subsystem(name='em', subsys=EmGroup(num_nodes=n))
@@ -44,12 +44,11 @@ class TestEmGroup(unittest.TestCase):
         p.model.connect('P_wire', 'em.P_wire')
         p.model.connect('P_steinmetz', 'em.P_steinmetz')
 
-        p.model.linear_solver = DirectSolver()
-        p.model.nonlinear_solver = NewtonSolver()
+        # p.model.linear_solver = DirectSolver()
 
         p.setup()
 
-        p['P_shaft'] = 10
+        p['P_shaft'] = 10 # units= 'kW'
 
         p.run_model()
 
@@ -57,6 +56,7 @@ class TestEmGroup(unittest.TestCase):
         print('Torque shaft as fun(rpm) ', p['em.Tq_shaft'])
         print('Omega ', p['em.omega'])
 
+        # better method in openmdao
         np.testing.assert_almost_equal(p['em.P_in'], 
                                        p['em.Tq_shaft']*p['em.omega']+p['P_wire']+p['P_steinmetz'], 
                                        decimal=6)
@@ -83,7 +83,7 @@ class TestEmGroup(unittest.TestCase):
         ivc.add_output('rpm', val=2000, units='rpm')
         ivc.add_output('stack_length', val=.0345, units='m')
         ivc.add_output('P_wire', val=396, units='W')
-        ivc.add_output('P_steinmetz', val=260, units='W/kg')
+        ivc.add_output('P_steinmetz', val=260, units='W')
 
         p.model.add_subsystem('ivc', ivc, promotes_outputs=['*'])
         p.model.add_subsystem(name='em', subsys=EmGroup(num_nodes=n))
@@ -95,20 +95,14 @@ class TestEmGroup(unittest.TestCase):
         p.model.linear_solver = DirectSolver()
         p.model.nonlinear_solver = NewtonSolver()
 
-        p.setup()
+        p.setup(force_alloc_complex=True)
 
         p['P_shaft'] = 10
 
         p.run_model()
 
-        p.check_partials(compact_print=True)
-
-        
-
-
-
-
-
+        data = p.check_partials(method='cs', compact_print=True, show_only_incorrect = True)
+        assert_check_partials(data, atol=1e-6, rtol=1e-6)
 
 if __name__ == '__main__':
     unittest.main()

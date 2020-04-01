@@ -15,29 +15,26 @@ class Motor(om.Group):
     def setup(self): 
         nn = self.options['num_nodes']
 
-        self.add_subsystem('thermal_properties', ThermalGroup(num_nodes=nn), promotes_inputs=[ 'B_pk', 'alpha_stein', 'beta_stein', 'k_stein', 'rpm', 
-                                                                                   'resistivity_wire', 'stack_length', 'n_slots', 'n_strands','motor_mass', 
-                                                                                   'n_m', 'mu_o', 'f_e', 'n_turns', 'T_coeff_cu', 'I', 'T_windings', 'r_strand', 'mu_r'],
-                                                                  promotes_outputs=['A_cu', 'r_litz', 'P_steinmetz', 'P_dc', 'P_ac', 'P_wire', 'L_wire', 'R_dc',
-                                                                                    'skin_depth', 'temp_resistivity', 'f_e'])
+        self.add_subsystem('thermal_properties', ThermalGroup(num_nodes=nn), promotes_inputs=['B_pk', 'alpha_stein', 'beta_stein', 'k_stein', 'rpm', 'sta_mass', 
+                                                                                              'resistivity_wire', 'stack_length', 'n_slots', 'n_strands', 
+                                                                                              'n_m', 'mu_o', 'f_e', 'n_turns', 'T_coeff_cu', 'I', 'T_windings', 'r_strand', 'mu_r'],
+                                                                            promotes_outputs=['A_cu', 'r_litz', 'P_steinmetz', 'P_dc', 'P_ac', 'P_wire', 'L_wire', 'R_dc',
+                                                                                              'skin_depth', 'temp_resistivity', 'f_e'])
 
 
-        self.add_subsystem('em_properties', EmGroup(num_nodes=nn), promotes_inputs=['w_slot',             
-                                                                        'w_t', 'T_coef_rem_mag', 'T_mag',            
-                                                                        'gap', 'carters_coef', 'k_sat', 'stack_length',                  
-                                                                        'Br', 'mu_r', 'g_eq', 't_mag',          
-                                                                        'B_g', 'n_m', 'n_turns', 'I', 'rot_or',  'rpm',  
-                                                                        'P_wire', 'P_steinmetz', 'sta_mass', 'P_shaft', 'Tq_shaft', 'omega'],       #  'l_slot_opening',  
-                                                        promotes_outputs=['Br', 'carters_coef', 'Tq_shaft', 'Tq_max',             
-                                                                          'g_eq','omega', 'P_in', 'Eff',                               
-                                                                          'B_g'])        # 'mech_angle', 't_1',                                                   
+        self.add_subsystem('em_properties', EmGroup(num_nodes=nn), promotes_inputs=['w_slot', 'w_t', 'T_coef_rem_mag', 'T_mag',            
+                                                                                    'gap', 'carters_coef', 'k_sat', 'stack_length',                  
+                                                                                    'Br', 'mu_r', 'g_eq', 't_mag',          
+                                                                                    'B_g', 'n_m', 'n_turns', 'I', 'rot_or',  'rpm',  
+                                                                                    'P_wire', 'P_steinmetz', 'P_shaft', 'Tq_shaft', 'omega'],       #  'l_slot_opening',  
+                                                                  promotes_outputs=['Br', 'carters_coef', 'Tq_shaft', 'Tq_max',             
+                                                                                    'g_eq','omega', 'P_in', 'Eff', 'B_g'])        # 'mech_angle', 't_1',                                                   
                                                                                                                                      
         
-        self.add_subsystem('geometry', SizeGroup(), promotes_inputs=['gap', 'B_g', 'k', 'b_ry', 'n_m',
-                                                                    'b_sy', 'b_t', 'n_turns', 'I', 'k_wb',
-                                                                    'rho', 'radius_motor', 'n_slots', 'sta_ir', 'w_t', 'stack_length',
-                                                                    's_d', 'rot_or', 'rot_ir', 't_mag', 'rho_mag'],
-                                                     promotes_outputs=['J', 'w_ry', 'w_sy', 'w_t', 'sta_ir', 'rot_ir', 's_d', 
+        self.add_subsystem('geometry', SizeGroup(), promotes_inputs=['gap', 'B_g', 'k', 'b_ry', 'n_m', 'b_sy', 'b_t', 'n_turns', 'I', 'k_wb',
+                                                                     'rho', 'radius_motor', 'n_slots', 'sta_ir', 'w_t', 'stack_length',
+                                                                     's_d', 'rot_or', 'rot_ir', 't_mag', 'rho_mag'],
+                                                   promotes_outputs=['J', 'w_ry', 'w_sy', 'w_t', 'sta_ir', 'rot_ir', 's_d', 
                                                                      'mag_mass', 'sta_mass', 'rot_mass', 'slot_area', 'w_slot'])
 
 

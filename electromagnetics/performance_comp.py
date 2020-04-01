@@ -76,19 +76,18 @@ class EfficiencyComp(om.ExplicitComponent):
     def setup(self):
         nn = self.options['num_nodes']
         self.add_input('P_wire', 500*np.ones(nn), units='W', desc='copper losses')
-        self.add_input('P_steinmetz', 200*np.ones(nn), units='W/kg', desc='iron losses')  
+        self.add_input('P_steinmetz', 200*np.ones(nn), units='W', desc='iron losses')  
         self.add_input('P_shaft', 14000*np.ones(nn), units='W', desc='output power') 
         self.add_input('Tq_shaft', 30*np.ones(nn), units='N*m', desc='torque') 
         self.add_input('omega', 400*np.ones(nn), units='Hz', desc='mechanical rad/s')  
         self.add_input('rpm', 5000*np.ones(nn), units='rpm', desc='speed of prop')   
-        self.add_input('sta_mass', 1, units='kg', desc='mass of the stator')
 
         self.add_output('P_in', 15*np.ones(nn), units='kW', desc='input power')
         self.add_output('Eff', 0.90*np.ones(nn), desc='efficiency of motor')
         
         r = c = np.arange(nn)
-        self.declare_partials('P_in', ['Tq_shaft', 'omega', 'P_wire', 'P_steinmetz', 'sta_mass'], rows=r, cols=c)
-        self.declare_partials('Eff', ['P_shaft', 'Tq_shaft', 'omega', 'P_wire', 'P_steinmetz', 'sta_mass'], rows=r, cols=c)
+        self.declare_partials('P_in', ['Tq_shaft', 'omega', 'P_wire', 'P_steinmetz'], rows=r, cols=c)
+        self.declare_partials('Eff', ['P_shaft', 'Tq_shaft', 'omega', 'P_wire', 'P_steinmetz'], rows=r, cols=c)
 
     def compute(self, inputs, outputs):
         rpm = inputs['rpm']
@@ -97,9 +96,8 @@ class EfficiencyComp(om.ExplicitComponent):
         P_shaft = inputs['P_shaft']
         Tq_shaft = inputs['Tq_shaft']
         omega = inputs['omega']
-        sta_mass = inputs['sta_mass']
 
-        outputs['P_in']  = (Tq_shaft*omega) + P_wire + (P_steinmetz*sta_mass)       
+        outputs['P_in']  = (Tq_shaft*omega) + P_wire + (P_steinmetz)       
         outputs['Eff'] =  P_shaft / outputs['P_in']
 
     def compute_partials(self, inputs, J):
@@ -109,17 +107,14 @@ class EfficiencyComp(om.ExplicitComponent):
         P_shaft = inputs['P_shaft']
         Tq_shaft = inputs['Tq_shaft']
         omega = inputs['omega']
-        sta_mass = inputs['sta_mass']
 
         J['P_in', 'Tq_shaft'] = omega  
         J['P_in', 'omega'] = Tq_shaft
         J['P_in', 'P_wire'] = 1
-        J['P_in', 'P_steinmetz'] = sta_mass
-        J['P_in', 'sta_mass'] = P_steinmetz
+        J['P_in', 'P_steinmetz'] = 1
 
-        J['Eff', 'P_shaft'] = 1 / ( (Tq_shaft*omega) + P_wire + P_steinmetz*sta_mass  )
-        J['Eff', 'Tq_shaft'] = -omega*P_shaft / ( (Tq_shaft*omega) + P_wire + P_steinmetz*sta_mass  )**2
-        J['Eff', 'omega'] = -Tq_shaft*P_shaft / ( (Tq_shaft*omega) + P_wire + P_steinmetz*sta_mass  )**2
-        J['Eff', 'P_wire'] = -P_shaft / ( (Tq_shaft*omega) + P_wire + P_steinmetz*sta_mass  )**2
-        J['Eff', 'P_steinmetz'] = -P_shaft / ( (Tq_shaft*omega) + P_wire + sta_mass  )**2
-        J['Eff', 'sta_mass'] = -P_shaft / ( (Tq_shaft*omega) + P_wire + P_steinmetz  )**2
+        J['Eff', 'P_shaft'] = 1 / ( (Tq_shaft*omega) + P_wire + P_steinmetz  )
+        J['Eff', 'Tq_shaft'] = -omega*P_shaft / ( (Tq_shaft*omega) + P_wire + P_steinmetz  )**2
+        J['Eff', 'omega'] = -Tq_shaft*P_shaft / ( (Tq_shaft*omega) + P_wire + P_steinmetz  )**2
+        J['Eff', 'P_wire'] = -P_shaft / ( (Tq_shaft*omega) + P_wire + P_steinmetz  )**2
+        J['Eff', 'P_steinmetz'] = -P_shaft / ( (Tq_shaft*omega) + P_wire )**2

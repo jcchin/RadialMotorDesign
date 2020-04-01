@@ -94,12 +94,13 @@ class SteinmetzLossComp(om.ExplicitComponent):
         self.add_input('alpha_stein', 1.286, desc='Alpha coefficient for steinmetz, constant')
         self.add_input('beta_stein', 1.76835, desc='Beta coefficient for steinmentz, dependent on freq')  
         self.add_input('k_stein', 0.0044, desc='k constant for steinmentz')
-        self.add_input('motor_mass', 2, units='kg', desc='total mass of back-iron')
-        self.add_output('P_steinmetz', 200*np.ones(nn), units='W/kg', desc='Simplified steinmetz losses')
+        self.add_input('sta_mass', 1, units='kg', desc='total mass of back-iron')
+
+        self.add_output('P_steinmetz', 200*np.ones(nn), units='W', desc='Simplified steinmetz losses')
 
         r = c = np.arange(nn)  # for scalar variables only
         self.declare_partials('*' , '*', method='fd')
-        self.declare_partials('P_steinmetz', ['k_stein', 'f_e', 'alpha_stein', 'B_pk', 'beta_stein', 'motor_mass'], rows=r, cols=c)
+        self.declare_partials('P_steinmetz', ['k_stein', 'f_e', 'alpha_stein', 'B_pk', 'beta_stein', 'sta_mass'], rows=r, cols=c)
 
     def compute(self, inputs, outputs):
         f_e = inputs['f_e']
@@ -107,9 +108,9 @@ class SteinmetzLossComp(om.ExplicitComponent):
         alpha_stein = inputs['alpha_stein']
         beta_stein = inputs['beta_stein']
         k_stein = inputs['k_stein']
-        motor_mass = inputs['motor_mass']
+        sta_mass = inputs['sta_mass']
 
-        outputs['P_steinmetz'] = k_stein * f_e**alpha_stein * B_pk**beta_stein * motor_mass
+        outputs['P_steinmetz'] = k_stein * f_e**alpha_stein * B_pk**beta_stein * sta_mass
         
 
 
