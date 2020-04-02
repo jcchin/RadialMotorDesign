@@ -18,7 +18,6 @@ class TorqueComp(om.ExplicitComponent):
        self.add_input('n_turns', 12, desc='number of wire turns')
        self.add_input('I', 35*np.ones(nn), units='A', desc='RMS current')       
        self.add_input('rot_or', 0.060, units='m', desc='rotor outer radius')
-       self.add_input('sta_ir', 0.060, units='m', desc='stator inner radius')
        self.add_input('P_shaft', 14000*np.ones(nn), units='W', desc='output power') 
        self.add_input('rpm', 5000*np.ones(nn), units='rpm', desc='Rotational Speed')
        self.add_input('stack_length', .0345, units='m', desc='stack length')

@@ -86,7 +86,18 @@ if __name__ == "__main__":
     ind.add_output('gap', 0.0010, units='m', desc='Air gap distance, Need to calculate effective air gap, using Carters Coeff')
 
     def motor_spec_connect(motor_path): 
-        p.model.connect('radius_motor', f'{motor_path}.radius_motor')
+        if motor_path == 'DESIGN':
+            p.model.connect('radius_motor', f'{motor_path}.radius_motor')
+            p.model.connect('rho', f'{motor_path}.rho')
+            p.model.connect('rho_mag', f'{motor_path}.rho_mag')
+            p.model.connect('b_ry', f'{motor_path}.b_ry')
+            p.model.connect('b_sy', f'{motor_path}.b_sy')
+            p.model.connect('b_t', f'{motor_path}.b_t')
+            p.model.connect('k_wb', f'{motor_path}.k_wb')
+            p.model.connect('k', f'{motor_path}.k')
+
+        p.model.connect('B_pk', f'{motor_path}.B_pk')
+        p.model.connect('Br_20', f'{motor_path}.Br_20')
         p.model.connect('n_turns', f'{motor_path}.n_turns')
         p.model.connect('n_slots', f'{motor_path}.n_slots')
         p.model.connect('n_m', f'{motor_path}.n_m')
@@ -104,8 +115,7 @@ if __name__ == "__main__":
         p.model.connect('k_sat', f'{motor_path}.k_sat')
         p.model.connect('mu_o', f'{motor_path}.mu_o')
         p.model.connect('mu_r', f'{motor_path}.mu_r')
-        p.model.connect('rho', f'{motor_path}.rho')
-        p.model.connect('rho_mag', f'{motor_path}.rho_mag')
+        
         # p.model.connect('rho_wire', f'{motor_path}.rho_wire')
         p.model.connect('resistivity_wire', f'{motor_path}.resistivity_wire')
         p.model.connect('T_coeff_cu', f'{motor_path}.T_coeff_cu')
@@ -114,17 +124,7 @@ if __name__ == "__main__":
         p.model.connect('beta_stein', f'{motor_path}.beta_stein')
         p.model.connect('k_stein', f'{motor_path}.k_stein')
         p.model.connect('T_coef_rem_mag', f'{motor_path}.T_coef_rem_mag')
-
-        # -------------------------------------------------------------------------
-
-        p.model.connect('b_ry', f'{motor_path}.b_ry')
-        p.model.connect('b_sy', f'{motor_path}.b_sy')
-        p.model.connect('b_t', f'{motor_path}.b_t')
-        p.model.connect('B_pk', f'{motor_path}.B_pk')
-        p.model.connect('k_wb', f'{motor_path}.k_wb')
-
-        # p.model.connect('l_slot_opening', f'{motor_path}.l_slot_opening')
-        p.model.connect('k', f'{motor_path}.k')
+        
         p.model.connect('gap', f'{motor_path}.gap')
 
     # On-Design Function, to size the motor
@@ -138,6 +138,10 @@ if __name__ == "__main__":
     p.model.add_subsystem('OD1', Motor(num_nodes=nn, design=False))
     motor_spec_connect('OD1')
     p.model.connect('DESIGN.rot_or', 'OD1.rot_or')
+    p.model.connect('DESIGN.sta_mass', 'OD1.sta_mass')
+    p.model.connect('DESIGN.w_slot', 'OD1.w_slot')
+    p.model.connect('DESIGN.w_t', 'OD1.w_t')
+
     p.model.connect('OD:rpm', 'OD1.rpm')
     p.model.connect('OD:I', 'OD1.I')
     p.model.connect('DES:stack_length', 'OD1.stack_length') # DES to OD1 to make sure it stays constant

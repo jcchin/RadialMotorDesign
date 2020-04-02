@@ -6,8 +6,8 @@ from math import pi
 import openmdao.api as om
 
 # from ..size_comp import MotorSizeComp
-from fields_comp import GapFieldsComp, CartersComp, GapEquivalentComp
-from performance_comp import TorqueComp, EfficiencyComp
+from electromagnetics.fields_comp import GapFieldsComp, CartersComp, GapEquivalentComp
+from electromagnetics.performance_comp import TorqueComp, EfficiencyComp
 
 
 
