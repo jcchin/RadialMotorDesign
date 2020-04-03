@@ -53,8 +53,8 @@ class TestMotorGroup(unittest.TestCase):
         ind.add_output('T_coeff_cu', 0.00393, desc='temperature coeff of copper')
         # ind.add_output('T_ref_wire', 20.0, units='C', desc='reference temperature at which winding resistivity is measured')
         ind.add_output('alpha_stein', 1.286, desc='Alpha coefficient for steinmetz, constant')
-        ind.add_output('beta_stein', 1.76835, desc='Beta coefficient for steinmentz, dependent on freq')
-        ind.add_output('k_stein', 0.0044, desc='k constant for steinmentz')
+        ind.add_output('beta_stein', 1.76835, desc='Beta coefficient for steinmetz, dependent on freq')
+        ind.add_output('k_stein', 0.0044, desc='k constant for steinmetz')
         ind.add_output('T_coef_rem_mag', -0.12, desc=' Temperature coefficient of the remnance flux density for N48H magnets')
     
         # -------------------------------------------------------------------------
@@ -121,9 +121,11 @@ class TestMotorGroup(unittest.TestCase):
         # p.run_model()
 
         # make new lines for each component
+
         data = p.check_partials(method='cs', compact_print=True, show_only_incorrect = True)#, includes='DESIGN.geometry.size')
+
         # can look at one component at a time with assert_check_partials
-        assert_check_partials(data, atol=1e-6, rtol=1e-6)
+        assert_check_partials(data_size, atol=1e-6, rtol=1e-6)
 
         data = p.check_partials(method='cs', compact_print=True, show_only_incorrect = True, includes='DESIGN.em_properties.carters')
         # can look at one component at a time with assert_check_partials
