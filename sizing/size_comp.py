@@ -82,8 +82,8 @@ class MotorSizeComp(om.ExplicitComponent):
         outputs['sta_ir'] = rot_or + gap
         outputs['slot_area'] = (pi*(radius_motor-outputs['w_sy'])**2 - \
                                pi*(radius_motor-outputs['w_sy']-outputs['s_d'])**2)/n_slots - (outputs['w_t'] * outputs['s_d']*1.05)
-        outputs['J'] = 2*n_turns*I*(2.**0.5)/(k_wb*(outputs['slot_area'])*1E6)
         outputs['w_slot'] = outputs['slot_area'] / outputs['s_d']
+        outputs['J'] = 2*n_turns*I*(2.**0.5)/(k_wb*outputs['slot_area']*1E6)
 
     def compute_partials(self, inputs, J):
 
@@ -236,33 +236,22 @@ class MotorSizeComp(om.ExplicitComponent):
 
         # Current density
 
-        J['J', 'n_turns'] = 2*I*(2**0.5)/(1E6*slot_area*k_wb)
-        
-        J['J', 'I'] = 2*n_turns*(2**0.5)/(1E6*slot_area*k_wb)
-        
-        J['J', 'k_wb'] = -2*n_turns*I*np.sqrt(2)/(k_wb**2*slot_area*1E6)
 
-        J['J', 'n_slots'] = 2*n_turns*I*np.sqrt(2)/(n_slots*k_wb*slot_area*1E6)
-        
-        J['J', 'radius_motor'] = (5.65685*(3.29867*I*B_g*k**3*n_slots*n_m**2*rot_or*b_t*n_turns*b_sy**2 + 9.8696*I*B_g*k**3*n_slots*n_m*rot_or*b_t**2*n_turns*b_sy - pi*I*k**4*n_slots*radius_motor*n_m**2*b_t**2*n_turns*b_sy**2))/(9.8696*B_g**2*k*rot_or*b_t + 20.7262*B_g**2*rot_or**2 + 6.59734*B_g*gap*k*n_m*rot_or*b_sy - 6.59734*B_g*k*radius_motor*n_m*rot_or*b_sy - 19.7392*B_g*k*radius_motor*rot_or*b_t + 6.59734*B_g*k*n_m*rot_or**2*b_sy + pi*gap**2*k**2*n_m*b_t*b_sy - 6.28319*gap*k**2*n_m*rot_or*b_t*b_sy + pi*k**2*radius_motor**2*n_m*b_t*b_sy - pi*k**2*n_m*rot_or**2*b_t*b_sy)**2
-        
-        
-        
-        J['J', 'rot_or'] = 2*n_turns*I*np.sqrt(2)/(k_wb*dslot_area__drot_or*1E6)
+        root8 = np.sqrt(8) # 2 * sqrt(2) = sqrt(4) * sqrt(2) = sqrt(8)
+        J['J', 'n_turns'] =  root8*I/(1e6*k_wb*slot_area)
+        J['J', 'I'] = root8*n_turns/(1e6*k_wb*slot_area)
+        J['J', 'k_wb'] = -root8*I*n_turns/(1e6* k_wb**2 *slot_area)
 
-        
-        # J['J', 'B_g'] = 2*n_turns*I*np.sqrt(2)/(k_wb*)
-
-        J['J', 'n_m'] = (2.82843*k**2*n_slots*b_t*b_sy*(9.8696*I*B_g**2*k*rot_or*b_t*n_turns + 20.7262*I*B_g**2*rot_or**2*n_turns - 19.7392*I*B_g*k*radius_motor*rot_or*b_t*n_turns))/(9.8696*B_g**2*k*rot_or*b_t + 20.7262*B_g**2*rot_or**2 + 6.59734*B_g*gap*k*n_m*rot_or*b_sy - 6.59734*B_g*k*radius_motor*n_m*rot_or*b_sy - 19.7392*B_g*k*radius_motor*rot_or*b_t + 6.59734*B_g*k*n_m*rot_or**2*b_sy + pi*gap**2*k**2*n_m*b_t*b_sy - 6.28319*gap*k**2*n_m*rot_or*b_t*b_sy + pi*k**2*radius_motor**2*n_m*b_t*b_sy - pi*k**2*n_m*rot_or**2*b_t*b_sy)**2
-        
-        J['J', 'k'] = (2.82843*(9.8696*I*B_g**2*k**2*n_slots*n_m*rot_or*b_t**2*n_turns*b_sy + 41.4523*I*B_g**2*k*n_slots*n_m*rot_or**2*b_t*n_turns*b_sy + 6.59734*I*B_g*gap*k**2*n_slots*n_m**2*rot_or*b_t*n_turns*b_sy**2 - 6.59734*I*B_g*k**2*n_slots*radius_motor*n_m**2*rot_or*b_t*n_turns*b_sy**2 - 19.7392*I*B_g*k**2*n_slots*radius_motor*n_m*rot_or*b_t**2*n_turns*b_sy + 6.59734*I*B_g*k**2*n_slots*n_m**2*rot_or**2*b_t*n_turns*b_sy**2))/(9.8696*B_g**2*k*rot_or*b_t + 20.7262*B_g**2*rot_or**2 + 6.59734*B_g*gap*k*n_m*rot_or*b_sy - 6.59734*B_g*k*radius_motor*n_m*rot_or*b_sy - 19.7392*B_g*k*radius_motor*rot_or*b_t + 6.59734*B_g*k*n_m*rot_or**2*b_sy + pi*gap**2*k**2*n_m*b_t*b_sy - 6.28319*gap*k**2*n_m*rot_or*b_t*b_sy + pi*k**2*radius_motor**2*n_m*b_t*b_sy - pi*k**2*n_m*rot_or**2*b_t*b_sy)**2
-        
-        J['J', 'b_sy'] = (2.82843*k**2*n_slots*n_m*b_t*(9.8696*I*B_g**2*k*rot_or*b_t*n_turns + 20.7262*I*B_g**2*rot_or**2*n_turns - 19.7392*I*B_g*k*radius_motor*rot_or*b_t*n_turns))/(9.8696*B_g**2*k*rot_or*b_t + 20.7262*B_g**2*rot_or**2 + 6.59734*B_g*gap*k*n_m*rot_or*b_sy - 6.59734*B_g*k*radius_motor*n_m*rot_or*b_sy - 19.7392*B_g*k*radius_motor*rot_or*b_t + 6.59734*B_g*k*n_m*rot_or**2*b_sy + pi*gap**2*k**2*n_m*b_t*b_sy - 6.28319*gap*k**2*n_m*rot_or*b_t*b_sy + pi*k**2*radius_motor**2*n_m*b_t*b_sy - pi*k**2*n_m*rot_or**2*b_t*b_sy)**2
-        
-        J['J', 'gap'] = (1.80063*I*k**3*n_slots*n_m**2*b_t*n_turns*b_sy**2*(k*b_t*(rot_or - gap) - 1.05*B_g*rot_or))/(B_g**2*rot_or*(-pi*k*b_t - 6.59734*rot_or) + B_g*k*rot_or*(-2.1*gap*n_m*b_sy + 2.1*radius_motor*n_m*b_sy + 6.28319*radius_motor*b_t - 2.1*n_m*rot_or*b_sy) + k**2*n_m*b_t*b_sy*(-gap**2 + 2*gap*rot_or - radius_motor**2 + rot_or**2))**2
-        
-        J['J', 'b_t'] = (I*B_g*k**2*n_slots*n_m*rot_or*n_turns*b_sy*(58.6225*B_g*rot_or + k*n_m*b_sy*(18.6601*gap - 18.6601*radius_motor + 18.6601*rot_or)))/(k*n_m*b_sy*(B_g*rot_or*(6.59734*gap - 6.59734*radius_motor + 6.59734*rot_or) + k*b_t*(pi*gap**2 - 6.28319*gap*rot_or + pi*radius_motor**2 - pi*rot_or**2)) + B_g*rot_or*(9.8696*B_g*k*b_t + 20.7262*B_g*rot_or - 19.7392*k*radius_motor*b_t))**2                     
-
+        const_term = -root8*n_turns*I/(1e6*k_wb*slot_area**2)
+        J['J', 'n_slots'] =  const_term * dslot_area__dn_slots
+        J['J', 'radius_motor'] = const_term * dslot_area__dradius_motor    
+        J['J', 'rot_or'] = const_term * dslot_area__drot_or
+        J['J', 'B_g'] =  const_term * dslot_area__dBg
+        J['J', 'n_m'] =  const_term * dslot_area__dn_m
+        J['J', 'k'] =  const_term * dslot_area__dk
+        J['J', 'b_sy'] =  const_term * dslot_area__db_sy
+        J['J', 'gap'] =  const_term * dslot_area__dgap
+        J['J', 'b_t'] =  const_term * dslot_area__db_t
 
 class MotorMassComp(om.ExplicitComponent):
 
