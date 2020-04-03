@@ -4,7 +4,7 @@ from math import pi
 
 import openmdao.api as om
 
-from sizing.size_comp import MotorSizeComp, MotorMassComp
+from rad_motor.sizing.size_comp import MotorSizeComp, MotorMassComp
 
 
 class SizeGroup(om.Group):

@@ -93,7 +93,8 @@ class TestEmGroup(unittest.TestCase):
         p.model.connect('P_steinmetz', 'em.P_steinmetz')
 
         p.model.linear_solver = DirectSolver()
-        p.model.nonlinear_solver = NewtonSolver()
+        newton = p.model.nonlinear_solver = NewtonSolver()
+        newton.options['solve_subsystems'] = True
 
         p.setup(force_alloc_complex=True)
 

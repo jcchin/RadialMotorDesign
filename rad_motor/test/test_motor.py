@@ -3,7 +3,7 @@ import numpy as np
 from openmdao.api import Problem, Group, IndepVarComp, ExecComp, ScipyOptimizeDriver
 from openmdao.utils.assert_utils import assert_rel_error, assert_check_partials
 
-from motor import Motor
+from rad_motor.motor import Motor
 # from motor_spec_connect import motor_spec_connect
 
 class TestMotorGroup(unittest.TestCase):
