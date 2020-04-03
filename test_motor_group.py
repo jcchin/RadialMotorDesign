@@ -119,8 +119,8 @@ class TestMotorGroup(unittest.TestCase):
         p['DESIGN.rot_or'] = 6.8    # initial guess
 
         # p.run_model()
-
         # make new lines for each component
+
 
         data = p.check_partials(method='cs', compact_print=True, show_only_incorrect = True, includes='DESIGN.geometry.size')
 
@@ -147,9 +147,13 @@ class TestMotorGroup(unittest.TestCase):
         # can look at one component at a time with assert_check_partials
         assert_check_partials(data, atol=1e-6, rtol=1e-6)
 
-        # data = p.check_partials(method='cs', compact_print=True, show_only_incorrect = True, includes='DESIGN.thermal_properties.copperloss')
-        # # can look at one component at a time with assert_check_partials
-        # assert_check_partials(data, atol=1e-6, rtol=1e-6)
+        data = p.check_partials(method='cs', compact_print=True, show_only_incorrect = True, includes='DESIGN.thermal_properties.copperloss')
+        # can look at one component at a time with assert_check_partials
+        assert_check_partials(data, atol=1e-6, rtol=1e-6)
+
+        data = p.check_partials(method='cs', compact_print=True, show_only_incorrect = True, includes='DESIGN.thermal_properties.steinmetzloss')
+        # can look at one component at a time with assert_check_partials
+        assert_check_partials(data, atol=1e-6, rtol=1e-6)
 
 
 if __name__ == '__main__':
