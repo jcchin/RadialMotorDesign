@@ -178,12 +178,12 @@ class MotorSizeComp(om.ExplicitComponent):
 
         # Slot Depth
         J['s_d', 'radius_motor'] = 1 
-        J['s_d', 'rot_or'] = -1 - pi*B_g/(k*n_m*b_ry)
+        J['s_d', 'rot_or'] = -1 - dw_sy__drot_or
         J['s_d', 'gap'] = -1
         J['s_d', 'B_g'] =  - (pi*rot_or)/(n_m*k*b_sy)
-        J['s_d', 'n_m'] = radius_motor - rot_or - gap + (pi*rot_or*B_g)/(n_m**2*k*b_sy)
-        J['s_d', 'k'] = radius_motor - rot_or - gap + (pi*rot_or*B_g)/(n_m*k**2*b_sy)
-        J['s_d', 'b_sy'] = radius_motor - rot_or - gap + (pi*rot_or*B_g)/(n_m*k*b_sy**2)
+        J['s_d', 'n_m'] = -dw_sy__dn_m
+        J['s_d', 'k'] = -dw_sy__dk
+        J['s_d', 'b_sy'] = -dw_sy__db_sy
 
         #Rotor Inner Radius
         
