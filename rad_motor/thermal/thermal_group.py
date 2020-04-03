@@ -4,7 +4,7 @@ from math import pi
 
 import openmdao.api as om
 
-from thermal.motor_losses import WindingLossComp, SteinmetzLossComp
+from rad_motor.thermal.motor_losses import WindingLossComp, SteinmetzLossComp
 
 motor_loss_data = np.array([
 # I:   10          14.4          18.9        23.3          27.8        32.2          36.7        41.1          45.6        50

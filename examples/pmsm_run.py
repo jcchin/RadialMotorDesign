@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 
 import openmdao.api as om
 
-from motor import Motor, print_motor
+from rad_motor.motor import Motor, print_motor
 
 if __name__ == "__main__":
     p = om.Problem()

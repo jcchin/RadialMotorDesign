@@ -1,8 +1,8 @@
 import openmdao.api as om
 
-from electromagnetics.em_group import EmGroup
-from thermal.thermal_group import ThermalGroup
-from sizing.size_group import SizeGroup
+from rad_motor.electromagnetics.em_group import EmGroup
+from rad_motor.thermal.thermal_group import ThermalGroup
+from rad_motor.sizing.size_group import SizeGroup
 
 class Motor(om.Group): 
 
