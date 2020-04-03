@@ -121,11 +121,11 @@ class TestMotorGroup(unittest.TestCase):
         # p.run_model()
 
         # make new lines for each component
-        data = p.check_partials(method='cs', compact_print=True, show_only_incorrect = True, includes='DESIGN.geometry.size')
-        # can look at one component at a time with assert_check_partials
-        assert_check_partials(data, atol=1e-6, rtol=1e-6)
+        # data = p.check_partials(method='cs', compact_print=True, show_only_incorrect = True, includes='DESIGN.geometry.size')
+        # # can look at one component at a time with assert_check_partials
+        # assert_check_partials(data, atol=1e-6, rtol=1e-6)
 
-        data = p.check_partials(method='cs', compact_print=True, show_only_incorrect = True, includes='DESIGN.em_properties.carters')
+        data = p.check_partials(method='cs', compact_print=True, show_only_incorrect = True, includes='DESIGN.em_properties')
         # can look at one component at a time with assert_check_partials
         assert_check_partials(data, atol=1e-6, rtol=1e-6)
 
