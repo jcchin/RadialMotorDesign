@@ -113,46 +113,61 @@ class MotorSizeComp(om.ExplicitComponent):
         w_slot = slot_area / s_d
         J_a = 2*n_turns*I*(2.**0.5)/(k_wb*(slot_area)*1E6)
 
+        # intermediate calculation used to make derivatives easier 
+        gamma = pi/n_slots * (radius_motor-w_ry)**2 - (radius_motor-w_sy-s_d)**2
+
         dw_sy__drot_or = pi*B_g/(n_m*k*b_sy)
         ds_d__drot_or = -1 - dw_sy__drot_or
         dw_t__drot_or = 2*pi*B_g/(n_slots*k*b_t)
+        dgamma__drot_or = -2*pi/n_slots*((radius_motor - w_sy)*dw_sy__drot_or - 
+                                         (radius_motor - w_sy - s_d)*(dw_sy__drot_or + ds_d__drot_or))
+        dslot_area__drot_or = dgamma__drot_or - ds_d__drot_or * w_t*1.05 - s_d* dw_t__drot_or*1.05
+        dw_ry__drot_or = pi*B_g/(n_m*k*b_ry)
+        ds_d__drot_or = -1 - dw_sy__drot_or
 
         dw_sy__dB_g = pi*rot_or/(n_m*k*b_sy)
         ds_d__dB_g = -dw_sy__dB_g
         dw_t__dB_g = 2*pi*rot_or/(n_slots*k*b_t)
+        dgamma__dB_g = -2*pi/n_slots*((radius_motor-w_sy)*(dw_sy__dB_g) - (radius_motor - w_sy - s_d)*(dw_sy__dB_g+ds_d__dB_g))
+        dw_ry__dB_g = pi*rot_or/(n_m*k*b_ry)
+        dslot_area__dBg = dgamma__dB_g - ds_d__dB_g * w_t*1.05 - s_d* dw_t__dB_g*1.05
 
         dw_t__dn_slots = -2*pi*rot_or*B_g/(n_slots**2*k*b_t)
         dgamma__dn_slots = -pi/n_slots**2*(2*radius_motor*s_d - s_d**2 - 2*s_d*w_sy)
-
-        dgamma__dradius_motor =  -2*pi/n_slots*((radius_motor-w_sy) - (radius_motor - w_sy - s_d))
-
-        dgamma__dB_g = -2*pi/n_slots*((radius_motor-w_sy)*(dw_sy__dB_g) - (radius_motor - w_sy - s_d)*(dw_sy__dB_g+ds_d__dB_g))
+        dslot_area__dn_slots = 2*pi/n_slots * (radius_motor - w_sy) - w_t*1.05
+        ds_d__dn_slots = -pi/n_slots**2*((radius_motor-w_ry)**2 - (radius_motor-w_sy-s_d)**2)
+        dslot_area__dn_slots = (- pi/n_slots**2 * ((radius_motor - w_sy)**2 - (radius_motor - w_sy - s_d)**2) 
+                                - dw_t__dn_slots * s_d * 1.05) 
 
         dw_sy__dn_m = -B_g*pi*rot_or/(n_m**2*k*b_sy)
         ds_d__dn_m = -dw_sy__dn_m
         dgamma__dn_m = -2*pi/n_slots*((radius_motor-w_sy)*(dw_sy__dn_m) - (radius_motor - w_sy - s_d)*(dw_sy__dn_m+ds_d__dn_m))
+        dw_ry__dn_m = -pi*rot_or*B_g/(k*n_m**2*b_ry)
+        dslot_area__dn_m =  dgamma__dn_m - ds_d__dn_m*w_t*1.05
 
         dw_sy__dk = -pi*rot_or*B_g/(n_m*k**2*b_sy)
         ds_d__dk = -dw_sy__dk
         dw_t__dk = -2*pi*rot_or*B_g/(n_slots*k**2*b_t)
         dgamma__dk = -2*pi/n_slots*((radius_motor-w_sy)*dw_sy__dk - ((radius_motor - w_sy - s_d)*(dw_sy__dk+ds_d__dk) ))
-        dw_ry__drot_or = pi*B_g/(n_m*k*b_ry)
-        dgamma__drot_or = -2*pi/n_slots*((radius_motor-w_sy)*(dw_sy__drot_or) - (radius_motor - w_sy - s_d)*(dw_sy__drot_or+ds_d__drot_or))
+        dw_ry__dk = -pi*rot_or*B_g/(k**2*n_m*b_ry)
+        dslot_area__dk = dgamma__dk - ds_d__dk*w_t*1.05 - s_d*dw_t__dk*1.05
 
         dw_sy__db_sy = -pi*rot_or*B_g/(n_m*k*b_sy**2)
         ds_d__db_sy = -dw_sy__db_sy
         dgamma__db_sy = -2*pi/n_slots*((radius_motor-w_sy)*(dw_sy__db_sy) - (radius_motor - w_sy - s_d)*(dw_sy__db_sy+ds_d__db_sy))
-        ds_d__dgap   = -gap**-2
-        dgamma__dgap = -2*pi*ds_d__dgap/n_slots*(radius_motor-w_sy)
+        dslot_area__db_sy = dgamma__db_sy - ds_d__db_sy*w_t *1.05
 
-        dgammaJ__drot_or = 2 * pi/n_slots*((radius_motor-w_sy) * dw_sy__drot_or - ((radius_motor - w_sy - s_d) * (dw_sy__drot_or + ds_d__drot_or) )) - s_d*dw_t__dn_slots
-        dA_s__d_rot_or = dgammaJ__drot_or-ds_d__drot_or*w_t*1.05 - s_d*dw_t__drot_or*1.05
-        dw_ry__dB_g = pi*rot_or/(n_m*k*b_ry)
-        dw_ry__dn_m = -pi*rot_or*B_g/(k*n_m**2*b_ry)
-        dw_ry__dk = -pi*rot_or*B_g/(k**2*n_m*b_ry)
+        ds_d__dgap   = -gap**-2
+        dgamma__dgap = -2*pi/n_slots*(radius_motor-w_sy-s_d)
+        dslot_area__dgap = dgamma__dgap + w_t*1.05
+
         dw_ry__db_ry = -pi*rot_or*B_g/(k*n_m*b_ry**2)
+        
         dw_t__db_t = -2*pi*rot_or*B_g/(n_slots*k*b_t**2)
-        ds_d__dn_slots = -pi/n_slots**2*((radius_motor-w_ry)**2 - (radius_motor-w_sy-s_d)**2)
+        dslot_area__db_t = -s_d*dw_t__db_t*1.05
+
+        dslot_area__dradius_motor = 2*pi/n_slots * (radius_motor - w_sy) - w_t*1.05
+
 
 
         # Rotor Yoke Width
@@ -178,96 +193,46 @@ class MotorSizeComp(om.ExplicitComponent):
 
         # Slot Depth
         J['s_d', 'radius_motor'] = 1 
-        J['s_d', 'rot_or'] = -1 - dw_sy__drot_or
+        J['s_d', 'rot_or'] = ds_d__drot_or
         J['s_d', 'gap'] = -1
-        J['s_d', 'B_g'] =  - (pi*rot_or)/(n_m*k*b_sy)
+        J['s_d', 'B_g'] = ds_d__dB_g
         J['s_d', 'n_m'] = -dw_sy__dn_m
-        J['s_d', 'k'] = -dw_sy__dk
+        J['s_d', 'k'] = ds_d__dk
         J['s_d', 'b_sy'] = -dw_sy__db_sy
 
         #Rotor Inner Radius
-        
-        J['rot_ir', 'rot_or'] = (1 - t_mag) - dw_ry__drot_or
-
-        J['rot_ir', 't_mag'] = ( -1)
-
-        
+        J['rot_ir', 'rot_or'] = 1  - dw_ry__drot_or
+        J['rot_ir', 't_mag'] = -1
         J['rot_ir', 'B_g'] = - dw_ry__dB_g 
-
-        
         J['rot_ir', 'n_m'] = -dw_ry__dn_m
-
-        
         J['rot_ir', 'k'] = - dw_ry__dk
-
-        
         J['rot_ir', 'b_ry'] = -dw_ry__db_ry
 
         # Stator Inner Radius
-        J['sta_ir', 'rot_or'] =  1 + gap
-        J['sta_ir', 'gap'] =  rot_or + 1
+        J['sta_ir', 'rot_or'] =  1
+        J['sta_ir', 'gap'] =  1
 
         # Slot Area
-        J['slot_area', 'n_slots'] = dgamma__dn_slots - ds_d__dn_slots*w_t*1.05 - s_d*dw_t__dn_slots*1.05
-
-        
-        J['slot_area', 'radius_motor'] = dgamma__dradius_motor - w_t*1.05 
-
-        
-        
-        J['slot_area', 'rot_or'] = dgamma__drot_or - ds_d__drot_or * w_t*1.05 - s_d* dw_t__drot_or*1.05
-        
-        
-        J['slot_area', 'B_g'] = dgamma__dB_g - ds_d__dB_g * w_t*1.05 - s_d* dw_t__dB_g*1.05
-        
-        
-        J['slot_area', 'n_m'] = dgamma__dn_m - ds_d__dn_m*w_t*1.05
-        
-        
-        J['slot_area', 'k'] = dgamma__dk - ds_d__dk*w_t*1.05 - s_d*dw_t__dk*1.05
-
-        
-        J['slot_area', 'b_sy'] = dgamma__db_sy - ds_d__db_sy*w_t *1.05
-        
-        J['slot_area', 'gap'] = -2*pi/n_slots*(radius_motor-w_sy-s_d) + w_t*1.05
-        
-        
-        J['slot_area', 'b_t'] = -s_d*dw_t__db_t*1.05
+        J['slot_area', 'n_slots'] = dslot_area__dn_slots
+        J['slot_area', 'radius_motor'] = dslot_area__dradius_motor
+        J['slot_area', 'rot_or'] = dslot_area__drot_or
+        J['slot_area', 'B_g'] = dslot_area__dBg
+        J['slot_area', 'n_m'] = dslot_area__dn_m
+        J['slot_area', 'k'] = dslot_area__dk
+        J['slot_area', 'b_sy'] = dslot_area__db_sy
+        J['slot_area', 'gap'] = dslot_area__dgap
+        J['slot_area', 'b_t'] = dslot_area__db_t
 
         # Slot Width 
-        J['w_slot', 'n_slots'] = ((4*pi**2*B_g*rot_or)/(k*n_slots**3*b_t)) - ((pi*((pi**2*B_g**2*rot_or**2)/(k**2*n_m**2*b_sy**2) - \
-                                 (2*pi*B_g*radius_motor*rot_or)/(k*n_m*b_sy) + gap**2- 2*gap*rot_or + radius_motor**2 - rot_or)) /  \
-                                 (n_slots**2 * ((-pi*B_g*rot_or)/(k*n_m*b_sy) - gap + radius_motor - rot_or))  )
-        
-        J['w_slot', 'radius_motor'] = (( pi*(2*radius_motor - (2*pi*B_g*rot_or)/(k*n_m*b_sy)) )/( n_slots* ((-pi*B_g*rot_or)/(k*n_m*b_sy) \
-                                      - gap + radius_motor - rot_or))) - (pi*((pi**2*B_g**2*rot_or**2)/(k**2*n_m**2*b_sy**2) - (2*pi*B_g*radius_motor*rot_or)/ \
-                                      (k*n_m*b_sy) + gap**2-2*gap*rot_or*radius_motor**2 - rot_or)/( n_slots *((-pi*B_g*rot_or)/(k*n_m*b_sy) - gap + radius_motor - rot_or)**2))
-        
-        J['w_slot', 'rot_or'] = ((-pi*(-pi*B_g/(k*n_m*b_sy)-1) * ((pi**2*B_g**2*rot_or**2)/(k**2*n_m**2*b_sy**2) - (2*pi*B_g*radius_motor*rot_or)/(k*n_m*b_sy)  \
-                                + gap**2-2*gap*rot_or+radius_motor**2- rot_or)) / (n_slots*( (-pi*B_g*rot_or)/(k*n_m*b_sy)-gap+radius_motor- rot_or )**2)) +    \
-                                (pi*((2*pi**2*B_g*rot_or)/(k**2*n_m**2*b_sy**2) - ((2*pi*B_g*radius_motor)/(k*n_m*b_sy) -2*gap- n_slots ) ) / (  (n_slots*((-pi*B_g*rot_or)  \
-                                /(k*n_m*b_sy)-gap+radius_motor- rot_or) ))) - (2*pi**2*B_g)/(k*n_slots**2*b_t)  
-        
-        J['w_slot', 'B_g'] = (pi**2*rot_or*(((pi*B_g*rot_or)/(k*n_m*b_sy))**2 - (2*pi*B_g*radius_motor*rot_or)/(n_m*k*b_sy) + gap**2 - 2*gap*rot_or + \
-                             radius_motor**2 - rot_or)) / (k*n_slots*n_m*b_sy*((-pi*B_g*rot_or)/(k*n_m*b_sy) -gap+radius_motor-rot_or )**2)   +       \
-                             ((2*pi*B_g*( ((pi*rot_or)/(k*n_m*b_sy))**2 - (2*pi*radius_motor*rot_or)/(B_g*k*n_m*b_sy)))/( n_slots*((-pi*B_g*rot_or)/(k*n_m*b_sy) \
-                             - gap+radius_motor-rot_or )))   -   ((2*pi**2*rot_or)/(k*n_slots**2*b_t))
-        
-        J['w_slot', 'n_m'] = ((2*pi**2/n_m*((B_g*radius_motor*rot_or)/(k*n_m*b_sy) - \
-                            pi*((B_g*rot_or)/(k*n_m*b_sy))**2)) / n_slots*((-pi*B_g*rot_or)/ \
-                             (k*n_m*b_sy)-gap+radius_motor-rot_or)) - ((pi**2*B_g*rot_or*(((pi*B_g*rot_or)/(k*n_m*b_sy))**2 - (2*pi*B_g*radius_motor*rot_or)\
-                             /(k*n_m*b_sy) + gap**2-2*gap*rot_or + radius_motor**2 - rot_or)) / (k*n_slots*n_m**2*b_sy*((-pi*B_g*rot_or)/(k*n_m*b_sy) - gap + radius_motor - rot_or)**2))
-        
-        J['w_slot', 'k'] = -(pi**2*B_g*rot_or*( ((pi*B_g*rot_or)/(k*n_m*b_sy))**2 - (2*radius_motor*pi*B_g*rot_or)/(k*n_m*b_sy) + gap**2 - 2*gap*rot_or + \
-                            radius_motor**2 - rot_or)) / (k**2*n_slots*n_m*b_sy*((-pi*B_g*rot_or)/(k*n_m*b_sy) -gap + radius_motor - rot_or)**2)  +  \
-                            ((pi*((2*radius_motor*pi*B_g*rot_or)/(k**2*n_m*b_sy) - (2*pi**2*B_g**2*rot_or**2)/(k**3*n_m**2*b_sy**2))) / (n_slots*((-pi*B_g*rot_or)/\
-                            (k*n_m*b_sy) - gap+radius_motor-rot_or))) + ((2*pi**2*B_g*rot_or)/(k**2*n_slots**2*b_t))
-        
-        J['w_slot', 'b_sy'] = (dgamma__db_sy - 1.05*w_t*ds_d__db_sy) 
-           
-        J['w_slot', 'gap'] = -2*pi/(gap**2*n_slots)*((radius_motor-w_sy)**2 - (radius_motor-w_sy-s_d)**2)*(-2*(radius_motor-w_sy-s_d))
-
-        J['w_slot', 'b_t'] = (2*pi**2*B_g*rot_or)/(k*n_slots**2*b_t**2)
+        J['w_slot', 'n_slots'] = dslot_area__dn_slots/s_d 
+        J['w_slot', 'radius_motor'] = dslot_area__dradius_motor/s_d - slot_area/s_d**2
+        J['w_slot', 'rot_or'] = dslot_area__drot_or/s_d - slot_area/s_d**2 * ds_d__drot_or
+        J['w_slot', 'B_g'] = dslot_area__dBg/s_d - slot_area/s_d**2 * ds_d__dB_g
+        J['w_slot', 'n_m'] = dslot_area__dn_m/s_d - slot_area/s_d**2 * ds_d__dn_m
+        J['w_slot', 'k'] = dslot_area__dk/s_d - slot_area/s_d**2 * ds_d__dk
+        J['w_slot', 'b_sy'] = dslot_area__db_sy/s_d - slot_area/s_d**2 * ds_d__db_sy
+        J['w_slot', 'gap'] = dslot_area__dgap/s_d + slot_area/s_d**2
+        J['w_slot', 'b_t'] = dslot_area__db_t/s_d
 
         # Current density
 
@@ -283,7 +248,7 @@ class MotorSizeComp(om.ExplicitComponent):
         
         
         
-        J['J', 'rot_or'] = 2*n_turns*I*np.sqrt(2)/(k_wb*dA_s__d_rot_or*1E6)
+        J['J', 'rot_or'] = 2*n_turns*I*np.sqrt(2)/(k_wb*dslot_area__drot_or*1E6)
 
         
         # J['J', 'B_g'] = 2*n_turns*I*np.sqrt(2)/(k_wb*)
