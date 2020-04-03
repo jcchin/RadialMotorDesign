@@ -41,12 +41,13 @@ class WindingLossComp(om.ExplicitComponent):
         self.add_output('P_wire', 400*np.ones(nn), units='W ', desc= 'total power loss from wire')
 
         r = c = np.arange(nn)  # for scalar variables only
-        self.declare_partials('*' , '*', method='fd')
 
         self.declare_partials('f_e', ['n_m', 'rpm'], rows=r, cols=c)
         self.declare_partials('r_litz', ['n_strands', 'r_strand'])
         self.declare_partials('L_wire', ['n_slots', 'n_turns', 'stack_length'])
         self.declare_partials('temp_resistivity', ['resistivity_wire', 'T_coeff_cu', 'T_windings'])
+        self.declare_partials('R_dc', ['resistivity_wire', 'T_coeff_cu', 'T_windings', 'n_slots', 'n_turns', 'stack_length', 'r_strand'])
+        self.declare_partials('skin_depth', ['resistivity_wire', 'T_coeff_cu', 'T_windings', 'n_m', 'rpm', 'mu_r', 'mu_o'], rows=r, cols=c)
         self.declare_partials('A_cu', ['n_turns', 'n_strands', 'r_strand'])
         self.declare_partials('R_dc', ['resistivity_wire', 'T_coeff_cu', 'T_windings', 'n_slots', 'n_turns', 'stack_length', 'r_strand'])
         self.declare_partials('skin_depth', ['resistivity_wire', 'T_coeff_cu', 'T_windings', 'n_m', 'rpm', 'mu_r', 'mu_o'], rows=r, cols=c)
@@ -98,65 +99,75 @@ class WindingLossComp(om.ExplicitComponent):
         n_strands = inputs['n_strands']
         AC_pf = inputs['AC_power_factor']
 
-        J['f_e', 'n_m'] = 1 / 2 * rpm / 60 
-        J['f_e', 'rpm'] = n_m / 2 * 1 / 60
-        J['r_litz', 'n_strands'] = (1/2*(n_strands**-0.5) * 1.154 * r_strand*2)/2  
-        J['r_litz', 'r_strand'] = (np.sqrt(n_strands) * 1.154 * r_strand)    
-        J['L_wire', 'n_slots'] = (1/3 * n_turns) * (stack_length*2 + .017*2) 
-        J['L_wire', 'n_turns'] = n_slots/3 * (stack_length*2 + .017*2)  
-        J['L_wire', 'stack_length'] =  (n_slots/3 * n_turns) * 2
-        J['temp_resistivity', 'resistivity_wire'] = (1 + T_coeff_cu*(T_windings-20))
-        J['temp_resistivity', 'T_coeff_cu'] = resistivity_wire *(T_windings-20)
-        J['temp_resistivity', 'T_windings'] = (resistivity_wire * T_coeff_cu)
+        f_e = n_m / 2 * rpm / 60  
+        L_wire = (n_slots/3 * n_turns) * (stack_length*2 + .017*2) 
+        temp_resistivity = (resistivity_wire * (1 + T_coeff_cu*(T_windings-20)))
+        R_dc = temp_resistivity * L_wire / ((np.pi*(r_strand)**2)*41)
+        P_dc = (I*np.sqrt(2))**2 * R_dc *3/2
+        P_ac = AC_pf * P_dc
+
+        d_f_e__d_n_m = J['f_e', 'n_m'] = 1 / 2 * rpm / 60
+        d_f_e__d_rpm = J['f_e', 'rpm'] = n_m / 2 * 1 / 60 
+
+        J['r_litz', 'n_strands'] = (n_strands**-.5 * 1.154 * r_strand*2)/4 
+        J['r_litz', 'r_strand'] = (np.sqrt(n_strands) * 1.154 * 2)/2 
+
+        d_L_wire__d_n_slots = J['L_wire', 'n_slots'] = (1/3 * n_turns) * (stack_length*2 + .017*2)
+        d_L_wire__d_n_turns = J['L_wire', 'n_turns'] = (n_slots/3) * (stack_length*2 + .017*2)
+        d_L_wire__d_stack_length = J['L_wire', 'stack_length'] = (n_slots/3 * n_turns) * 2
+
+        d_temp_resistivity__d_resistivity_wire = J['temp_resistivity', 'resistivity_wire'] = 1 + T_coeff_cu*(T_windings-20)
+        d_temp_resistivity__dT_coeff_cu = J['temp_resistivity', 'T_coeff_cu'] = resistivity_wire * (T_windings-20)
+        d_temp_resistivity__dT_windings = J['temp_resistivity', 'T_windings'] = resistivity_wire * T_coeff_cu  
+
+        d_R_dc__d_resistivity_wire = J['R_dc', 'resistivity_wire'] = L_wire/((np.pi*(r_strand)**2)*41) * d_temp_resistivity__d_resistivity_wire
+        d_R_dc__d_T_coeff_cu =J['R_dc', 'T_coeff_cu'] = L_wire/((np.pi*(r_strand)**2)*41) * d_temp_resistivity__dT_coeff_cu
+        d_R_dc__d_T_windings =J['R_dc', 'T_windings'] = L_wire/((np.pi*(r_strand)**2)*41) * d_temp_resistivity__dT_windings
+        d_R_dc__d_n_slots =J['R_dc', 'n_slots'] = temp_resistivity / ((np.pi*(r_strand)**2)*41) * d_L_wire__d_n_slots
+        d_R_dc__d_n_turns =J['R_dc', 'n_turns'] = temp_resistivity / ((np.pi*(r_strand)**2)*41) * d_L_wire__d_n_turns
+        d_R_dc__d_stack_length =J['R_dc', 'stack_length'] = temp_resistivity / ((np.pi*(r_strand)**2)*41) * d_L_wire__d_stack_length
+        d_R_dc__d_r_strand =J['R_dc', 'r_strand'] = -2 * temp_resistivity * L_wire / ((np.pi*(r_strand)**3)*41)
+
+        J['skin_depth', 'n_m'] = .5*(temp_resistivity / (np.pi*f_e*mu_r*mu_o))**-0.5*temp_resistivity*-1*f_e**-2/(np.pi*mu_r*mu_o) * d_f_e__d_n_m
+        J['skin_depth', 'rpm'] = .5*(temp_resistivity / (np.pi*f_e*mu_r*mu_o))**-0.5*temp_resistivity*-1*f_e**-2/(np.pi*mu_r*mu_o) * d_f_e__d_rpm
+        J['skin_depth', 'resistivity_wire'] = .5*(temp_resistivity / (np.pi*f_e*mu_r*mu_o))**-0.5*1/(np.pi*f_e*mu_r*mu_o) * d_temp_resistivity__d_resistivity_wire
+        J['skin_depth', 'T_coeff_cu'] = .5*(temp_resistivity / (np.pi*f_e*mu_r*mu_o))**-0.5*1/(np.pi*f_e*mu_r*mu_o) * d_temp_resistivity__dT_coeff_cu
+        J['skin_depth', 'T_windings'] = .5*(temp_resistivity / (np.pi*f_e*mu_r*mu_o))**-0.5*1/(np.pi*f_e*mu_r*mu_o) * d_temp_resistivity__dT_windings
+        J['skin_depth', 'mu_o'] = .5*(temp_resistivity / (np.pi*f_e*mu_r*mu_o))**-0.5*temp_resistivity*-1*mu_o**-2/(np.pi*mu_r*f_e)
+        J['skin_depth', 'mu_r'] = .5*(temp_resistivity / (np.pi*f_e*mu_r*mu_o))**-0.5*temp_resistivity*-1*mu_r**-2/(np.pi*f_e*mu_o)
+
         J['A_cu', 'n_turns'] = n_strands * 2 * np.pi * r_strand**2
         J['A_cu', 'n_strands'] = n_turns * 2 * np.pi * r_strand**2
         J['A_cu', 'r_strand'] = n_turns * n_strands * 4 * pi * r_strand
 
-        # J['R_dc', 'resistivity_wire'] = 
-        # J['R_dc', 'T_coeff_cu'] = 
-        # J['R_dc', 'T_windings'] = 
-        # J['R_dc', 'n_slots'] = 
-        # J['R_dc', 'n_turns'] = 
-        # J['R_dc', 'stack_length'] = 
-        # J['R_dc', 'r_strand']= 
+        d_P_dc__d_I = J['P_dc', 'I'] = 2*(I*np.sqrt(2)) * (R_dc) *3/2 * np.sqrt(2)
+        d_P_dc__d_resistivity_wire = J['P_dc', 'resistivity_wire'] = (I*np.sqrt(2))**2 *3/2 * d_R_dc__d_resistivity_wire
+        d_P_dc__d_T_coeff_cu = J['P_dc', 'T_coeff_cu'] = (I*np.sqrt(2))**2 *3/2 * d_R_dc__d_T_coeff_cu
+        d_P_dc__d_T_windings = J['P_dc', 'T_windings'] = (I*np.sqrt(2))**2 *3/2 * d_R_dc__d_T_windings
+        d_P_dc__d_n_slots = J['P_dc', 'n_slots'] = (I*np.sqrt(2))**2 *3/2 * d_R_dc__d_n_slots
+        d_P_dc__d_n_turns = J['P_dc', 'n_turns'] = (I*np.sqrt(2))**2 *3/2 * d_R_dc__d_n_turns
+        d_P_dc__d_stack_length = J['P_dc', 'stack_length'] = (I*np.sqrt(2))**2 *3/2 * d_R_dc__d_stack_length
+        d_P_dc__d_r_strand = J['P_dc', 'r_strand'] = (I*np.sqrt(2))**2 *3/2 * d_R_dc__d_r_strand
 
-        # J['skin_depth', 'resistivity_wire'] = 
-        # J['skin_depth', 'T_coeff_cu'] = 
-        # J['skin_depth', 'T_windings'] = 
-        # J['skin_depth', 'n_m'] = 
-        # J['skin_depth', 'rpm'] = 
-        # J['skin_depth', 'mu_r'] = 
-        # J['skin_depth', 'mu_o'] = 
+        d_P_ac__d_AC_pf = J['P_ac', 'AC_power_factor'] = P_dc
+        d_P_ac__d_I = J['P_ac', 'I'] = AC_pf * d_P_dc__d_I
+        d_P_ac__d_resistivity_wire =J['P_ac', 'resistivity_wire'] = AC_pf * d_P_dc__d_resistivity_wire
+        d_P_ac__d_T_coeff_cu = J['P_ac', 'T_coeff_cu'] = AC_pf * d_P_dc__d_T_coeff_cu
+        d_P_ac__d_T_windings = J['P_ac', 'T_windings'] = AC_pf * d_P_dc__d_T_windings
+        d_P_ac__d_n_slots = J['P_ac', 'n_slots'] = AC_pf * d_P_dc__d_n_slots
+        d_P_ac__d_n_turns = J['P_ac', 'n_turns'] = AC_pf * d_P_dc__d_n_turns
+        d_P_ac__d_stack_length = J['P_ac', 'stack_length'] = AC_pf * d_P_dc__d_stack_length
+        d_P_ac__d_r_strand = J['P_ac', 'r_strand'] = AC_pf * d_P_dc__d_r_strand
 
-        # J['P_dc', 'I']  
-        # J['P_dc', 'resistivity_wire'] = 
-        # J['P_dc', 'T_coeff_cu'] = 
-        # J['P_dc', 'T_windings'] = 
-        # J['P_dc', 'n_slots'] = 
-        # J['P_dc', 'n_turns'] = 
-        # J['P_dc', 'stack_length'] = 
-        # J['P_dc', 'r_strand'] = 
-
-        # J['P_ac', 'AC_power_factor'] = 
-        # J['P_ac', 'I'] = 
-        # J['P_ac', 'resistivity_wire'] = 
-        # J['P_ac', 'T_coeff_cu'] = 
-        # J['P_ac', 'T_windings'] = 
-        # J['P_ac', 'n_slots'] = 
-        # J['P_ac', 'n_turns'] = 
-        # J['P_ac', 'stack_length'] = 
-        # J['P_ac', 'r_strand'] = 
-
-        # J['P_wire', 'I'] = 
-        # J['P_wire', 'resistivity_wire'] = 
-        # J['P_wire', 'T_coeff_cu'] = 
-        # J['P_wire', 'T_windings'] = 
-        # J['P_wire', 'n_slots'] = 
-        # J['P_wire', 'n_turns'] = 
-        # J['P_wire', 'stack_length'] = 
-        # J['P_wire', 'r_strand'] = 
-        # J['P_wire', 'AC_power_factor'] = 
-
+        J['P_wire', 'I'] = d_P_dc__d_I + d_P_ac__d_I
+        J['P_wire', 'resistivity_wire'] = d_P_dc__d_resistivity_wire + d_P_ac__d_resistivity_wire
+        J['P_wire', 'T_coeff_cu'] = d_P_dc__d_T_coeff_cu + d_P_ac__d_T_coeff_cu
+        J['P_wire', 'T_windings'] = d_P_dc__d_T_windings + d_P_ac__d_T_windings
+        J['P_wire', 'n_slots'] = d_P_dc__d_n_slots + d_P_ac__d_n_slots
+        J['P_wire', 'n_turns'] = d_P_dc__d_n_turns + d_P_ac__d_n_turns
+        J['P_wire', 'stack_length'] = d_P_dc__d_stack_length + d_P_ac__d_stack_length
+        J['P_wire', 'r_strand'] = d_P_dc__d_r_strand + d_P_ac__d_r_strand
+        J['P_wire', 'AC_power_factor'] = d_P_ac__d_AC_pf
 
 class SteinmetzLossComp(om.ExplicitComponent):
     def initialize(self):
@@ -196,9 +207,9 @@ class SteinmetzLossComp(om.ExplicitComponent):
 
         J['P_steinmetz', 'k_stein'] = f_e**alpha_stein * B_pk**beta_stein * sta_mass
         J['P_steinmetz', 'f_e'] = alpha_stein*k_stein * f_e**(alpha_stein-1) * B_pk**beta_stein * sta_mass
-        J['P_steinmetz', 'alpha_stein'] = k_stein * f_e**alpha_stein * B_pk**beta_stein * sta_mass * np.log(alpha_stein)
+        J['P_steinmetz', 'alpha_stein'] = k_stein * f_e**alpha_stein * B_pk**beta_stein * sta_mass * np.log(f_e)
         J['P_steinmetz', 'B_pk'] = k_stein * f_e**alpha_stein * B_pk**(beta_stein-1) * sta_mass*beta_stein
-        J['P_steinmetz', 'beta_stein'] = k_stein * f_e**alpha_stein * B_pk**beta_stein * sta_mass * np.log(beta_stein)
+        J['P_steinmetz', 'beta_stein'] = k_stein * f_e**alpha_stein * B_pk**beta_stein * sta_mass * np.log(B_pk)
         J['P_steinmetz', 'sta_mass'] = k_stein * f_e**alpha_stein * B_pk**beta_stein
         
 
