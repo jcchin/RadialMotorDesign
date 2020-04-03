@@ -106,7 +106,6 @@ class GapEquivalentComp(om.ExplicitComponent):
         self.add_output('g_eq', .001, units='m', desc='Equivalent aig gap')  # Gieras - pg.180
         # self.add_output('g_eq_q', .001, units='m', desc='Equivalent air gap q-axis')  # Gieras - pg.180
 
-        self.declare_partials('*','*', method='fd')
         self.declare_partials('g_eq', ['gap', 'carters_coef', 'k_sat'])
 
     def compute(self, inputs, outputs):
@@ -139,7 +138,6 @@ class GapFieldsComp(om.ExplicitComponent):
     # self.add_output('H_g', units='A/m', desc='air gap field intensity')
     self.add_output('B_g', 1.5, units='T', desc='air gap flux density')
 
-    self.declare_partials('*','*', method='fd')
     self.declare_partials('B_g', ['Br', 'mu_r', 'g_eq', 't_mag'])
     # self.declare_partials('H_g', ['Hc_20', 'Br', 'mu_r', 'g_eq', 't_mag', 'Br_20'])
 
@@ -154,7 +152,7 @@ class GapFieldsComp(om.ExplicitComponent):
     outputs['B_g'] = Br/(1+mu_r*(g_eq/t_mag))                   # neglecting leakage flux and fringing, magnetic voltag drop in steel (eqn2.14 Gieres PMSM)
     # outputs['H_g'] = Hc_20*(outputs['B_g']/Br_20)
 
-def compute_partials(self, inputs, J):
+  def compute_partials(self, inputs, J):
     Br = inputs['Br']
     mu_r=inputs['mu_r']
     g_eq=inputs['g_eq']

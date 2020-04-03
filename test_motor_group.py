@@ -135,7 +135,7 @@ class TestMotorGroup(unittest.TestCase):
 
         data = p.check_partials(method='cs', compact_print=True, show_only_incorrect = True, includes='DESIGN.em_properties.gap_fields')
         # can look at one component at a time with assert_check_partials
-        assert_check_partials(data, atol=1e-1, rtol=1e-2) #DERIVS SEEM FINE, LOOSENED TOLERANCE
+        assert_check_partials(data, atol=1e-6, rtol=1e-6) 
 
         data = p.check_partials(method='cs', compact_print=True, show_only_incorrect = True, includes='DESIGN.em_properties.torque')
         # can look at one component at a time with assert_check_partials
@@ -145,7 +145,7 @@ class TestMotorGroup(unittest.TestCase):
         # can look at one component at a time with assert_check_partials
         assert_check_partials(data, atol=1e-6, rtol=1e-6)
 
-        # data = p.check_partials(method='cs', compact_print=True, show_only_incorrect = True, includes='DESIGN.thermal_properties')
+        # data = p.check_partials(method='cs', compact_print=True, show_only_incorrect = True, includes='DESIGN.thermal_properties.copperloss')
         # # can look at one component at a time with assert_check_partials
         # assert_check_partials(data, atol=1e-6, rtol=1e-6)
 
