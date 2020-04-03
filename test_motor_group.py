@@ -121,14 +121,35 @@ class TestMotorGroup(unittest.TestCase):
         # p.run_model()
 
         # make new lines for each component
-        data_size = p.check_partials(method='cs', compact_print=True, show_only_incorrect = False, includes='DESIGN.geometry.size') # Not Good
-        # data_mass = p.check_partials(method='cs', compact_print=True, show_only_incorrect = False, includes='DESIGN.geometry.mass') # Good
-        # data_copperloss = p.check_partials(method='cs', compact_print=True, show_only_incorrect = False, includes='OD1.em_properties.copperloss') 
-        # data_steinmetzloss= p.check_partials(method='cs', compact_print=True, show_only_incorrect = False, includes='OD1.em_properties.steinmetz')
+
+        data = p.check_partials(method='cs', compact_print=True, show_only_incorrect = True)#, includes='DESIGN.geometry.size')
 
         # can look at one component at a time with assert_check_partials
         assert_check_partials(data_size, atol=1e-6, rtol=1e-6)
 
+        data = p.check_partials(method='cs', compact_print=True, show_only_incorrect = True, includes='DESIGN.em_properties.carters')
+        # can look at one component at a time with assert_check_partials
+        assert_check_partials(data, atol=1e-6, rtol=1e-6)
+
+        data = p.check_partials(method='cs', compact_print=True, show_only_incorrect = True, includes='DESIGN.em_properties.equivalent_gap')
+        # can look at one component at a time with assert_check_partials
+        assert_check_partials(data, atol=1e-6, rtol=1e-6)
+
+        data = p.check_partials(method='cs', compact_print=True, show_only_incorrect = True, includes='DESIGN.em_properties.gap_fields')
+        # can look at one component at a time with assert_check_partials
+        assert_check_partials(data, atol=1e-6, rtol=1e-6) 
+
+        data = p.check_partials(method='cs', compact_print=True, show_only_incorrect = True, includes='DESIGN.em_properties.torque')
+        # can look at one component at a time with assert_check_partials
+        assert_check_partials(data, atol=1e-6, rtol=1e-6)
+
+        data = p.check_partials(method='cs', compact_print=True, show_only_incorrect = True, includes='DESIGN.em_properties.motor_efficiency')
+        # can look at one component at a time with assert_check_partials
+        assert_check_partials(data, atol=1e-6, rtol=1e-6)
+
+        # data = p.check_partials(method='cs', compact_print=True, show_only_incorrect = True, includes='DESIGN.thermal_properties.copperloss')
+        # # can look at one component at a time with assert_check_partials
+        # assert_check_partials(data, atol=1e-6, rtol=1e-6)
 
 
 if __name__ == '__main__':

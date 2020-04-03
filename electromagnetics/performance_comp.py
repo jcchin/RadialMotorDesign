@@ -116,4 +116,4 @@ class EfficiencyComp(om.ExplicitComponent):
         J['Eff', 'Tq_shaft'] = -omega*P_shaft / ( (Tq_shaft*omega) + P_wire + P_steinmetz  )**2
         J['Eff', 'omega'] = -Tq_shaft*P_shaft / ( (Tq_shaft*omega) + P_wire + P_steinmetz  )**2
         J['Eff', 'P_wire'] = -P_shaft / ( (Tq_shaft*omega) + P_wire + P_steinmetz  )**2
-        J['Eff', 'P_steinmetz'] = -P_shaft / ( (Tq_shaft*omega) + P_wire )**2
+        J['Eff', 'P_steinmetz'] = -P_shaft / ( (Tq_shaft*omega) + P_wire + (P_steinmetz) )**2
