@@ -122,7 +122,7 @@ class TestMotorGroup(unittest.TestCase):
         # make new lines for each component
 
 
-        data = p.check_partials(method='cs', compact_print=False, show_only_incorrect = True, includes='DESIGN.geometry.size')
+        data = p.check_partials(method='cs', compact_print=True, show_only_incorrect = True, includes='DESIGN.geometry.size')
 
         # can look at one component at a time with assert_check_partials
         assert_check_partials(data, atol=1e-6, rtol=1e-6)
