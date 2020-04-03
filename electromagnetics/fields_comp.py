@@ -151,7 +151,7 @@ class GapFieldsComp(om.ExplicitComponent):
     g_eq=inputs['g_eq']
     t_mag=inputs['t_mag']
 
-    outputs['B_g'] = (Br/(1+mu_r*g_eq/t_mag))                   # neglecting leakage flux and fringing, magnetic voltag drop in steel (eqn2.14 Gieres PMSM)
+    outputs['B_g'] = Br/(1+mu_r*(g_eq/t_mag))                   # neglecting leakage flux and fringing, magnetic voltag drop in steel (eqn2.14 Gieres PMSM)
     # outputs['H_g'] = Hc_20*(outputs['B_g']/Br_20)
 
 def compute_partials(self, inputs, J):
@@ -162,7 +162,7 @@ def compute_partials(self, inputs, J):
 
     J['B_g', 'Br'] = (1/(1+mu_r*g_eq/t_mag)) 
     J['B_g', 'mu_r'] = -Br*g_eq*t_mag/((g_eq*mu_r+t_mag)**2)
-    J['B_g', 'g_eq'] = -Br*mu_r*t_mag/((g_eq*mu_r+t_mag)**2)
-    J['B_g', 't_mag'] = Br*g_eq*mu_r/((g_eq*mu_r+t_mag)**2)
+    J['B_g', 'g_eq'] = -Br*(mu_r/t_mag)/(1+mu_r*(g_eq/t_mag))**2
+    J['B_g', 't_mag'] = Br * mu_r*g_eq*t_mag**-2 / (1+mu_r*(g_eq/t_mag))**2
 
 
