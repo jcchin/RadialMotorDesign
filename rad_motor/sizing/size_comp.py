@@ -4,8 +4,11 @@ from math import pi
 import openmdao.api as om
 
 class MotorSizeComp(om.ExplicitComponent):
+    # def initialize(self):
+    #     self.options.declare('num_nodes', types=int)
 
     def setup(self):
+        # nn = self.options['num_nodes']
         self.add_input('radius_motor', 0.078225, units='m', desc='outer radius of motor')
         self.add_input('gap', 0.001, units='m', desc='air gap')
         self.add_input('rot_or', .05, units='m', desc='rotor outer radius') 
@@ -18,7 +21,7 @@ class MotorSizeComp(om.ExplicitComponent):
         self.add_input('b_t', 2.4, units='T', desc='flux density of tooth')
         self.add_input('n_slots', 20, desc='Number of slots')
         self.add_input('n_turns', 11, desc='number of wire turns')
-        self.add_input('I_required', 25, units='A', desc='RMS current')  # Imax
+        self.add_input('I_required',30, units='A', desc='RMS current')  # Imax
         self.add_input('k_wb', 0.65, desc='bare wire slot fill factor')
 
         self.add_output('w_ry', .004, units='m', desc='width of stator yoke')
@@ -32,6 +35,7 @@ class MotorSizeComp(om.ExplicitComponent):
         self.add_output('w_slot', .015, units='m', desc='width of a slot')
         self.add_output('J', units='A/mm**2', desc='Current density')
 
+        # r = c = np.arange(nn)  # for scalar variables only
         self.declare_partials('w_ry', ['rot_or', 'B_g', 'n_m', 'k', 'b_ry'])
         self.declare_partials('w_sy', ['rot_or', 'B_g', 'n_m', 'k', 'b_sy'])
         self.declare_partials('w_t', ['rot_or','B_g','n_slots','k','b_t'])
@@ -40,6 +44,7 @@ class MotorSizeComp(om.ExplicitComponent):
         self.declare_partials('sta_ir', ['rot_or', 'gap'])
         self.declare_partials('slot_area', ['n_slots', 'radius_motor', 'rot_or', 'B_g', 'n_m', 'k', 'b_sy', 'gap', 'b_t'])
         self.declare_partials('w_slot', ['n_slots', 'radius_motor', 'rot_or', 'B_g', 'n_m', 'k', 'b_sy', 'gap', 'b_t'])
+        # self.declare_partials(of='J', wrt='I_required', rows=r, cols=c)
         self.declare_partials('J', ['n_turns', 'I_required', 'k_wb', 'n_slots', 'radius_motor', 'rot_or', 'B_g', 'n_m', 'k', 'b_sy', 'gap', 'b_t'])
 
     def compute(self,inputs,outputs):

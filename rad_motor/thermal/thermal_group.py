@@ -70,7 +70,7 @@ class ThermalGroup(om.Group):
         
         motor_interp.add_input('rpm', 5400*np.ones(nn), training_data= rpm_data, units='rpm' )
         motor_interp.add_input('I_peak', 50, training_data=current_data, units='A')
-        motor_interp.add_output('AC_power_factor', 0.5, training_data=motor_loss_data)
+        motor_interp.add_output('AC_power_factor', 0.5*np.ones(nn), training_data=motor_loss_data)
         self.add_subsystem('ac_power_factor_interp', motor_interp, 
                             promotes_inputs=['rpm', 'I_peak'], promotes_outputs=['AC_power_factor'])
 
@@ -86,8 +86,8 @@ class ThermalGroup(om.Group):
                            promotes_inputs=['alpha_stein', 'B_pk', 'f_e', 'beta_stein', 'k_stein', 'sta_mass'],
                            promotes_outputs = ['P_steinmetz'])
 
-        adder = om.AddSubtractComp()
-        adder.add_equation('total_losses', input_names=['P_steinmetz', 'P_wire'], units='W')
+        adder = om.AddSubtractComp(num_nodes=nn)
+        adder.add_equation('Q_total', input_names=['P_steinmetz', 'P_wire'], units='W', vec_size=nn)
         self.add_subsystem(name='totallossescomp', subsys=adder)
 
         self.connect('P_steinmetz', 'totallossescomp.P_steinmetz')

@@ -106,7 +106,7 @@ def print_motor(prob, motor_path=''):
     print('AC Winding  Losses......',   prob.get_val(f'{motor_path}P_ac'))
     print('TOTAL Winding  Losses...',   prob.get_val(f'{motor_path}P_wire'))
     print('Total Losses............',   prob.get_val(f'{motor_path}P_steinmetz') + prob.get_val(f'{motor_path}P_wire'))
-    print('Total Losses Add/Sub....',   prob.get_val(f'{motor_path}thermal_properties.totallossescomp.total_losses'))
+    print('Total Losses Add/Sub....',   prob.get_val(f'{motor_path}thermal_properties.totallossescomp.Q_total'))
    
     print('Overall Efficiency......',   prob.get_val(f'{motor_path}Eff'))
 
