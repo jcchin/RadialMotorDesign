@@ -22,13 +22,13 @@ class WindingLossComp(om.ExplicitComponent):
         self.add_input('T_windings', 150, units='C', desc='operating temperature of windings')
         self.add_input('T_coeff_cu', 0.00393, desc='temperature coefficient for copper')
         self.add_input('resistivity_wire', 1.724e-8, units='ohm*m', desc='resisitivity of Cu at 20 degC')
-        self.add_input('I', 30*np.ones(nn), units='A', desc='RMS current into motor')
+        self.add_input('I_required', 25*np.ones(nn), units='A', desc='RMS current into motor')
         self.add_input('stack_length', 0.035, units='m', desc='axial length of stator')
         self.add_input('n_slots', 24, desc='number of slots')
-        self.add_input('n_turns', 12, desc='number of winding turns')
+        self.add_input('n_turns', 11, desc='number of winding turns')
         self.add_input('n_strands', 41, desc='number of strands in litz wire')        
         self.add_input('AC_power_factor', 0.5*np.ones(nn), desc='litz wire AC power factor')
-
+        
         self.add_output('f_e', 900*np.ones(nn), units = 'Hz', desc='electrical frequency')
         self.add_output('r_litz', 0.0011, units='m', desc='radius of whole litz wire')
         self.add_output('L_wire', 10, units='m', desc='length of wire for one phase')
@@ -51,9 +51,9 @@ class WindingLossComp(om.ExplicitComponent):
         self.declare_partials('A_cu', ['n_turns', 'n_strands', 'r_strand'])
         self.declare_partials('R_dc', ['resistivity_wire', 'T_coeff_cu', 'T_windings', 'n_slots', 'n_turns', 'stack_length', 'r_strand'])
         self.declare_partials('skin_depth', ['resistivity_wire', 'T_coeff_cu', 'T_windings', 'n_m', 'rpm', 'mu_r', 'mu_o'], rows=r, cols=c)
-        self.declare_partials('P_dc', ['I', 'resistivity_wire', 'T_coeff_cu', 'T_windings', 'n_slots', 'n_turns', 'stack_length', 'r_strand'], rows=r, cols=c)
-        self.declare_partials('P_ac', ['AC_power_factor', 'I', 'resistivity_wire', 'T_coeff_cu', 'T_windings', 'n_slots', 'n_turns', 'stack_length', 'r_strand'], rows=r, cols=c)
-        self.declare_partials('P_wire', ['I', 'resistivity_wire', 'T_coeff_cu', 'T_windings', 'n_slots', 'n_turns', 'stack_length', 'r_strand', 'AC_power_factor'], rows=r, cols=c)
+        self.declare_partials('P_dc', ['I_required', 'resistivity_wire', 'T_coeff_cu', 'T_windings', 'n_slots', 'n_turns', 'stack_length', 'r_strand'], rows=r, cols=c)
+        self.declare_partials('P_ac', ['AC_power_factor', 'I_required', 'resistivity_wire', 'T_coeff_cu', 'T_windings', 'n_slots', 'n_turns', 'stack_length', 'r_strand'], rows=r, cols=c)
+        self.declare_partials('P_wire', ['I_required', 'resistivity_wire', 'T_coeff_cu', 'T_windings', 'n_slots', 'n_turns', 'stack_length', 'r_strand', 'AC_power_factor'], rows=r, cols=c)
 
 
     def compute(self, inputs, outputs):
@@ -65,7 +65,7 @@ class WindingLossComp(om.ExplicitComponent):
         T_windings = inputs['T_windings']
         T_coeff_cu = inputs['T_coeff_cu']
         resistivity_wire = inputs['resistivity_wire']
-        I = inputs['I']
+        I = inputs['I_required']
         stack_length = inputs['stack_length']
         n_slots = inputs['n_slots']
         n_turns = inputs['n_turns']
@@ -92,7 +92,7 @@ class WindingLossComp(om.ExplicitComponent):
         T_windings = inputs['T_windings']
         T_coeff_cu = inputs['T_coeff_cu']
         resistivity_wire = inputs['resistivity_wire']
-        I = inputs['I']
+        I = inputs['I_required']
         stack_length = inputs['stack_length']
         n_slots = inputs['n_slots']
         n_turns = inputs['n_turns']
@@ -140,7 +140,7 @@ class WindingLossComp(om.ExplicitComponent):
         J['A_cu', 'n_strands'] = n_turns * 2 * np.pi * r_strand**2
         J['A_cu', 'r_strand'] = n_turns * n_strands * 4 * pi * r_strand
 
-        d_P_dc__d_I = J['P_dc', 'I'] = 2*(I*np.sqrt(2)) * (R_dc) *3/2 * np.sqrt(2)
+        d_P_dc__d_I = J['P_dc', 'I_required'] = 2*(I*np.sqrt(2)) * (R_dc) *3/2 * np.sqrt(2)
         d_P_dc__d_resistivity_wire = J['P_dc', 'resistivity_wire'] = (I*np.sqrt(2))**2 *3/2 * d_R_dc__d_resistivity_wire
         d_P_dc__d_T_coeff_cu = J['P_dc', 'T_coeff_cu'] = (I*np.sqrt(2))**2 *3/2 * d_R_dc__d_T_coeff_cu
         d_P_dc__d_T_windings = J['P_dc', 'T_windings'] = (I*np.sqrt(2))**2 *3/2 * d_R_dc__d_T_windings
@@ -150,7 +150,7 @@ class WindingLossComp(om.ExplicitComponent):
         d_P_dc__d_r_strand = J['P_dc', 'r_strand'] = (I*np.sqrt(2))**2 *3/2 * d_R_dc__d_r_strand
 
         d_P_ac__d_AC_pf = J['P_ac', 'AC_power_factor'] = P_dc
-        d_P_ac__d_I = J['P_ac', 'I'] = AC_pf * d_P_dc__d_I
+        d_P_ac__d_I = J['P_ac', 'I_required'] = AC_pf * d_P_dc__d_I
         d_P_ac__d_resistivity_wire =J['P_ac', 'resistivity_wire'] = AC_pf * d_P_dc__d_resistivity_wire
         d_P_ac__d_T_coeff_cu = J['P_ac', 'T_coeff_cu'] = AC_pf * d_P_dc__d_T_coeff_cu
         d_P_ac__d_T_windings = J['P_ac', 'T_windings'] = AC_pf * d_P_dc__d_T_windings
@@ -159,7 +159,7 @@ class WindingLossComp(om.ExplicitComponent):
         d_P_ac__d_stack_length = J['P_ac', 'stack_length'] = AC_pf * d_P_dc__d_stack_length
         d_P_ac__d_r_strand = J['P_ac', 'r_strand'] = AC_pf * d_P_dc__d_r_strand
 
-        J['P_wire', 'I'] = d_P_dc__d_I + d_P_ac__d_I
+        J['P_wire', 'I_required'] = d_P_dc__d_I + d_P_ac__d_I
         J['P_wire', 'resistivity_wire'] = d_P_dc__d_resistivity_wire + d_P_ac__d_resistivity_wire
         J['P_wire', 'T_coeff_cu'] = d_P_dc__d_T_coeff_cu + d_P_ac__d_T_coeff_cu
         J['P_wire', 'T_windings'] = d_P_dc__d_T_windings + d_P_ac__d_T_windings
@@ -184,7 +184,7 @@ class SteinmetzLossComp(om.ExplicitComponent):
 
         self.add_output('P_steinmetz', 200*np.ones(nn), units='W', desc='Simplified steinmetz losses')
 
-        r = c = np.arange(nn)  # for scalar variables only
+        r = c = np.arange(nn)
         self.declare_partials('P_steinmetz', ['k_stein', 'f_e', 'alpha_stein', 'B_pk', 'beta_stein', 'sta_mass'], rows=r, cols=c)
 
     def compute(self, inputs, outputs):
@@ -195,7 +195,8 @@ class SteinmetzLossComp(om.ExplicitComponent):
         k_stein = inputs['k_stein']
         sta_mass = inputs['sta_mass']
 
-        outputs['P_steinmetz'] = k_stein * f_e**alpha_stein * B_pk**beta_stein * sta_mass
+        # The 1.20 results from electrical steel material having additional losses of up to 30% from batch to batch
+        outputs['P_steinmetz'] = k_stein * f_e**alpha_stein * B_pk**beta_stein * sta_mass * 1.20
 
     def compute_partials(self, inputs, J):
         f_e = inputs['f_e']
@@ -205,12 +206,12 @@ class SteinmetzLossComp(om.ExplicitComponent):
         k_stein = inputs['k_stein']
         sta_mass = inputs['sta_mass']
 
-        J['P_steinmetz', 'k_stein'] = f_e**alpha_stein * B_pk**beta_stein * sta_mass
-        J['P_steinmetz', 'f_e'] = alpha_stein*k_stein * f_e**(alpha_stein-1) * B_pk**beta_stein * sta_mass
-        J['P_steinmetz', 'alpha_stein'] = k_stein * f_e**alpha_stein * B_pk**beta_stein * sta_mass * np.log(f_e)
-        J['P_steinmetz', 'B_pk'] = k_stein * f_e**alpha_stein * B_pk**(beta_stein-1) * sta_mass*beta_stein
-        J['P_steinmetz', 'beta_stein'] = k_stein * f_e**alpha_stein * B_pk**beta_stein * sta_mass * np.log(B_pk)
-        J['P_steinmetz', 'sta_mass'] = k_stein * f_e**alpha_stein * B_pk**beta_stein
+        J['P_steinmetz', 'k_stein'] = f_e**alpha_stein * B_pk**beta_stein * sta_mass* 1.20
+        J['P_steinmetz', 'f_e'] = alpha_stein*k_stein * f_e**(alpha_stein-1) * B_pk**beta_stein * sta_mass* 1.20
+        J['P_steinmetz', 'alpha_stein'] = k_stein * f_e**alpha_stein * B_pk**beta_stein * sta_mass * np.log(f_e)* 1.20
+        J['P_steinmetz', 'B_pk'] = k_stein * f_e**alpha_stein * B_pk**(beta_stein-1) * sta_mass*beta_stein* 1.20
+        J['P_steinmetz', 'beta_stein'] = k_stein * f_e**alpha_stein * B_pk**beta_stein * sta_mass * np.log(B_pk)* 1.20
+        J['P_steinmetz', 'sta_mass'] = k_stein * f_e**alpha_stein * B_pk**beta_stein* 1.20
         
 
 

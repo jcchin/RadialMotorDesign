@@ -30,19 +30,17 @@ if __name__ == "__main__":
     # -------------------------------------------------------------------------
     #                              
     # -------------------------------------------------------------------------
-    ind.add_output('DES:P_shaft', 14.000, units='kW', desc='shaft power out of the motor')
-    ind.add_output('OD:P_shaft', 1.000*np.ones(nn), units='kW', desc='shaft power out of the motor')
+    ind.add_output('DES:P_shaft', 16.400, units='kW', desc='shaft power out of the motor')
+    ind.add_output('OD:P_shaft', 9.000*np.ones(nn), units='kW', desc='shaft power out of the motor')
 
     ind.add_output('DES:stack_length', 0.0345, units='m', desc='axial length of the motor')
     
-    ind.add_output('DES:rpm', 5400, units='rpm', desc='Rotation speed')
-    ind.add_output('OD:rpm', 1000*np.ones(nn), units='rpm', desc='Rotation speed')  
-
-    ind.add_output('DES:I', 34.5, units='A', desc='RMS Current')
-    ind.add_output('OD:I', 34.5*np.ones(nn), units='A', desc='RMS Current')
+    ind.add_output('DES:rpm', 5460, units='rpm', desc='Rotation speed')
+    ind.add_output('OD:rpm', 2000*np.ones(nn), units='rpm', desc='Rotation speed')  
 
     ind.add_output('radius_motor', 0.078225, units='m', desc='Motor outer radius')  # Ref motor = 0.078225
 
+# ------- for statics-------------#
     ind.add_output('n_turns', 12, desc='Number of wire turns')
     ind.add_output('n_slots', 24, desc='Number of Slots')
     ind.add_output('n_m', 20, desc='Number of magnets')
@@ -131,7 +129,6 @@ if __name__ == "__main__":
     p.model.add_subsystem('DESIGN', Motor(num_nodes=nn, design=True))
     motor_spec_connect('DESIGN')
     p.model.connect('DES:rpm', 'DESIGN.rpm')
-    p.model.connect('DES:I', 'DESIGN.I')
     p.model.connect('DES:stack_length', 'DESIGN.stack_length')
     p.model.connect('DES:P_shaft', 'DESIGN.P_shaft')
 
@@ -143,7 +140,6 @@ if __name__ == "__main__":
     p.model.connect('DESIGN.w_t', 'OD1.w_t')
 
     p.model.connect('OD:rpm', 'OD1.rpm')
-    p.model.connect('OD:I', 'OD1.I')
     p.model.connect('DES:stack_length', 'OD1.stack_length') # DES to OD1 to make sure it stays constant
     p.model.connect('OD:P_shaft', 'OD1.P_shaft')
 

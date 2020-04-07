@@ -33,8 +33,35 @@ class ThermalGroup(om.Group):
     def setup(self):
         nn = self.options['num_nodes']
 
-        self.add_subsystem('comp', om.ExecComp('I_peak= I*2**0.5', I={'value': np.ones(nn), 'units':'A'}), promotes_inputs=['I'], promotes_outputs=['I_peak'])
+        self.add_subsystem('comp', om.ExecComp('I_peak= I_required*2**0.5', I_required={'value': np.ones(nn), 'units':'A'},  units='A'), 
+                                                promotes_inputs=['I_required'], promotes_outputs=['I_peak'])
 
+        # ''' I_required represents the current required based on the power demanded from the motor '''
+        # self.add_subsystem('comp_I', om.ExecComp('I_required = (stack_length*2*n_m*n_turns*B_g*rot_or*P_shaft/(rpm*2*pi/60)*1.10)', 
+        #                                         stack_length={'value': 0.0345, 'units':'m'},
+        #                                         n_m={'value': 20.},
+        #                                         n_turns={'value': 12.},
+        #                                         B_g={'value':2., 'units':'T'},
+        #                                         rot_or={'value': 'units':'m'},
+        #                                         P_shaft={'value': 14000 np.ones(nn), 'units':'W'},
+        #                                         rpm={'value': 3000*np.ones(nn), 'units':'rpm'},
+        #                                         units='A'), promotes_inputs=['stack_length', 'n_m', 'n_turns', 'B_g', 'rot_or', 'P_shaft', 'rpm'],
+        #                                         promotes_outputs=['I_required'])
+
+        # ''' I_peak is passed into the the ac power factor for AC losses '''
+        # self.add_subsystem('comp', om.ExecComp('I_peak = (stack_length*2*n_m*n_turns*B_g*rot_or*P_shaft/(rpm*2*pi/60)*1.10)*2**0.5', 
+        #                                         stack_length={'value': 0.0345, 'units':'m'},
+        #                                         n_m={'value': 20.},
+        #                                         n_turns={'value': 12.},
+        #                                         B_g={'value':2., 'units':'T'},
+        #                                         rot_or={'value': 'units':'m'},
+        #                                         P_shaft={'value': 14000 np.ones(nn), 'units':'W'},
+        #                                         rpm={'value': 3000*np.ones(nn), 'units':'rpm'},
+        #                                         units='A'), promotes_inputs=['stack_length', 'n_m', 'n_turns', 'B_g', 'rot_or', 'P_shaft', 'rpm'],
+        #                                         promotes_outputs=['I_peak'])
+
+
+# stack_length*2*n_m*n_turns*B_g*rot_or*outputs['Tq_shaft']*1.10
 
         motor_interp = om.MetaModelStructuredComp(method='scipy_slinear', extrapolate=True)
     
@@ -49,7 +76,7 @@ class ThermalGroup(om.Group):
 
         self.add_subsystem(name='copperloss', 
                            subsys=WindingLossComp(num_nodes=nn),
-                           promotes_inputs=['resistivity_wire', 'stack_length', 'n_slots', 'n_turns', 'T_coeff_cu', 'I',
+                           promotes_inputs=['resistivity_wire', 'stack_length', 'n_slots', 'n_turns', 'T_coeff_cu', 'I_required',
                                              'T_windings', 'r_strand', 'n_m', 'mu_o', 'mu_r', 'n_strands', 'rpm', 'AC_power_factor'],
                            promotes_outputs=['A_cu', 'f_e', 'r_litz', 'P_dc', 'P_ac', 'P_wire', 'L_wire', 'R_dc', 'skin_depth', 'temp_resistivity'])
 
@@ -59,3 +86,9 @@ class ThermalGroup(om.Group):
                            promotes_inputs=['alpha_stein', 'B_pk', 'f_e', 'beta_stein', 'k_stein', 'sta_mass'],
                            promotes_outputs = ['P_steinmetz'])
 
+        adder = om.AddSubtractComp()
+        adder.add_equation('total_losses', input_names=['P_steinmetz', 'P_wire'], units='W')
+        self.add_subsystem(name='totallossescomp', subsys=adder)
+
+        self.connect('P_steinmetz', 'totallossescomp.P_steinmetz')
+        self.connect('P_wire', 'totallossescomp.P_wire')

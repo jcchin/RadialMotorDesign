@@ -8,7 +8,7 @@ class MotorSizeComp(om.ExplicitComponent):
     def setup(self):
         self.add_input('radius_motor', 0.078225, units='m', desc='outer radius of motor')
         self.add_input('gap', 0.001, units='m', desc='air gap')
-        self.add_input('rot_or', .05, units='m', desc='rotor outer radius')
+        self.add_input('rot_or', .05, units='m', desc='rotor outer radius') 
         self.add_input('B_g', 1.0, units='T', desc='air gap flux density')
         self.add_input('k', 0.95, desc='stacking factor')
         self.add_input('b_ry', 2.4, units='T', desc='flux density of rotor yoke')
@@ -17,8 +17,8 @@ class MotorSizeComp(om.ExplicitComponent):
         self.add_input('b_sy', 2.4, units='T', desc='flux density of stator yoke')
         self.add_input('b_t', 2.4, units='T', desc='flux density of tooth')
         self.add_input('n_slots', 20, desc='Number of slots')
-        self.add_input('n_turns', 12, desc='number of wire turns')
-        self.add_input('I', 30, units='A', desc='RMS current')  # Imax
+        self.add_input('n_turns', 11, desc='number of wire turns')
+        self.add_input('I_required', 25, units='A', desc='RMS current')  # Imax
         self.add_input('k_wb', 0.65, desc='bare wire slot fill factor')
 
         self.add_output('w_ry', .004, units='m', desc='width of stator yoke')
@@ -32,7 +32,6 @@ class MotorSizeComp(om.ExplicitComponent):
         self.add_output('w_slot', .015, units='m', desc='width of a slot')
         self.add_output('J', units='A/mm**2', desc='Current density')
 
-        # self.declare_partials('*','*', method='fd')
         self.declare_partials('w_ry', ['rot_or', 'B_g', 'n_m', 'k', 'b_ry'])
         self.declare_partials('w_sy', ['rot_or', 'B_g', 'n_m', 'k', 'b_sy'])
         self.declare_partials('w_t', ['rot_or','B_g','n_slots','k','b_t'])
@@ -41,10 +40,10 @@ class MotorSizeComp(om.ExplicitComponent):
         self.declare_partials('sta_ir', ['rot_or', 'gap'])
         self.declare_partials('slot_area', ['n_slots', 'radius_motor', 'rot_or', 'B_g', 'n_m', 'k', 'b_sy', 'gap', 'b_t'])
         self.declare_partials('w_slot', ['n_slots', 'radius_motor', 'rot_or', 'B_g', 'n_m', 'k', 'b_sy', 'gap', 'b_t'])
-        self.declare_partials('J', ['n_turns', 'I', 'k_wb', 'n_slots', 'radius_motor', 'rot_or', 'B_g', 'n_m', 'k', 'b_sy', 'gap', 'b_t'])
+        self.declare_partials('J', ['n_turns', 'I_required', 'k_wb', 'n_slots', 'radius_motor', 'rot_or', 'B_g', 'n_m', 'k', 'b_sy', 'gap', 'b_t'])
 
     def compute(self,inputs,outputs):
-        radius_motor = inputs['radius_motor']  # .0765
+        radius_motor = inputs['radius_motor']
         gap = inputs['gap']
         B_g = inputs['B_g']
         n_m = inputs['n_m']
@@ -52,27 +51,12 @@ class MotorSizeComp(om.ExplicitComponent):
         b_ry = inputs['b_ry']
         t_mag = inputs['t_mag']
         n_turns = inputs['n_turns']
-        I = inputs['I']
+        I = inputs['I_required']
         k_wb = inputs['k_wb']
         b_sy= inputs['b_sy']
         n_slots = inputs['n_slots']
         b_t = inputs['b_t']
         rot_or = inputs['rot_or']
-
-        # variable for pi*rot_or*...
-        # replace eqns with outputs
-
-        # outputs['w_ry'] = (pi*rot_or*B_g)/(n_m*k*b_ry) 
-        # outputs['w_sy'] = (pi*rot_or*B_g)/(n_m*k*b_sy)
-        # outputs['w_t'] = (2*pi*rot_or*B_g) / (n_slots*k*b_t) 
-        # outputs['s_d'] = radius_motor - rot_or - gap - ((pi*rot_or*B_g)/(n_m*k*b_sy))
-        # outputs['rot_ir'] = (rot_or- t_mag) - outputs['w_ry'] 
-        # outputs['sta_ir'] = rot_or + gap
-        # outputs['slot_area'] = pi/n_slots*((radius_motor**2 - (2*radius_motor*pi*rot_or*B_g)/(n_m*k*b_sy) + ((pi*rot_or*B_g)/(n_m*k*b_sy))**2) -  (rot_or**2 + 2*rot_or*gap + gap**2 ))  \
-        #  - ( 1.05*(2*pi*rot_or*B_g)/(n_slots*k*b_t) * (radius_motor - rot_or - gap - (pi*rot_or*B_g)/(n_m*k*b_sy)) )
-        # outputs['w_slot']    = ( pi/n_slots*((radius_motor**2 - (2*radius_motor*pi*rot_or*B_g)/(n_m*k*b_sy) + ((pi*rot_or*B_g)/(n_m*k*b_sy))**2) -  (rot_or**2 + 2*rot_or*gap + gap**2 )) \
-        #   - ( (2*pi*rot_or*B_g)/(n_slots*k*b_t) * (radius_motor - rot_or - gap - (pi*rot_or*B_g)/(n_m*k*b_sy)) ) ) / (radius_motor - rot_or - gap - ((pi*rot_or*B_g)/(n_m*k*b_sy)))         #outputs['slot_area'] / outputs['s_d']
-        # outputs['J'] = 2*n_turns*I*(2.**0.5)/(k_wb*(outputs['slot_area'])*1E6)
 
         outputs['w_ry'] = (pi*rot_or*B_g)/(n_m*k*b_ry) 
         outputs['w_t'] = (2*pi*rot_or*B_g) / (n_slots*k*b_t) 
@@ -95,7 +79,7 @@ class MotorSizeComp(om.ExplicitComponent):
         b_ry = inputs['b_ry']
         t_mag = inputs['t_mag']
         n_turns = inputs['n_turns']
-        I = inputs['I']
+        I = inputs['I_required']
         k_wb = inputs['k_wb']
         b_sy= inputs['b_sy']
         n_slots = inputs['n_slots']
@@ -134,7 +118,6 @@ class MotorSizeComp(om.ExplicitComponent):
 
         dw_t__dn_slots = -2*pi*rot_or*B_g/(n_slots**2*k*b_t)
         dgamma__dn_slots = -pi/n_slots**2*(2*radius_motor*s_d - s_d**2 - 2*s_d*w_sy)
-        dslot_area__dn_slots = 2*pi/n_slots * (radius_motor - w_sy) - w_t*1.05
         ds_d__dn_slots = -pi/n_slots**2*((radius_motor-w_ry)**2 - (radius_motor-w_sy-s_d)**2)
         dslot_area__dn_slots = (- pi/n_slots**2 * ((radius_motor - w_sy)**2 - (radius_motor - w_sy - s_d)**2) 
                                 - dw_t__dn_slots * s_d * 1.05) 
@@ -235,11 +218,9 @@ class MotorSizeComp(om.ExplicitComponent):
         J['w_slot', 'b_t'] = dslot_area__db_t/s_d
 
         # Current density
-
-
         root8 = np.sqrt(8) # 2 * sqrt(2) = sqrt(4) * sqrt(2) = sqrt(8)
         J['J', 'n_turns'] =  root8*I/(1e6*k_wb*slot_area)
-        J['J', 'I'] = root8*n_turns/(1e6*k_wb*slot_area)
+        J['J', 'I_required'] = root8*n_turns/(1e6*k_wb*slot_area)
         J['J', 'k_wb'] = -root8*I*n_turns/(1e6* k_wb**2 *slot_area)
 
         const_term = -root8*n_turns*I/(1e6*k_wb*slot_area**2)
@@ -272,7 +253,9 @@ class MotorMassComp(om.ExplicitComponent):
         self.add_output('sta_mass', 1.0, units='kg', desc='mass of stator')
         self.add_output('rot_mass', 1.0, units='kg', desc='weight of rotor')
         
-        self.declare_partials('*','*', method='fd')
+        self.declare_partials('mag_mass', ['rot_or', 't_mag', 'rho_mag', 'stack_length'])
+        self.declare_partials('rot_mass', ['rot_or', 't_mag', 'rot_ir', 'rho', 'stack_length'])
+        self.declare_partials('sta_mass', ['rho', 'stack_length', 'radius_motor', 'sta_ir', 's_d', 'n_slots', 'w_t'])
 
     def compute(self,inputs,outputs):
         rho=inputs['rho']
