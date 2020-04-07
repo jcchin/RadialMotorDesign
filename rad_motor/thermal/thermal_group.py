@@ -24,8 +24,6 @@ motor_loss_data = np.array([
   [6.14424586,  3.044548373, 1.859187116, 1.282938888, 0.959527238, 0.759635469, 0.627167766, 0.534597704, 0.467133872, 0.416252825]]  #    = 5400
 )
 
-
-
 class ThermalGroup(om.Group):
     def initialize(self):
         self.options.declare('num_nodes', types=int)

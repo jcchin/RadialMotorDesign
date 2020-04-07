@@ -19,5 +19,14 @@ class SizeGroup(om.Group):
         self.add_subsystem(name='mass',
                            subsys=MotorMassComp(),
                            promotes_inputs=['rho', 'radius_motor', 'n_slots', 'sta_ir', 'w_t', 'stack_length',
-                                            's_d', 'rot_or', 'rot_ir', 't_mag', 'rho_mag'],
-                           promotes_outputs=['mag_mass', 'sta_mass', 'rot_mass'])
+                                            's_d', 'rot_or', 'rot_ir', 't_mag', 'rho_mag', 'L_wire', 'rho_wire', 'r_litz'],
+                           promotes_outputs=['mag_mass', 'sta_mass', 'rot_mass', 'wire_mass'])
+
+        adder = om.AddSubtractComp()
+        adder.add_equation('mass_total', input_names=['mag_mass', 'sta_mass', 'rot_mass', 'wire_mass'], units='kg')
+        self.add_subsystem(name='totalmasscomp', subsys=adder)
+
+        self.connect('mag_mass', 'totalmasscomp.mag_mass')
+        self.connect('sta_mass', 'totalmasscomp.sta_mass')
+        self.connect('rot_mass', 'totalmasscomp.rot_mass')
+        self.connect('wire_mass', 'totalmasscomp.wire_mass')

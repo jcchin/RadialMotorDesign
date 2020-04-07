@@ -40,7 +40,6 @@ if __name__ == "__main__":
 
     ind.add_output('radius_motor', 0.078225, units='m', desc='Motor outer radius')  # Ref motor = 0.078225
 
-# ------- for statics-------------#
     ind.add_output('n_turns', 12, desc='Number of wire turns')
     ind.add_output('n_slots', 24, desc='Number of Slots')
     ind.add_output('n_m', 20, desc='Number of magnets')
@@ -62,7 +61,7 @@ if __name__ == "__main__":
     ind.add_output('mu_r',  1.0, units='H/m', desc='relative magnetic permeability of ferromagnetic materials')
     ind.add_output('rho', 8110.2, units='kg/m**3', desc='Density of Hiperco-50')  
     ind.add_output('rho_mag', 7500, units='kg/m**3', desc='Density of Magnets')
-    # ind.add_output('rho_wire', 8940, units='kg/m**3', desc='Density of wire: Cu=8940')
+    ind.add_output('rho_wire', 8940, units='kg/m**3', desc='Density of wire: Cu=8940')
     ind.add_output('resistivity_wire', 1.724e-8, units='ohm*m', desc='resisitivity of Cu at 20 degC') 
     ind.add_output('T_coeff_cu', 0.00393, desc='temperature coeff of copper')
     # ind.add_output('T_ref_wire', 20.0, units='C', desc='reference temperature at which winding resistivity is measured')

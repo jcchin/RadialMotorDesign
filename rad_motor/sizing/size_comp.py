@@ -253,14 +253,19 @@ class MotorMassComp(om.ExplicitComponent):
         self.add_input('rot_ir', 0.0515, units='m', desc='rotor inner radius')
         self.add_input('t_mag', .0045, units='m', desc='magnet thickness')
         self.add_input('rho_mag', 7500, units='kg/m**3', desc='density of magnet')
+        self.add_input('rho_wire', 8940, units='kg/m**3', desc='Density of wire: Cu=8940')
+        self.add_input('L_wire', 10, units='m', desc='length of the wire')
+        self.add_input('r_litz', .001, units='m', desc='radius of the wire')
 
         self.add_output('mag_mass', 0.5, units='kg', desc='mass of magnets')
         self.add_output('sta_mass', 1.0, units='kg', desc='mass of stator')
-        self.add_output('rot_mass', 1.0, units='kg', desc='weight of rotor')
+        self.add_output('rot_mass', 1.0, units='kg', desc='mass of rotor')
+        self.add_output('wire_mass', 1.0, units='kg', desc='mass of the windings')
         
         self.declare_partials('mag_mass', ['rot_or', 't_mag', 'rho_mag', 'stack_length'])
         self.declare_partials('rot_mass', ['rot_or', 't_mag', 'rot_ir', 'rho', 'stack_length'])
         self.declare_partials('sta_mass', ['rho', 'stack_length', 'radius_motor', 'sta_ir', 's_d', 'n_slots', 'w_t'])
+        self.declare_partials('wire_mass', ['L_wire', 'rho_wire', 'r_litz'])
 
     def compute(self,inputs,outputs):
         rho=inputs['rho']
@@ -274,10 +279,14 @@ class MotorMassComp(om.ExplicitComponent):
         rot_or=inputs['rot_or']
         t_mag=inputs['t_mag']
         rho_mag=inputs['rho_mag']
+        rho_wire=inputs['rho_wire']
+        L_wire=inputs['L_wire']
+        r_litz=inputs['r_litz']
 
-        outputs['sta_mass'] = rho * stack_length * ((pi * radius_motor**2)-(pi * (sta_ir+s_d)**2)+(n_slots*(w_t*s_d)))
-        outputs['rot_mass'] = (pi*(rot_or - t_mag)**2 - pi*rot_ir**2) * rho * stack_length
-        outputs['mag_mass'] = (((pi*rot_or**2) - (pi*(rot_or-t_mag)**2))) * rho_mag * stack_length
+        outputs['sta_mass']  = rho * stack_length * ((pi * radius_motor**2)-(pi * (sta_ir+s_d)**2)+(n_slots*(w_t*s_d)))
+        outputs['rot_mass']  = (pi*(rot_or - t_mag)**2 - pi*rot_ir**2) * rho * stack_length
+        outputs['mag_mass']  = (((pi*rot_or**2) - (pi*(rot_or-t_mag)**2))) * rho_mag * stack_length
+        outputs['wire_mass'] = L_wire*rho_wire* (2*pi*r_litz**2 )
 
     def compute_partials(self,inputs,J):
         rho=inputs['rho']
@@ -291,6 +300,9 @@ class MotorMassComp(om.ExplicitComponent):
         s_d=inputs['s_d']
         rot_ir=inputs['rot_ir']
         rot_or=inputs['rot_or']
+        rho_wire=inputs['rho_wire']
+        L_wire=inputs['L_wire']
+        r_litz=inputs['r_litz']
 
         J['sta_mass', 'rho'] = stack_length * ((pi * radius_motor**2)-(pi * (sta_ir+s_d)**2)+(n_slots*(w_t*s_d)))
         J['sta_mass', 'stack_length'] = rho * ((pi * radius_motor**2)-(pi * (sta_ir+s_d)**2)+(n_slots*(w_t*s_d)))
@@ -310,3 +322,7 @@ class MotorMassComp(om.ExplicitComponent):
         J['mag_mass', 't_mag'] = 2 * pi * rho_mag * stack_length * (rot_or-t_mag)
         J['mag_mass', 'rho_mag'] = (((pi*rot_or**2) - (pi*(rot_or-t_mag)**2))) * stack_length
         J['mag_mass', 'stack_length'] = (((pi*rot_or**2) - (pi*(rot_or-t_mag)**2))) * rho_mag
+
+        J['wire_mass', 'L_wire'] = rho_wire* (2*pi*r_litz**2 )
+        J['wire_mass', 'rho_wire'] = L_wire* (2*pi*r_litz**2 )
+        J['wire_mass', 'r_litz'] = L_wire*rho_wire* (4*pi*r_litz )
