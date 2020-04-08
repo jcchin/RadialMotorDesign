@@ -19,7 +19,7 @@ class Motor(om.Group):
                                                                                               'resistivity_wire', 'stack_length', 'n_slots', 'n_strands', 'I_required', 
                                                                                               'n_m', 'mu_o', 'f_e', 'n_turns', 'T_coeff_cu', 'T_windings', 'r_strand', 'mu_r'],
                                                                             promotes_outputs=['A_cu', 'r_litz', 'P_steinmetz', 'P_dc', 'P_ac', 'P_wire', 'L_wire', 'R_dc',
-                                                                                              'skin_depth', 'temp_resistivity', 'f_e'])
+                                                                                              'skin_depth', 'temp_resistivity', 'f_e', 'Q_total'])
 
 
         self.add_subsystem('em_properties', EmGroup(num_nodes=nn), promotes_inputs=['w_slot', 'w_t', 'T_coef_rem_mag', 'T_mag',            
@@ -34,9 +34,10 @@ class Motor(om.Group):
 
             self.add_subsystem('geometry', SizeGroup(), promotes_inputs=['gap', 'B_g', 'k', 'b_ry', 'n_m', 'b_sy', 'b_t', 'n_turns', 'I_required', 'k_wb',
                                                                      'rho', 'radius_motor', 'n_slots', 'sta_ir', 'w_t', 'stack_length',
-                                                                     's_d', 'rot_or', 'rot_ir', 't_mag', 'rho_mag', 'L_wire', 'rho_wire', 'r_litz'],
+                                                                     's_d', 'rot_or', 'rot_ir', 't_mag', 'rho_mag', 'L_wire', 'rho_wire', 'r_litz',
+                                                                     'mag_mass', 'sta_mass', 'rot_mass', 'wire_mass', 'motor_mass', 'hiperco_cp', 'copper_cp', 'neo_cp'],
                                                    promotes_outputs=['J', 'w_ry', 'w_sy', 'w_t', 'sta_ir', 'rot_ir', 's_d', 
-                                                                     'mag_mass', 'sta_mass', 'rot_mass', 'wire_mass', 'slot_area', 'w_slot'])
+                                                                     'mag_mass', 'sta_mass', 'rot_mass', 'wire_mass', 'slot_area', 'w_slot', 'motor_mass', 'cp_motor'])
 
             bal = om.BalanceComp(num_nodes=nn)
             bal.add_balance('rot_or', val=0.05, units='cm', eq_units='A/mm**2', lower=1e-4)#, use_mult=True, mult_val=0.5)
@@ -99,7 +100,9 @@ def print_motor(prob, motor_path=''):
         print('Mass of Magnets...................',  prob.get_val('DESIGN.mag_mass', units='kg')) 
         print('Mass of Windings..................',  prob.get_val('DESIGN.wire_mass', units='kg'))
         print('Mass of Motor.....................',  prob.get_val('DESIGN.mag_mass', units='kg') + prob.get_val('DESIGN.wire_mass', units='kg') + prob.get_val('DESIGN.rot_mass', units='kg') + prob.get_val('DESIGN.sta_mass', units='kg'))   
-        # print('Mass of Motor Add/Sub.............',  prob.get_val('DESGIN.geometry.totalmasscomp.mass_total'))
+        print('Mass of Motor Add/Sub.............',  prob.get_val('DESIGN.motor_mass'))
+
+        print('Motor Specific Heat...............',  prob.get_val('DESIGN.cp_motor'))
     print('--------------LOSSES-------------')
     
     print('Iron losses.............',   prob.get_val(f'{motor_path}P_steinmetz') * prob.get_val(f'{motor_path}sta_mass'))
@@ -107,7 +110,7 @@ def print_motor(prob, motor_path=''):
     print('AC Winding  Losses......',   prob.get_val(f'{motor_path}P_ac'))
     print('TOTAL Winding  Losses...',   prob.get_val(f'{motor_path}P_wire'))
     print('Total Losses............',   prob.get_val(f'{motor_path}P_steinmetz') + prob.get_val(f'{motor_path}P_wire'))
-    print('Total Losses Add/Sub....',   prob.get_val(f'{motor_path}thermal_properties.totallossescomp.Q_total'))
+    print('Total Losses Add/Sub....',   prob.get_val(f'{motor_path}Q_total'))
    
     print('Overall Efficiency......',   prob.get_val(f'{motor_path}Eff'))
 

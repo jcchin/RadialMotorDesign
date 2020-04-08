@@ -38,7 +38,7 @@ if __name__ == "__main__":
     ind.add_output('DES:rpm', 5460, units='rpm', desc='Rotation speed')
     ind.add_output('OD:rpm', 2000*np.ones(nn), units='rpm', desc='Rotation speed')  
 
-    ind.add_output('radius_motor', 0.078225, units='m', desc='Motor outer radius')  # Ref motor = 0.078225
+    ind.add_output('radius_motor', 0.086, units='m', desc='Motor outer radius')  # Ref motor = 0.078225
 
     ind.add_output('n_turns', 12, desc='Number of wire turns')
     ind.add_output('n_slots', 24, desc='Number of Slots')
@@ -54,6 +54,9 @@ if __name__ == "__main__":
     # -------------------------------------------------------------------------
     #                        Material Properties and Constants
     # -------------------------------------------------------------------------
+    ind.add_output('copper_cp', 386, units='J/kg/C', desc='specific heat for copper')
+    ind.add_output('hiperco_cp', 410, units='J/kg/C', desc='specific heat for hiperco')
+    ind.add_output('neo_cp', 190, units='J/kg/C', desc='specific heat for neodymium')
     ind.add_output('Hc_20', -1046, units='kA/m', desc='Intrinsic Coercivity at 20 degC')     
     ind.add_output('Br_20', 1.39, units='T', desc='remnance flux density at 20 degC')           
     ind.add_output('k_sat', 1, desc='Saturation factor of the magnetic circuit due to the main (linkage) magnetic flux')
@@ -92,6 +95,10 @@ if __name__ == "__main__":
             p.model.connect('b_t', f'{motor_path}.b_t')
             p.model.connect('k_wb', f'{motor_path}.k_wb')
             p.model.connect('k', f'{motor_path}.k')
+            p.model.connect('rho_wire', f'{motor_path}.rho_wire')
+            p.model.connect('copper_cp', f'{motor_path}.copper_cp')
+            p.model.connect('hiperco_cp', f'{motor_path}.hiperco_cp')
+            p.model.connect('neo_cp', f'{motor_path}.neo_cp')
 
         p.model.connect('B_pk', f'{motor_path}.B_pk')
         p.model.connect('Br_20', f'{motor_path}.Br_20')
@@ -113,7 +120,6 @@ if __name__ == "__main__":
         p.model.connect('mu_o', f'{motor_path}.mu_o')
         p.model.connect('mu_r', f'{motor_path}.mu_r')
         
-        # p.model.connect('rho_wire', f'{motor_path}.rho_wire')
         p.model.connect('resistivity_wire', f'{motor_path}.resistivity_wire')
         p.model.connect('T_coeff_cu', f'{motor_path}.T_coeff_cu')
         # p.model.connect('T_ref_wire', f'{motor_path}.T_ref_wire')
@@ -134,7 +140,6 @@ if __name__ == "__main__":
     p.model.add_subsystem('OD1', Motor(num_nodes=nn, design=False))
     motor_spec_connect('OD1')
     p.model.connect('DESIGN.rot_or', 'OD1.rot_or')
-    p.model.connect('DESIGN.sta_mass', 'OD1.sta_mass')
     p.model.connect('DESIGN.w_slot', 'OD1.w_slot')
     p.model.connect('DESIGN.w_t', 'OD1.w_t')
 
@@ -158,7 +163,7 @@ if __name__ == "__main__":
     p.setup()
 
 
-    p['radius_motor'] = 0.086   # Set the desired radius of the motor, application specific
+    # p['radius_motor'] = 0.086   # Set the desired radius of the motor, application specific
     p['DESIGN.rot_or'] = 6.8    # initial guess
 
     p.run_model()

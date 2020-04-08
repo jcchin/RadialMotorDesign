@@ -261,11 +261,15 @@ class MotorMassComp(om.ExplicitComponent):
         self.add_output('sta_mass', 1.0, units='kg', desc='mass of stator')
         self.add_output('rot_mass', 1.0, units='kg', desc='mass of rotor')
         self.add_output('wire_mass', 1.0, units='kg', desc='mass of the windings')
-        
+        self.add_output('motor_mass', 2.5, units='kg', desc='mass of motor')
+       
         self.declare_partials('mag_mass', ['rot_or', 't_mag', 'rho_mag', 'stack_length'])
         self.declare_partials('rot_mass', ['rot_or', 't_mag', 'rot_ir', 'rho', 'stack_length'])
         self.declare_partials('sta_mass', ['rho', 'stack_length', 'radius_motor', 'sta_ir', 's_d', 'n_slots', 'w_t'])
         self.declare_partials('wire_mass', ['L_wire', 'rho_wire', 'r_litz'])
+        self.declare_partials('motor_mass', ['rot_or', 't_mag', 'rho_mag', 'stack_length', 'rot_ir', 'rho', 'radius_motor',
+                                             'sta_ir', 's_d', 'n_slots', 'w_t', 'L_wire', 'rho_wire', 'r_litz'])
+
 
     def compute(self,inputs,outputs):
         rho=inputs['rho']
@@ -287,6 +291,13 @@ class MotorMassComp(om.ExplicitComponent):
         outputs['rot_mass']  = (pi*(rot_or - t_mag)**2 - pi*rot_ir**2) * rho * stack_length
         outputs['mag_mass']  = (((pi*rot_or**2) - (pi*(rot_or-t_mag)**2))) * rho_mag * stack_length
         outputs['wire_mass'] = L_wire*rho_wire* (2*pi*r_litz**2 )
+        outputs['motor_mass'] = outputs['sta_mass'] + outputs['rot_mass'] + outputs['mag_mass'] + outputs['wire_mass']
+
+        # outputs['sta_cp'] = sta_mass * hiperco_cp / motor_mass
+        # outputs['rot_cp'] = sta_mass * hiperco_cp / motor_mass
+        # outputs['mag_cp'] = mag_mass * neo_cp / motor_mass
+        # outputs['wire_cp'] = wire_mass * copper_cp / motor_mass
+
 
     def compute_partials(self,inputs,J):
         rho=inputs['rho']
@@ -316,7 +327,7 @@ class MotorMassComp(om.ExplicitComponent):
         J['rot_mass', 'rot_or'] = (2*pi*(rot_or - t_mag)) * rho * stack_length
         J['rot_mass', 't_mag'] =  (-2*pi*(rot_or - t_mag)) * rho * stack_length
         J['rot_mass', 'rot_ir'] = -2*pi*rot_ir * rho * stack_length
-        J['rot_mass', 'stack_length'] = (pi*(rot_or - t_mag)**2 - pi*rot_ir**2) * rho
+        J['rot_mass', 'stack_length'] = ((pi*(rot_or - t_mag)**2 - pi*rot_ir**2) * rho)
 
         J['mag_mass', 'rot_or'] = ((2*pi*rot_or - 2*pi*(rot_or-t_mag)))*stack_length*rho_mag
         J['mag_mass', 't_mag'] = 2 * pi * rho_mag * stack_length * (rot_or-t_mag)
@@ -326,3 +337,80 @@ class MotorMassComp(om.ExplicitComponent):
         J['wire_mass', 'L_wire'] = rho_wire* (2*pi*r_litz**2 )
         J['wire_mass', 'rho_wire'] = L_wire* (2*pi*r_litz**2 )
         J['wire_mass', 'r_litz'] = L_wire*rho_wire* (4*pi*r_litz )
+
+        J['motor_mass', 'rot_or'] = ((2*pi*rot_or - 2*pi*(rot_or-t_mag)))*stack_length*rho_mag
+        J['motor_mass', 't_mag'] = (-2*pi*(rot_or - t_mag)) * rho * stack_length + 2 * pi * rho_mag * stack_length * (rot_or-t_mag)
+        J['motor_mass', 'rho_mag'] = (((pi*rot_or**2) - (pi*(rot_or-t_mag)**2))) * stack_length
+        J['motor_mass', 'stack_length'] = (rho * ((pi * radius_motor**2)-(pi * (sta_ir+s_d)**2)+(n_slots*(w_t*s_d)))) + ((pi*(rot_or - t_mag)**2 - pi*rot_ir**2) * rho) + ((((pi*rot_or**2) - (pi*(rot_or-t_mag)**2))) * rho_mag)
+        J['motor_mass', 'rot_ir'] = -2*pi*rot_ir * rho * stack_length
+        J['motor_mass', 'rho'] = (stack_length * ((pi * radius_motor**2)-(pi * (sta_ir+s_d)**2)+(n_slots*(w_t*s_d)))) + ((pi*(rot_or - t_mag)**2 - pi*rot_ir**2)  * stack_length)
+        J['motor_mass', 'radius_motor'] = rho * stack_length * (pi * radius_motor)*2
+        J['motor_mass', 'sta_ir'] = -2*pi*rho*stack_length*(sta_ir+s_d)
+        J['motor_mass', 's_d'] = rho*stack_length*(-2*pi*(sta_ir+s_d) + n_slots*w_t)
+        J['motor_mass', 'n_slots'] = rho*stack_length*w_t*s_d
+        J['motor_mass', 'w_t'] = rho*stack_length*n_slots*s_d
+        J['motor_mass', 'L_wire'] = rho_wire* (2*pi*r_litz**2 )
+        J['motor_mass', 'rho_wire'] = L_wire* (2*pi*r_litz**2 )
+        J['motor_mass', 'r_litz'] = L_wire*rho_wire* (4*pi*r_litz )
+
+class SpecificHeatComp(om.ExplicitComponent):
+    def setup(self):
+        self.add_input('copper_cp', 386, units='J/kg/C', desc='specific heat for copper')
+        self.add_input('hiperco_cp', 410, units='J/kg/C', desc='specific heat for hiperco')
+        self.add_input('neo_cp', 190, units='J/kg/C', desc='specific heat for neodymium')
+        self.add_input('mag_mass', 0.5, units='kg', desc='mass of magnets')
+        self.add_input('sta_mass', 1.0, units='kg', desc='mass of stator')
+        self.add_input('rot_mass', 1.0, units='kg', desc='mass of rotor')
+        self.add_input('wire_mass', 1.0, units='kg', desc='mass of the windings')
+        self.add_input('motor_mass', 2.5, units='kg', desc='mass of motor')
+
+        self.add_output('mag_cp', units='J/kg/C', desc='Specific heat for magnets')
+        self.add_output('sta_cp', units='J/kg/C', desc='Specific heat for stator')
+        self.add_output('rot_cp', units='J/kg/C', desc='Specific heat for rotor')
+        self.add_output('wire_cp', units='J/kg/C', desc='Specific heat for wires')
+
+        self.declare_partials('mag_cp', ('neo_cp', 'mag_mass', 'motor_mass'))
+        self.declare_partials('sta_cp', ('hiperco_cp', 'sta_mass', 'motor_mass'))
+        self.declare_partials('rot_cp', ('hiperco_cp', 'rot_mass', 'motor_mass'))
+        self.declare_partials('wire_cp', ('copper_cp', 'wire_mass', 'motor_mass'))
+
+    def compute(self, inputs, outputs):
+        copper_cp = inputs['copper_cp']
+        hiperco_cp = inputs['hiperco_cp']
+        neo_cp = inputs['neo_cp']
+        mag_mass = inputs['mag_mass']
+        sta_mass = inputs['sta_mass']
+        rot_mass = inputs['rot_mass']
+        wire_mass = inputs['wire_mass'] 
+        motor_mass = inputs['motor_mass']
+
+        outputs['sta_cp'] = sta_mass * hiperco_cp / motor_mass
+        outputs['rot_cp'] = rot_mass * hiperco_cp / motor_mass
+        outputs['mag_cp'] = mag_mass * neo_cp / motor_mass
+        outputs['wire_cp'] = wire_mass * copper_cp / motor_mass
+
+    def compute_partials(self,inputs,J):
+        copper_cp = inputs['copper_cp']
+        hiperco_cp = inputs['hiperco_cp']
+        neo_cp = inputs['neo_cp']
+        mag_mass = inputs['mag_mass']
+        sta_mass = inputs['sta_mass']
+        rot_mass = inputs['rot_mass']
+        wire_mass = inputs['wire_mass'] 
+        motor_mass = inputs['motor_mass']
+
+        J['sta_cp', 'sta_mass'] =   hiperco_cp / motor_mass
+        J['sta_cp', 'hiperco_cp'] = sta_mass / motor_mass
+        J['sta_cp', 'motor_mass'] = -sta_mass * hiperco_cp / motor_mass**2
+
+        J['rot_cp', 'rot_mass'] =   hiperco_cp / motor_mass
+        J['rot_cp', 'hiperco_cp'] = rot_mass / motor_mass
+        J['rot_cp', 'motor_mass'] = -rot_mass * hiperco_cp / motor_mass**2
+
+        J['mag_cp', 'mag_mass'] =   neo_cp / motor_mass
+        J['mag_cp', 'neo_cp'] =      mag_mass / motor_mass
+        J['mag_cp', 'motor_mass'] = -mag_mass * neo_cp / motor_mass**2
+
+        J['wire_cp', 'wire_mass'] =  copper_cp / motor_mass
+        J['wire_cp', 'copper_cp'] =  wire_mass / motor_mass
+        J['wire_cp', 'motor_mass'] = -wire_mass * copper_cp / motor_mass**2

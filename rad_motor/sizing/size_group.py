@@ -4,7 +4,7 @@ from math import pi
 
 import openmdao.api as om
 
-from rad_motor.sizing.size_comp import MotorSizeComp, MotorMassComp
+from rad_motor.sizing.size_comp import MotorSizeComp, MotorMassComp, SpecificHeatComp
 
 
 class SizeGroup(om.Group):
@@ -20,13 +20,19 @@ class SizeGroup(om.Group):
                            subsys=MotorMassComp(),
                            promotes_inputs=['rho', 'radius_motor', 'n_slots', 'sta_ir', 'w_t', 'stack_length',
                                             's_d', 'rot_or', 'rot_ir', 't_mag', 'rho_mag', 'L_wire', 'rho_wire', 'r_litz'],
-                           promotes_outputs=['mag_mass', 'sta_mass', 'rot_mass', 'wire_mass'])
+                           promotes_outputs=['mag_mass', 'sta_mass', 'rot_mass', 'wire_mass', 'motor_mass'])
+
+        self.add_subsystem(name='specific_heat',
+                           subsys=SpecificHeatComp(),
+                           promotes_inputs=['mag_mass', 'sta_mass', 'rot_mass', 'wire_mass', 'motor_mass',
+                                            'hiperco_cp', 'copper_cp', 'neo_cp'],
+                           promotes_outputs=['mag_cp', 'sta_cp', 'rot_cp', 'wire_cp'])
 
         adder = om.AddSubtractComp()
-        adder.add_equation('mass_total', input_names=['mag_mass', 'sta_mass', 'rot_mass', 'wire_mass'], units='kg')
-        self.add_subsystem(name='totalmasscomp', subsys=adder)
+        adder.add_equation('cp_motor', input_names=['mag_cp', 'sta_cp', 'rot_cp', 'wire_cp'], units='J/kg/C')
+        self.add_subsystem(name='CpMotorComp', subsys=adder, promotes_outputs=['cp_motor'])
 
-        self.connect('mag_mass', 'totalmasscomp.mag_mass')
-        self.connect('sta_mass', 'totalmasscomp.sta_mass')
-        self.connect('rot_mass', 'totalmasscomp.rot_mass')
-        self.connect('wire_mass', 'totalmasscomp.wire_mass')
+        self.connect('mag_cp', 'CpMotorComp.mag_cp')
+        self.connect('sta_cp', 'CpMotorComp.sta_cp')
+        self.connect('rot_cp', 'CpMotorComp.rot_cp')
+        self.connect('wire_cp','CpMotorComp.wire_cp')

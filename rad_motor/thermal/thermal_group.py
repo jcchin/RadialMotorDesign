@@ -86,7 +86,7 @@ class ThermalGroup(om.Group):
 
         adder = om.AddSubtractComp(num_nodes=nn)
         adder.add_equation('Q_total', input_names=['P_steinmetz', 'P_wire'], units='W', vec_size=nn)
-        self.add_subsystem(name='totallossescomp', subsys=adder)
+        self.add_subsystem(name='totallossescomp', subsys=adder, promotes_outputs=['Q_total'])
 
         self.connect('P_steinmetz', 'totallossescomp.P_steinmetz')
         self.connect('P_wire', 'totallossescomp.P_wire')
