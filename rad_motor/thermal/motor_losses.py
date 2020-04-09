@@ -14,7 +14,7 @@ class WindingLossComp(om.ExplicitComponent):
 
     def setup(self):
         nn = self.options['num_nodes']
-        self.add_input('rpm', 4000*np.ones(nn), units='rpm', desc='Rotation speed')
+        self.add_input('rpm', val=1000*np.ones(nn), units='rpm', desc='Rotation speed')
         self.add_input('n_m', 20, desc='Number of magnets')
         self.add_input('mu_o', 1.2566e-6, units='H/m', desc='permeability of free space')    
         self.add_input('mu_r', 1.0, units='H/m', desc='relative magnetic permeability of ferromagnetic materials') 
@@ -22,14 +22,14 @@ class WindingLossComp(om.ExplicitComponent):
         self.add_input('T_windings', 150, units='C', desc='operating temperature of windings')
         self.add_input('T_coeff_cu', 0.00393, desc='temperature coefficient for copper')
         self.add_input('resistivity_wire', 1.724e-8, units='ohm*m', desc='resisitivity of Cu at 20 degC')
-        self.add_input('I_required', 25*np.ones(nn), units='A', desc='RMS current into motor')
+        self.add_input('I_required', val=25*np.ones(nn), units='A', desc='RMS current into motor')
         self.add_input('stack_length', 0.035, units='m', desc='axial length of stator')
         self.add_input('n_slots', 24, desc='number of slots')
         self.add_input('n_turns', 11, desc='number of winding turns')
         self.add_input('n_strands', 41, desc='number of strands in litz wire')        
         self.add_input('AC_power_factor', 0.5*np.ones(nn), desc='litz wire AC power factor')
         
-        self.add_output('f_e', 900*np.ones(nn), units = 'Hz', desc='electrical frequency')
+        self.add_output('f_e', val=900*np.ones(nn), units = 'Hz', desc='electrical frequency')
         self.add_output('r_litz', 0.0011, units='m', desc='radius of whole litz wire')
         self.add_output('L_wire', 10, units='m', desc='length of wire for one phase')
         self.add_output('temp_resistivity', 1.724e-8, units='ohm*m', desc='temp dependent resistivity')
@@ -40,7 +40,7 @@ class WindingLossComp(om.ExplicitComponent):
         self.add_output('P_ac', 100*np.ones(nn), units='W ', desc= 'Power loss from ac resistance')
         self.add_output('P_wire', 400*np.ones(nn), units='W ', desc= 'total power loss from wire')
 
-        r = c = np.arange(nn)  # for scalar variables only
+        r = c = np.arange(nn, dtype=int)  # for scalar variables only
 
         self.declare_partials('f_e', ['n_m', 'rpm'], rows=r, cols=c)
         self.declare_partials('r_litz', ['n_strands', 'r_strand'])

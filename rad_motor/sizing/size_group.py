@@ -8,10 +8,14 @@ from rad_motor.sizing.size_comp import MotorSizeComp, MotorMassComp, SpecificHea
 
 
 class SizeGroup(om.Group):
+    def initialize(self):
+        self.options.declare('num_nodes', types=int)
+
     def setup(self):
+        nn = self.options['num_nodes']
 
         self.add_subsystem(name='size',
-                           subsys=MotorSizeComp(),
+                           subsys=MotorSizeComp(num_nodes=nn),
                            promotes_inputs=['radius_motor', 'gap', 'rot_or', 'B_g', 'k', 'b_ry', 'n_m', 't_mag',
                                             'b_sy', 'b_t', 'n_slots', 'n_turns', 'I_required', 'k_wb'],
                            promotes_outputs=['J', 'w_ry', 'w_sy', 'w_t', 'sta_ir', 'rot_ir', 's_d', 'slot_area', 'w_slot'])

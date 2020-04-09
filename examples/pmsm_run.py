@@ -30,13 +30,13 @@ if __name__ == "__main__":
     # -------------------------------------------------------------------------
     #                              
     # -------------------------------------------------------------------------
-    ind.add_output('DES:P_shaft', 16.400, units='kW', desc='shaft power out of the motor')
-    ind.add_output('OD:P_shaft', 9.000*np.ones(nn), units='kW', desc='shaft power out of the motor')
+    ind.add_output('DES:P_shaft', 14.00, units='kW', desc='shaft power out of the motor')
+    ind.add_output('OD:P_shaft', 10.000*np.ones(nn), units='kW', desc='shaft power out of the motor')
 
     ind.add_output('DES:stack_length', 0.0345, units='m', desc='axial length of the motor')
 
-    ind.add_output('DES:rpm', 5460, units='rpm', desc='Rotation speed')
-    ind.add_output('OD:rpm', 2000*np.ones(nn), units='rpm', desc='Rotation speed')  
+    ind.add_output('DES:rpm', 4000, units='rpm', desc='Rotation speed')
+    ind.add_output('OD:rpm', 3000*np.ones(nn), units='rpm', desc='Rotation speed')  
 
     ind.add_output('radius_motor', 0.086, units='m', desc='Motor outer radius')  # Ref motor = 0.078225
 

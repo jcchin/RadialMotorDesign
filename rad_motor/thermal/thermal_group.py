@@ -31,44 +31,20 @@ class ThermalGroup(om.Group):
     def setup(self):
         nn = self.options['num_nodes']
 
-        self.add_subsystem('comp', om.ExecComp('I_peak= I_required*2**0.5', I_required={'value': np.ones(nn), 'units':'A'},  units='A'), 
+        self.add_subsystem('comp', om.ExecComp('I_peak= I_required*2**0.5', 
+                                                I_peak={'value': np.ones(nn), 'units':'A'},
+                                                I_required={'value': np.ones(nn), 'units':'A'},  units='A'), 
                                                 promotes_inputs=['I_required'], promotes_outputs=['I_peak'])
 
-        # ''' I_required represents the current required based on the power demanded from the motor '''
-        # self.add_subsystem('comp_I', om.ExecComp('I_required = (stack_length*2*n_m*n_turns*B_g*rot_or*P_shaft/(rpm*2*pi/60)*1.10)', 
-        #                                         stack_length={'value': 0.0345, 'units':'m'},
-        #                                         n_m={'value': 20.},
-        #                                         n_turns={'value': 12.},
-        #                                         B_g={'value':2., 'units':'T'},
-        #                                         rot_or={'value': 'units':'m'},
-        #                                         P_shaft={'value': 14000 np.ones(nn), 'units':'W'},
-        #                                         rpm={'value': 3000*np.ones(nn), 'units':'rpm'},
-        #                                         units='A'), promotes_inputs=['stack_length', 'n_m', 'n_turns', 'B_g', 'rot_or', 'P_shaft', 'rpm'],
-        #                                         promotes_outputs=['I_required'])
 
-        # ''' I_peak is passed into the the ac power factor for AC losses '''
-        # self.add_subsystem('comp', om.ExecComp('I_peak = (stack_length*2*n_m*n_turns*B_g*rot_or*P_shaft/(rpm*2*pi/60)*1.10)*2**0.5', 
-        #                                         stack_length={'value': 0.0345, 'units':'m'},
-        #                                         n_m={'value': 20.},
-        #                                         n_turns={'value': 12.},
-        #                                         B_g={'value':2., 'units':'T'},
-        #                                         rot_or={'value': 'units':'m'},
-        #                                         P_shaft={'value': 14000 np.ones(nn), 'units':'W'},
-        #                                         rpm={'value': 3000*np.ones(nn), 'units':'rpm'},
-        #                                         units='A'), promotes_inputs=['stack_length', 'n_m', 'n_turns', 'B_g', 'rot_or', 'P_shaft', 'rpm'],
-        #                                         promotes_outputs=['I_peak'])
-
-
-# stack_length*2*n_m*n_turns*B_g*rot_or*outputs['Tq_shaft']*1.10
-
-        motor_interp = om.MetaModelStructuredComp(method='scipy_slinear', extrapolate=True)
+        motor_interp = om.MetaModelStructuredComp(method='scipy_slinear', extrapolate=True, vec_size=nn)
     
         rpm_data = np.array([200, 600, 1000, 1800, 2200, 3000, 3400, 4200, 5000, 5400])  #  1400, 2600,  3800, 4600
         current_data = np.array([10, 14.4, 18.9, 23.3, 27.8, 32.2, 36.7, 41.1, 45.6, 50])
         
-        motor_interp.add_input('rpm', 5400*np.ones(nn), training_data= rpm_data, units='rpm' )
-        motor_interp.add_input('I_peak', 50, training_data=current_data, units='A')
-        motor_interp.add_output('AC_power_factor', 0.5*np.ones(nn), training_data=motor_loss_data)
+        motor_interp.add_input('rpm', val=5000*np.ones(nn), training_data= rpm_data, units='rpm' )
+        motor_interp.add_input('I_peak', val=50*np.ones(nn), training_data=current_data, units='A')
+        motor_interp.add_output('AC_power_factor', val=0.5*np.ones(nn), training_data=motor_loss_data)
         self.add_subsystem('ac_power_factor_interp', motor_interp, 
                             promotes_inputs=['rpm', 'I_peak'], promotes_outputs=['AC_power_factor'])
 
