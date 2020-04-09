@@ -34,6 +34,7 @@ class CartersComp(om.ExplicitComponent):
         T_coef_rem_mag = inputs['T_coef_rem_mag']
 
         outputs['Br']  = Br_20*(1+T_coef_rem_mag/100 * (T_mag-20)) 
+        print(w_slot, w_t)
         outputs['carters_coef'] = (1 - w_slot/(w_slot + w_t)) + ((4*(g+t_mag/outputs['Br'])/(np.pi*(w_slot + w_t))) * np.log(1 + (np.pi*w_slot/(4*(g+t_mag/outputs['Br'])))))**-1 
 
     def compute_partials(self, inputs, J):
