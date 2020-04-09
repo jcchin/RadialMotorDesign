@@ -17,8 +17,8 @@ class TorqueComp(om.ExplicitComponent):
        self.add_input('n_m', 20, desc='number of magnets')
        self.add_input('n_turns', 11, desc='number of wire turns')      
        self.add_input('rot_or', 0.060, units='m', desc='rotor outer radius')
-       self.add_input('P_shaft', 14000*np.ones(nn), units='W', desc='output power') 
-       self.add_input('rpm', 5000*np.ones(nn), units='rpm', desc='Rotational Speed')
+       self.add_input('P_shaft', 12000*np.ones(nn), units='W', desc='output power') 
+       self.add_input('rpm', 1000*np.ones(nn), units='rpm', desc='Rotational Speed')
        self.add_input('stack_length', .0345, units='m', desc='stack length')
 
        self.add_output('omega', 900*np.ones(nn), units='Hz', desc='mechanical rad/s')     
@@ -80,7 +80,7 @@ class EfficiencyComp(om.ExplicitComponent):
         self.add_input('omega', 400*np.ones(nn), units='Hz', desc='mechanical rad/s')  
         self.add_input('rpm', 5000*np.ones(nn), units='rpm', desc='speed of prop')   
 
-        self.add_output('P_in', 15*np.ones(nn), units='kW', desc='input power')
+        self.add_output('P_in', 10000*np.ones(nn), units='W', desc='input power')
         self.add_output('Eff', 0.90*np.ones(nn), desc='efficiency of motor')
         
         r = c = np.arange(nn)

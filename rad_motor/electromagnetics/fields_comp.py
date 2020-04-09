@@ -22,7 +22,7 @@ class CartersComp(om.ExplicitComponent):
         self.add_output('carters_coef', 1,  desc='How much the air gap must be increased to account for slots')  # Gieras - pg.563 - (A.27)
 
         self.declare_partials('Br', ['Br_20', 'T_coef_rem_mag', 'T_mag'])
-        self.declare_partials('carters_coef', ['w_slot', 'w_t', 'gap', 't_mag', 'Br_20', 'T_coef_rem_mag', 'T_mag'])
+        # self.declare_partials('carters_coef', ['w_slot', 'w_t', 'gap', 't_mag', 'Br_20', 'T_coef_rem_mag', 'T_mag'])
 
     def compute(self, inputs, outputs):
         g = inputs['gap']
@@ -34,8 +34,7 @@ class CartersComp(om.ExplicitComponent):
         T_coef_rem_mag = inputs['T_coef_rem_mag']
 
         outputs['Br']  = Br_20*(1+T_coef_rem_mag/100 * (T_mag-20)) 
-        print(w_slot, w_t)
-        outputs['carters_coef'] = (1 - w_slot/(w_slot + w_t)) + ((4*(g+t_mag/outputs['Br'])/(np.pi*(w_slot + w_t))) * np.log(1 + (np.pi*w_slot/(4*(g+t_mag/outputs['Br'])))))**-1 
+        outputs['carters_coef'] =  2 # (1 - w_slot/(w_slot + w_t)) + ((4*(g+t_mag/outputs['Br'])/(np.pi*(w_slot + w_t))) * np.log(1 + (np.pi*w_slot/(4*(g+t_mag/outputs['Br'])))))**-1 
 
     def compute_partials(self, inputs, J):
         g = inputs['gap']
@@ -54,45 +53,45 @@ class CartersComp(om.ExplicitComponent):
 
         # # Carters Coefficient
         
-        J['carters_coef', 'w_slot'] = (-1*(w_slot + w_t) + w_slot)/(w_slot + w_t)**2 - \
-                                        ((4*(g+t_mag/Br)/(np.pi*(w_slot + w_t))) * np.log(1 + (np.pi*w_slot/(4*(g+t_mag/Br)))))**-2 * \
-                                        (((-np.pi*4*(g+t_mag/Br))/(np.pi*(w_slot+w_t))**2) * np.log(1 + (np.pi*w_slot/(4*(g+t_mag/Br)))) \
-                                        + ((4*(g+t_mag/Br)/(np.pi*(w_slot + w_t)))*(1/(1 + (np.pi*w_slot/(4*(g+t_mag/Br)))))*(np.pi/(4*(g+t_mag/Br)))))
+        # J['carters_coef', 'w_slot'] = (-1*(w_slot + w_t) + w_slot)/(w_slot + w_t)**2 - \
+        #                                 ((4*(g+t_mag/Br)/(np.pi*(w_slot + w_t))) * np.log(1 + (np.pi*w_slot/(4*(g+t_mag/Br)))))**-2 * \
+        #                                 (((-np.pi*4*(g+t_mag/Br))/(np.pi*(w_slot+w_t))**2) * np.log(1 + (np.pi*w_slot/(4*(g+t_mag/Br)))) \
+        #                                 + ((4*(g+t_mag/Br)/(np.pi*(w_slot + w_t)))*(1/(1 + (np.pi*w_slot/(4*(g+t_mag/Br)))))*(np.pi/(4*(g+t_mag/Br)))))
         
-        J['carters_coef', 'w_t'] = w_slot/(w_slot + w_t)**2 - ((4*(g+t_mag/Br)/(np.pi*(w_slot + w_t))) * np.log(1 + (np.pi*w_slot/(4*(g+t_mag/Br)))))**-2 * \
-                                    (((-np.pi*4*(g+t_mag/Br))/(np.pi*(w_slot+w_t))**2) * np.log(1 + (np.pi*w_slot/(4*(g+t_mag/Br)))))
+        # J['carters_coef', 'w_t'] = w_slot/(w_slot + w_t)**2 - ((4*(g+t_mag/Br)/(np.pi*(w_slot + w_t))) * np.log(1 + (np.pi*w_slot/(4*(g+t_mag/Br)))))**-2 * \
+        #                             (((-np.pi*4*(g+t_mag/Br))/(np.pi*(w_slot+w_t))**2) * np.log(1 + (np.pi*w_slot/(4*(g+t_mag/Br)))))
         
-        J['carters_coef', 'gap'] = -1 * \
-                                    ((4*(g+t_mag/Br)/(np.pi*(w_slot + w_t))) * np.log(1 + (np.pi*w_slot/(4*(g+t_mag/Br)))))**-2 \
-                                    * ((4/(np.pi*(w_slot + w_t))) * np.log(1 + (np.pi*w_slot/(4*(g+t_mag/Br)))) +
-                                        1/(1 + (np.pi*w_slot/(4*(g+t_mag/Br)))) * (-np.pi*w_slot*4/(4*(g+t_mag/Br))**2) * \
-                                        4*(g+t_mag/Br)/(np.pi*(w_slot + w_t)))
+        # J['carters_coef', 'gap'] = -1 * \
+        #                             ((4*(g+t_mag/Br)/(np.pi*(w_slot + w_t))) * np.log(1 + (np.pi*w_slot/(4*(g+t_mag/Br)))))**-2 \
+        #                             * ((4/(np.pi*(w_slot + w_t))) * np.log(1 + (np.pi*w_slot/(4*(g+t_mag/Br)))) +
+        #                                 1/(1 + (np.pi*w_slot/(4*(g+t_mag/Br)))) * (-np.pi*w_slot*4/(4*(g+t_mag/Br))**2) * \
+        #                                 4*(g+t_mag/Br)/(np.pi*(w_slot + w_t)))
 
-        J['carters_coef', 't_mag'] = -1 * ((4*(g+t_mag/Br)/(np.pi*(w_slot + w_t))) * np.log(1 + (np.pi*w_slot/(4*(g+t_mag/Br)))))**-2 \
-                                    * ((4/(Br*np.pi*(w_slot + w_t)))*np.log(1 + (np.pi*w_slot/(4*(g+t_mag/Br)))) \
-                                    + (4*(g+t_mag/Br)/(np.pi*(w_slot + w_t)))*(1/(1 + (np.pi*w_slot/(4*(g+t_mag/Br)))))*((-4/Br)*np.pi*w_slot/(4*(g+t_mag/Br))**2))
+        # J['carters_coef', 't_mag'] = -1 * ((4*(g+t_mag/Br)/(np.pi*(w_slot + w_t))) * np.log(1 + (np.pi*w_slot/(4*(g+t_mag/Br)))))**-2 \
+        #                             * ((4/(Br*np.pi*(w_slot + w_t)))*np.log(1 + (np.pi*w_slot/(4*(g+t_mag/Br)))) \
+        #                             + (4*(g+t_mag/Br)/(np.pi*(w_slot + w_t)))*(1/(1 + (np.pi*w_slot/(4*(g+t_mag/Br)))))*((-4/Br)*np.pi*w_slot/(4*(g+t_mag/Br))**2))
         
-        dBr__dBr_20 = (1+T_coef_rem_mag/100 * (T_mag-20))
-        dBe1__dBr_20 = -(4*t_mag/(np.pi*(w_slot+w_t)*Br**2)) * dBr__dBr_20
-        dBe2__dBr_20 = (4*t_mag*Br**-2*dBr__dBr_20 * np.pi*w_slot)/(4*g + 4*t_mag/Br)**2
-        J['carters_coef', 'Br_20'] = -1 * ((4*(g+t_mag/Br)/(np.pi*(w_slot + w_t))) * np.log(1 + (np.pi*w_slot/(4*(g+t_mag/Br)))))**-2 \
-                                     * ((dBe1__dBr_20 * np.log(1 + (np.pi*w_slot/(4*(g+t_mag/Br))))) + (((4*(g+t_mag/Br)/(np.pi*(w_slot + w_t))) * (1/(1 + (np.pi*w_slot/(4*(g+t_mag/Br))))))
-                                        * dBe2__dBr_20))
+        # dBr__dBr_20 = (1+T_coef_rem_mag/100 * (T_mag-20))
+        # dBe1__dBr_20 = -(4*t_mag/(np.pi*(w_slot+w_t)*Br**2)) * dBr__dBr_20
+        # dBe2__dBr_20 = (4*t_mag*Br**-2*dBr__dBr_20 * np.pi*w_slot)/(4*g + 4*t_mag/Br)**2
+        # J['carters_coef', 'Br_20'] = -1 * ((4*(g+t_mag/Br)/(np.pi*(w_slot + w_t))) * np.log(1 + (np.pi*w_slot/(4*(g+t_mag/Br)))))**-2 \
+        #                              * ((dBe1__dBr_20 * np.log(1 + (np.pi*w_slot/(4*(g+t_mag/Br))))) + (((4*(g+t_mag/Br)/(np.pi*(w_slot + w_t))) * (1/(1 + (np.pi*w_slot/(4*(g+t_mag/Br))))))
+        #                                 * dBe2__dBr_20))
 
 
-        dBr__dT_coef_rem_mag = (T_mag-20)*Br_20/100
-        dBe1__dT_coef_rem_mag = -(4*t_mag/(np.pi*(w_slot+w_t)*Br**2)) * dBr__dT_coef_rem_mag
-        dBe2__dT_coef_rem_mag = (4*t_mag*Br**-2*dBr__dT_coef_rem_mag * np.pi*w_slot)/(4*g + 4*t_mag/Br)**2
-        J['carters_coef', 'T_coef_rem_mag'] = -1 * ((4*(g+t_mag/Br)/(np.pi*(w_slot + w_t))) * np.log(1 + (np.pi*w_slot/(4*(g+t_mag/Br)))))**-2 \
-                                     * ((dBe1__dT_coef_rem_mag * np.log(1 + (np.pi*w_slot/(4*(g+t_mag/Br))))) + (((4*(g+t_mag/Br)/(np.pi*(w_slot + w_t))) * (1/(1 + (np.pi*w_slot/(4*(g+t_mag/Br))))))
-                                        * dBe2__dT_coef_rem_mag))
+        # dBr__dT_coef_rem_mag = (T_mag-20)*Br_20/100
+        # dBe1__dT_coef_rem_mag = -(4*t_mag/(np.pi*(w_slot+w_t)*Br**2)) * dBr__dT_coef_rem_mag
+        # dBe2__dT_coef_rem_mag = (4*t_mag*Br**-2*dBr__dT_coef_rem_mag * np.pi*w_slot)/(4*g + 4*t_mag/Br)**2
+        # J['carters_coef', 'T_coef_rem_mag'] = -1 * ((4*(g+t_mag/Br)/(np.pi*(w_slot + w_t))) * np.log(1 + (np.pi*w_slot/(4*(g+t_mag/Br)))))**-2 \
+        #                              * ((dBe1__dT_coef_rem_mag * np.log(1 + (np.pi*w_slot/(4*(g+t_mag/Br))))) + (((4*(g+t_mag/Br)/(np.pi*(w_slot + w_t))) * (1/(1 + (np.pi*w_slot/(4*(g+t_mag/Br))))))
+        #                                 * dBe2__dT_coef_rem_mag))
         
-        dBr__dT_mag = Br_20 * T_coef_rem_mag/100
-        dBe1__dT_mag = -(4*t_mag/(np.pi*(w_slot+w_t)*Br**2)) * dBr__dT_mag
-        dBe2__dT_mag = (4*t_mag*Br**-2*dBr__dT_mag * np.pi*w_slot)/(4*g + 4*t_mag/Br)**2
-        J['carters_coef', 'T_mag'] = -1 * ((4*(g+t_mag/Br)/(np.pi*(w_slot + w_t))) * np.log(1 + (np.pi*w_slot/(4*(g+t_mag/Br)))))**-2 \
-                                     * ((dBe1__dT_mag * np.log(1 + (np.pi*w_slot/(4*(g+t_mag/Br))))) + (((4*(g+t_mag/Br)/(np.pi*(w_slot + w_t))) * (1/(1 + (np.pi*w_slot/(4*(g+t_mag/Br))))))
-                                        * dBe2__dT_mag))
+        # dBr__dT_mag = Br_20 * T_coef_rem_mag/100
+        # dBe1__dT_mag = -(4*t_mag/(np.pi*(w_slot+w_t)*Br**2)) * dBr__dT_mag
+        # dBe2__dT_mag = (4*t_mag*Br**-2*dBr__dT_mag * np.pi*w_slot)/(4*g + 4*t_mag/Br)**2
+        # J['carters_coef', 'T_mag'] = -1 * ((4*(g+t_mag/Br)/(np.pi*(w_slot + w_t))) * np.log(1 + (np.pi*w_slot/(4*(g+t_mag/Br)))))**-2 \
+        #                              * ((dBe1__dT_mag * np.log(1 + (np.pi*w_slot/(4*(g+t_mag/Br))))) + (((4*(g+t_mag/Br)/(np.pi*(w_slot + w_t))) * (1/(1 + (np.pi*w_slot/(4*(g+t_mag/Br))))))
+        #                                 * dBe2__dT_mag))
 
 
 class GapEquivalentComp(om.ExplicitComponent):
@@ -100,14 +99,11 @@ class GapEquivalentComp(om.ExplicitComponent):
         self.add_input('gap', 0.001, units='m', desc='Air Gap - Mechanical Clearance')
         self.add_input('carters_coef', 2,  desc='Carters Coefficient')  # Gieras - pg.563 - (A.27)
         self.add_input('k_sat', 1,  desc='Saturation factor of the magnetic circuit due to the main (linkage) magnetic flux')  # Gieras - pg.73 - (2.48) - Typically ~1
-        # self.add_input('t_mag', 0.0044, units='m', desc='Magnet thickness')  # 'h_m' in Gieras's book
-        # self.add_input('mu_o', 1.2566e-6, units='H/m', desc='Magnetic Permeability of Free Space')  #CONSTANT
-        # self.add_input('mu_r', 1, units='H/m', desc='Relative recoil permeability')  # Gieras - pg.48 - (2.5)
 
         self.add_output('g_eq', .001, units='m', desc='Equivalent aig gap')  # Gieras - pg.180
-        # self.add_output('g_eq_q', .001, units='m', desc='Equivalent air gap q-axis')  # Gieras - pg.180
 
         self.declare_partials('g_eq', ['gap', 'carters_coef', 'k_sat'])
+        # self.declare_partials(of='*', wrt='*')
 
     def compute(self, inputs, outputs):
         gap = inputs['gap']
@@ -115,6 +111,8 @@ class GapEquivalentComp(om.ExplicitComponent):
         k_sat = inputs['k_sat']
 
         outputs['g_eq'] = gap*carters_coef*k_sat 
+
+        # outputs['g_eq'] = .002
 
     def compute_partials(self, inputs, J):
         gap = inputs['gap']
@@ -133,25 +131,18 @@ class GapFieldsComp(om.ExplicitComponent):
     self.add_input('g_eq', .001, units='m', desc='air gap')
     self.add_input('t_mag', 0.0045, units='m', desc='magnet height')
     self.add_input('Br', 1, units = 'T', desc='temp dependent renmance flux density of an N48H magnet')
-    # self.add_input('Hc_20', -1046, units='A/m', desc='Intrinsic Coercivity at 20 degC')
-    # self.add_input('Br_20', 1.39, units='T', desc='remnance flux density at 20 degC')
-    
-    # self.add_output('H_g', units='A/m', desc='air gap field intensity')
+
     self.add_output('B_g', 1.5, units='T', desc='air gap flux density')
 
     self.declare_partials('B_g', ['Br', 'mu_r', 'g_eq', 't_mag'])
-    # self.declare_partials('H_g', ['Hc_20', 'Br', 'mu_r', 'g_eq', 't_mag', 'Br_20'])
 
   def compute(self, inputs, outputs):
-    # Hc_20=inputs['Hc_20']
-    # Br_20=inputs['Br_20']
     Br = inputs['Br']
     mu_r=inputs['mu_r']
     g_eq=inputs['g_eq']
     t_mag=inputs['t_mag']
 
     outputs['B_g'] = Br/(1+mu_r*(g_eq/t_mag))                   # neglecting leakage flux and fringing, magnetic voltag drop in steel (eqn2.14 Gieres PMSM)
-    # outputs['H_g'] = Hc_20*(outputs['B_g']/Br_20)
 
   def compute_partials(self, inputs, J):
     Br = inputs['Br']

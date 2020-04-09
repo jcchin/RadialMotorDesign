@@ -63,17 +63,20 @@ class MotorSizeComp(om.ExplicitComponent):
         b_t = inputs['b_t']
         rot_or = inputs['rot_or']
 
+
         outputs['w_ry'] = (pi*rot_or*B_g)/(n_m*k*b_ry) 
         outputs['w_t'] = (2*pi*rot_or*B_g) / (n_slots*k*b_t) 
         outputs['w_sy'] = (pi*rot_or*B_g)/(n_m*k*b_sy)
         outputs['s_d'] = radius_motor - rot_or - gap - outputs['w_sy']
         outputs['rot_ir'] = rot_or - t_mag - outputs['w_ry'] 
         outputs['sta_ir'] = rot_or + gap
+
         outputs['slot_area'] = (pi*(radius_motor-outputs['w_sy'])**2 - \
                                pi*(radius_motor-outputs['w_sy']-outputs['s_d'])**2)/n_slots - (outputs['w_t'] * outputs['s_d']*1.05)
         outputs['w_slot'] = outputs['slot_area'] / outputs['s_d']
         outputs['J'] = 2*n_turns*I*(2.**0.5)/(k_wb*outputs['slot_area']*1E6)
 
+   
     def compute_partials(self, inputs, J):
 
         radius_motor = inputs['radius_motor']

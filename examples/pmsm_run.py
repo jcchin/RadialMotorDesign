@@ -35,10 +35,10 @@ if __name__ == "__main__":
 
     ind.add_output('DES:stack_length', 0.0345, units='m', desc='axial length of the motor')
 
-    ind.add_output('DES:rpm', 4000, units='rpm', desc='Rotation speed')
+    ind.add_output('DES:rpm', 5000, units='rpm', desc='Rotation speed')
     ind.add_output('OD:rpm', 3000*np.ones(nn), units='rpm', desc='Rotation speed')  
 
-    ind.add_output('radius_motor', 0.086, units='m', desc='Motor outer radius')  # Ref motor = 0.078225
+    ind.add_output('radius_motor', 0.086, units='m', desc='Motor outer radius')  # Ref motor = 0.078225 --- max=0.12
 
     ind.add_output('n_turns', 12, desc='Number of wire turns')
     ind.add_output('n_slots', 24, desc='Number of Slots')
@@ -142,6 +142,7 @@ if __name__ == "__main__":
     p.model.connect('DESIGN.rot_or', 'OD1.rot_or')
     p.model.connect('DESIGN.w_slot', 'OD1.w_slot')
     p.model.connect('DESIGN.w_t', 'OD1.w_t')
+    p.model.connect('DESIGN.sta_mass', 'OD1.sta_mass')
 
     p.model.connect('OD:rpm', 'OD1.rpm')
     p.model.connect('DES:stack_length', 'OD1.stack_length') # DES to OD1 to make sure it stays constant
@@ -162,9 +163,8 @@ if __name__ == "__main__":
 
     p.setup()
 
-
-    # p['radius_motor'] = 0.086   # Set the desired radius of the motor, application specific
-    p['DESIGN.rot_or'] = 6.8    # initial guess
+    print('the radius is: ', p['DESIGN.geometry.size.radius_motor'])
+    p['DESIGN.rot_or'] = (p['DESIGN.geometry.size.radius_motor'] *0.80 )*100   # 8.0 = (0.08*100)
 
     p.run_model()
     # p.run_driver()

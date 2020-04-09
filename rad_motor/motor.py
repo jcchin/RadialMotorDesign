@@ -40,7 +40,7 @@ class Motor(om.Group):
                                                                      'mag_mass', 'sta_mass', 'rot_mass', 'wire_mass', 'slot_area', 'w_slot', 'motor_mass', 'cp_motor'])
 
             bal = om.BalanceComp(num_nodes=nn)
-            bal.add_balance('rot_or', val=0.05, units='cm', eq_units='A/mm**2', lower=1e-4)#, use_mult=True, mult_val=0.5)
+            bal.add_balance('rot_or', val=0.5, units='cm', eq_units='A/mm**2', lower=1e-4)
             tgt = om.IndepVarComp(name='J_tgt', val=14.0, units='A/mm**2')
 
             self.add_subsystem(name='target', subsys=tgt, promotes_outputs=['J_tgt'])
@@ -98,13 +98,13 @@ def print_motor(prob, motor_path=''):
         # print('Mass of Rotor.....................',  prob.get_val('DESIGN.rot_mass', units='kg'))
         # print('Mass of Magnets...................',  prob.get_val('DESIGN.mag_mass', units='kg')) 
         # print('Mass of Windings..................',  prob.get_val('DESIGN.wire_mass', units='kg'))
-        print('Mass of Motor.....................',  prob.get_val('DESIGN.motor_mass'))
-        print('Motor Specific Heat...............',  prob.get_val('DESIGN.cp_motor'))
+        # print('Mass of Motor.....................',  prob.get_val('DESIGN.motor_mass'))
+        # print('Motor Specific Heat...............',  prob.get_val('DESIGN.cp_motor'))
 
     print('Iron losses.............',   prob.get_val(f'{motor_path}P_steinmetz') * prob.get_val(f'{motor_path}sta_mass'))
     # print('DC Winding  Losses......',   prob.get_val(f'{motor_path}P_dc'))
     # print('AC Winding  Losses......',   prob.get_val(f'{motor_path}P_ac'))
-    print('TOTAL Winding  Losses...',   prob.get_val(f'{motor_path}P_wire'))
+    # print('TOTAL Winding  Losses...',   prob.get_val(f'{motor_path}P_wire'))
     print('Total Losses Add/Sub....',   prob.get_val(f'{motor_path}Q_total'))
    
     print('Overall Efficiency......',   prob.get_val(f'{motor_path}Eff'))
@@ -115,8 +115,8 @@ def print_motor(prob, motor_path=''):
     print('Power Required...........',  prob.get_val(f'{motor_path}P_in'))
     # print('Power out  .......................',  prob.get_val(f'{motor_path}P_shaft'))
     # print('Electrical Frequency..............',  prob.get_val(f'{motor_path}f_e'))
-    # print('Torque............................',  prob.get_val(f'{motor_path}Tq_shaft'))
-    # print('Required Current..................',  prob.get_val(f'{motor_path}I_required'))
+    print('Torque............................',  prob.get_val(f'{motor_path}Tq_shaft'))
+    print('Required Current..................',  prob.get_val(f'{motor_path}I_required'))
 
     # print('--------------FIELDS--------------')
     # print('Air gap flux density .............',  prob.get_val(f'{motor_path}B_g'))   
