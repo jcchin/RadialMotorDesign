@@ -72,7 +72,7 @@ class WindingLossComp(om.ExplicitComponent):
         n_strands = inputs['n_strands']
         AC_pf = inputs['AC_power_factor']
 
-        outputs['f_e']              = n_m / 2 * rpm / 60                                            # Eqn 1.5 "Brushless PM Motor Design" by D. Hansleman                                       
+        outputs['f_e']              = n_m*rpm/(2*60)  #n_m / 2 * rpm / 60                                            # Eqn 1.5 "Brushless PM Motor Design" by D. Hansleman                                       
         outputs['r_litz']           = (np.sqrt(n_strands) * 1.154 * r_strand*2)/2                   # New England Wire
         outputs['L_wire']           = (n_slots/3 * n_turns) * (stack_length*2 + .017*2)              
         outputs['temp_resistivity'] = (resistivity_wire * (1 + T_coeff_cu*(T_windings-20)))         # Eqn 4.14 "Brushless PM Motor Design" by D. Hansleman
@@ -106,8 +106,8 @@ class WindingLossComp(om.ExplicitComponent):
         P_dc = (I*np.sqrt(2))**2 * R_dc *3/2
         P_ac = AC_pf * P_dc
 
-        d_f_e__d_n_m = J['f_e', 'n_m'] = 1 / 2 * rpm / 60
-        d_f_e__d_rpm = J['f_e', 'rpm'] = n_m / 2 * 1 / 60 
+        d_f_e__d_n_m = J['f_e', 'n_m'] = rpm/120 #1 / 2 * rpm / 60
+        d_f_e__d_rpm = J['f_e', 'rpm'] = n_m / 120
 
         J['r_litz', 'n_strands'] = (n_strands**-.5 * 1.154 * r_strand*2)/4 
         J['r_litz', 'r_strand'] = (np.sqrt(n_strands) * 1.154 * 2)/2 

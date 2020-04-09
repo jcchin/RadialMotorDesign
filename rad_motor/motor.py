@@ -78,17 +78,17 @@ def print_motor(prob, motor_path=''):
     if motor_path == 'DESIGN.':
 
 
-        # print('Motor Outer Radius................',      prob.get_val('DESIGN.geometry.mass.radius_motor', units='mm'))
-        # print('Stator Inner Radius...............',      prob.get_val('DESIGN.sta_ir', units='mm'))
+        print('Motor Outer Radius................',      prob.get_val('DESIGN.geometry.mass.radius_motor', units='mm'))
+        print('Stator Inner Radius...............',      prob.get_val('DESIGN.sta_ir', units='mm'))
         print('Rotor Outer Radius................',     prob.get_val('DESIGN.rot_or', units='mm'))
-        # print('Rotor Inner Radius................',     prob.get_val('DESIGN.rot_ir', units='mm'))
+        print('Rotor Inner Radius................',     prob.get_val('DESIGN.rot_ir', units='mm'))
     
-        # print('Slot Depth........................',  prob.get_val('DESIGN.s_d', units='mm'))
-        # print('Stator Yoke Thickness.............',  prob.get_val('DESIGN.w_sy', units='mm'))
+        print('Slot Depth........................',  prob.get_val('DESIGN.s_d', units='mm'))
+        print('Stator Yoke Thickness.............',  prob.get_val('DESIGN.w_sy', units='mm'))
         print('Tooth Width.......................',  prob.get_val('DESIGN.w_t', units='mm'))
         # print('Radius of litz wire ..............', prob.get_val('DESIGN.r_litz', units='m'))
         # print('Length of Windings................',  prob.get_val('DESIGN.L_wire', units='m'))
-        # print('Slot Area.........................', prob.get_val('DESIGN.slot_area', units='m**2'))
+        print('Slot Area.........................', prob.get_val('DESIGN.slot_area', units='m**2'))
         print('Slot Width........................', prob.get_val('DESIGN.w_slot'))
         # print('Copper area in one slot...........', prob.get_val('DESIGN.A_cu', units='m**2'))
         # print('Copper Slot Fill Percentage.......', prob.get_val('DESIGN.A_cu') / prob.get_val('DESIGN.slot_area'))
@@ -101,13 +101,13 @@ def print_motor(prob, motor_path=''):
         print('Mass of Motor.....................',  prob.get_val('DESIGN.motor_mass'))
         print('Motor Specific Heat...............',  prob.get_val('DESIGN.cp_motor'))
 
-    # print('Iron losses.............',   prob.get_val(f'{motor_path}P_steinmetz') * prob.get_val(f'{motor_path}sta_mass'))
+    print('Iron losses.............',   prob.get_val(f'{motor_path}P_steinmetz') * prob.get_val(f'{motor_path}sta_mass'))
     # print('DC Winding  Losses......',   prob.get_val(f'{motor_path}P_dc'))
     # print('AC Winding  Losses......',   prob.get_val(f'{motor_path}P_ac'))
-    # print('TOTAL Winding  Losses...',   prob.get_val(f'{motor_path}P_wire'))
+    print('TOTAL Winding  Losses...',   prob.get_val(f'{motor_path}P_wire'))
     print('Total Losses Add/Sub....',   prob.get_val(f'{motor_path}Q_total'))
    
-    # print('Overall Efficiency......',   prob.get_val(f'{motor_path}Eff'))
+    print('Overall Efficiency......',   prob.get_val(f'{motor_path}Eff'))
 
     # print('--------------EM PERF-------------')
     # print('Current Density...................',   prob.get_val('DESIGN.J'))
