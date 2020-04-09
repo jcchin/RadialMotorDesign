@@ -28,7 +28,8 @@ class TorqueComp(om.ExplicitComponent):
        r = c = np.arange(nn)  # for scalar variables only
        self.declare_partials('omega', 'rpm', rows=r, cols=c)
        self.declare_partials('Tq_shaft', ['P_shaft', 'rpm'], rows=r, cols=c)
-       self.declare_partials('I_required', ['stack_length', 'n_m', 'n_turns', 'B_g', 'rot_or', 'P_shaft', 'rpm'], rows=r, cols=c)
+       self.declare_partials('I_required', ['stack_length', 'n_m', 'n_turns', 'B_g', 'rot_or'])
+       self.declare_partials('I_required', ['P_shaft', 'rpm'], rows=r, cols=c)
 
     def compute(self,inputs,outputs):
         n_m=inputs['n_m']

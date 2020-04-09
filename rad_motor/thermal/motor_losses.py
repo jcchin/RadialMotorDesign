@@ -42,21 +42,28 @@ class WindingLossComp(om.ExplicitComponent):
 
         r = c = np.arange(nn, dtype=int)  # for scalar variables only
 
-        self.declare_partials('f_e', ['n_m', 'rpm'], rows=r, cols=c)
+        self.declare_partials('f_e', 'n_m')
+        self.declare_partials('f_e', 'rpm', rows=r, cols=c)
         self.declare_partials('r_litz', ['n_strands', 'r_strand'])
         self.declare_partials('L_wire', ['n_slots', 'n_turns', 'stack_length'])
         self.declare_partials('temp_resistivity', ['resistivity_wire', 'T_coeff_cu', 'T_windings'])
         self.declare_partials('R_dc', ['resistivity_wire', 'T_coeff_cu', 'T_windings', 'n_slots', 'n_turns', 'stack_length', 'r_strand'])
-        self.declare_partials('skin_depth', ['resistivity_wire', 'T_coeff_cu', 'T_windings', 'n_m', 'rpm', 'mu_r', 'mu_o'], rows=r, cols=c)
+        # self.declare_partials('skin_depth', ['resistivity_wire', 'T_coeff_cu', 'T_windings', 'n_m', 'rpm', 'mu_r', 'mu_o'], rows=r, cols=c)
+        self.declare_partials('skin_depth', ['resistivity_wire', 'T_coeff_cu', 'T_windings', 'n_m', 'mu_r', 'mu_o'])
+        self.declare_partials('skin_depth', 'rpm', rows=r, cols=c)
         self.declare_partials('A_cu', ['n_turns', 'n_strands', 'r_strand'])
-        self.declare_partials('R_dc', ['resistivity_wire', 'T_coeff_cu', 'T_windings', 'n_slots', 'n_turns', 'stack_length', 'r_strand'])
-        self.declare_partials('skin_depth', ['resistivity_wire', 'T_coeff_cu', 'T_windings', 'n_m', 'rpm', 'mu_r', 'mu_o'], rows=r, cols=c)
-        self.declare_partials('P_dc', ['I_required', 'resistivity_wire', 'T_coeff_cu', 'T_windings', 'n_slots', 'n_turns', 'stack_length', 'r_strand'], rows=r, cols=c)
-        self.declare_partials('P_ac', ['AC_power_factor', 'I_required', 'resistivity_wire', 'T_coeff_cu', 'T_windings', 'n_slots', 'n_turns', 'stack_length', 'r_strand'], rows=r, cols=c)
-        self.declare_partials('P_wire', ['I_required', 'resistivity_wire', 'T_coeff_cu', 'T_windings', 'n_slots', 'n_turns', 'stack_length', 'r_strand', 'AC_power_factor'], rows=r, cols=c)
 
+        self.declare_partials('P_dc', ['resistivity_wire', 'T_coeff_cu', 'T_windings', 'n_slots', 'n_turns', 'stack_length', 'r_strand'])
+        self.declare_partials('P_dc', 'I_required', rows=r, cols=c)
+
+        self.declare_partials('P_ac', ['resistivity_wire', 'T_coeff_cu', 'T_windings', 'n_slots', 'n_turns', 'stack_length', 'r_strand'])
+        self.declare_partials('P_ac', ['AC_power_factor', 'I_required'], rows=r, cols=c)
+
+        self.declare_partials('P_wire', ['resistivity_wire', 'T_coeff_cu', 'T_windings', 'n_slots', 'n_turns', 'stack_length', 'r_strand'])
+        self.declare_partials('P_wire', ['I_required', 'AC_power_factor'], rows=r, cols=c)
 
     def compute(self, inputs, outputs):
+        nn = self.options['num_nodes']
         rpm = inputs['rpm']
         n_m = inputs['n_m']
         mu_o = inputs['mu_o']
@@ -84,6 +91,7 @@ class WindingLossComp(om.ExplicitComponent):
         outputs['P_wire']           = outputs['P_dc'] + outputs['P_ac']
 
     def compute_partials(self, inputs, J):
+        nn = self.options['num_nodes']
         rpm = inputs['rpm']
         n_m = inputs['n_m']
         mu_o = inputs['mu_o']
@@ -133,12 +141,14 @@ class WindingLossComp(om.ExplicitComponent):
         J['skin_depth', 'resistivity_wire'] = .5*(temp_resistivity / (np.pi*f_e*mu_r*mu_o))**-0.5*1/(np.pi*f_e*mu_r*mu_o) * d_temp_resistivity__d_resistivity_wire
         J['skin_depth', 'T_coeff_cu'] = .5*(temp_resistivity / (np.pi*f_e*mu_r*mu_o))**-0.5*1/(np.pi*f_e*mu_r*mu_o) * d_temp_resistivity__dT_coeff_cu
         J['skin_depth', 'T_windings'] = .5*(temp_resistivity / (np.pi*f_e*mu_r*mu_o))**-0.5*1/(np.pi*f_e*mu_r*mu_o) * d_temp_resistivity__dT_windings
-        J['skin_depth', 'mu_o'] = .5*(temp_resistivity / (np.pi*f_e*mu_r*mu_o))**-0.5*temp_resistivity*-1*mu_o**-2/(np.pi*mu_r*f_e)
+        # J['skin_depth', 'mu_o'] = .5*(temp_resistivity / (np.pi*f_e*mu_r*mu_o))**-0.5*temp_resistivity*-1*mu_o**-2/(np.pi*mu_r*f_e)
         J['skin_depth', 'mu_r'] = .5*(temp_resistivity / (np.pi*f_e*mu_r*mu_o))**-0.5*temp_resistivity*-1*mu_r**-2/(np.pi*f_e*mu_o)
+
+        J['skin_depth', 'mu_o'] = -.5 * temp_resistivity**0.5 * (np.pi*f_e*mu_r)**-0.5 * mu_o**-1.5 
 
         J['A_cu', 'n_turns'] = n_strands * 2 * np.pi * r_strand**2
         J['A_cu', 'n_strands'] = n_turns * 2 * np.pi * r_strand**2
-        J['A_cu', 'r_strand'] = n_turns * n_strands * 4 * pi * r_strand
+        J['A_cu', 'r_strand'] = n_turns * n_strands * 4. * np.pi * r_strand
 
         d_P_dc__d_I = J['P_dc', 'I_required'] = 2*(I*np.sqrt(2)) * (R_dc) *3/2 * np.sqrt(2)
         d_P_dc__d_resistivity_wire = J['P_dc', 'resistivity_wire'] = (I*np.sqrt(2))**2 *3/2 * d_R_dc__d_resistivity_wire
@@ -185,7 +195,8 @@ class SteinmetzLossComp(om.ExplicitComponent):
         self.add_output('P_steinmetz', 200*np.ones(nn), units='W', desc='Simplified steinmetz losses')
 
         r = c = np.arange(nn)
-        self.declare_partials('P_steinmetz', ['k_stein', 'f_e', 'alpha_stein', 'B_pk', 'beta_stein', 'sta_mass'], rows=r, cols=c)
+        self.declare_partials('P_steinmetz', ['k_stein', 'alpha_stein', 'B_pk', 'beta_stein', 'sta_mass'])
+        self.declare_partials('P_steinmetz', 'f_e', rows=r, cols=c)
 
     def compute(self, inputs, outputs):
         f_e = inputs['f_e']
@@ -215,4 +226,19 @@ class SteinmetzLossComp(om.ExplicitComponent):
         
 
 
+if __name__ == "__main__":
+    from openmdao.api import Problem
+
+    nn = 1
+    prob = Problem()
+    # des_vars = prob.model.add_subsystem('des_vars', om.IndepVarComp(), promotes=['*'])
+    # des_vars.add_output('r_strand', np.ones(nn), units='m')
+    # des_vars.add_output('mu_o', np.ones(nn), units='H/m')
+    # des_vars.add_output('resistivity_wire', np.ones(nn), units='ohm*m')
+
+    prob.model.add_subsystem('sys', WindingLossComp(num_nodes=nn), promotes=['*'])
+
+    prob.setup(force_alloc_complex=True)
+    prob.run_model()
+    prob.check_partials(method='cs', compact_print=True)
 

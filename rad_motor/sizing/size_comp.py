@@ -33,7 +33,7 @@ class MotorSizeComp(om.ExplicitComponent):
         self.add_output('slot_area', 0.0002, units='m**2', desc='area of one slot')
 
         self.add_output('w_slot', .015, units='m', desc='width of a slot')
-        self.add_output('J', units='A/mm**2', desc='Current density')
+        self.add_output('J',  units='A/mm**2', desc='Current density')
 
         r = c = np.arange(nn) 
         self.declare_partials('w_ry', ['rot_or', 'B_g', 'n_m', 'k', 'b_ry'])
@@ -414,3 +414,21 @@ class SpecificHeatComp(om.ExplicitComponent):
         J['wire_cp', 'wire_mass'] =  copper_cp / motor_mass
         J['wire_cp', 'copper_cp'] =  wire_mass / motor_mass
         J['wire_cp', 'motor_mass'] = -wire_mass * copper_cp / motor_mass**2
+
+
+if __name__ == "__main__":
+    from openmdao.api import Problem
+
+    nn = 1
+    prob = Problem()
+    # des_vars = prob.model.add_subsystem('des_vars', om.IndepVarComp(), promotes=['*'])
+    # des_vars.add_output('r_strand', np.ones(nn), units='m')
+    # des_vars.add_output('mu_o', np.ones(nn), units='H/m')
+    # des_vars.add_output('resistivity_wire', np.ones(nn), units='ohm*m')
+
+    prob.model.add_subsystem('sys', MotorSizeComp(num_nodes=nn), promotes=['*'])
+
+    prob.setup(force_alloc_complex=True)
+    prob.run_model()
+    prob.check_partials(method='cs', compact_print=True)
+
