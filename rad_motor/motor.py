@@ -52,7 +52,7 @@ class Motor(om.Group):
             self.linear_solver = om.DirectSolver()
     
             newton = self.nonlinear_solver = om.NewtonSolver()
-            newton.options['maxiter'] = 50
+            newton.options['maxiter'] = 100
             newton.options['iprint'] = 2
             newton.options['solve_subsystems'] = True
     
@@ -99,7 +99,7 @@ def print_motor(prob, motor_path=''):
         # print('Mass of Magnets...................',  prob.get_val('DESIGN.mag_mass', units='kg')) 
         # print('Mass of Windings..................',  prob.get_val('DESIGN.wire_mass', units='kg'))
         print('Mass of Motor.....................',  prob.get_val('DESIGN.motor_mass'))
-        # print('Motor Specific Heat...............',  prob.get_val('DESIGN.cp_motor'))
+        print('Motor Specific Heat...............',  prob.get_val('DESIGN.cp_motor'))
 
     print('Iron losses.............',   prob.get_val(f'{motor_path}P_steinmetz') * prob.get_val(f'{motor_path}sta_mass'))
     print('DC Winding  Losses......',   prob.get_val(f'{motor_path}P_dc'))
