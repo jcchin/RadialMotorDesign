@@ -43,7 +43,8 @@ class TorqueComp(om.ExplicitComponent):
         outputs['omega'] = rpm*2*pi/60 
         outputs['Tq_shaft'] = P_shaft/(rpm*2*pi/60)
         # outputs['Tq_max'] = stack_length*2*n_m*n_turns*B_g*rot_or*I    # Eqn 4.11, pg 79, from D.Hansleman book
-        outputs['I_required'] = stack_length*2*n_m*n_turns*B_g*rot_or*outputs['Tq_shaft'] + 3
+        outputs['I_required'] = stack_length*2*n_m*n_turns*B_g*rot_or*outputs['Tq_shaft']
+        
 
     def compute_partials(self,inputs,J):
         n_m=inputs['n_m']

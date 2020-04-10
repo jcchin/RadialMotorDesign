@@ -41,7 +41,7 @@ class Motor(om.Group):
 
             bal = om.BalanceComp(num_nodes=nn)
             bal.add_balance('rot_or', val=0.5, units='cm', eq_units='A/mm**2', lower=1e-4)
-            tgt = om.IndepVarComp(name='J_tgt', val=14.0, units='A/mm**2')
+            tgt = om.IndepVarComp(name='J_tgt', val=15.6, units='A/mm**2')
 
             self.add_subsystem(name='target', subsys=tgt, promotes_outputs=['J_tgt'])
             self.add_subsystem(name='balance', subsys=bal, promotes_outputs=['rot_or'])
@@ -98,12 +98,12 @@ def print_motor(prob, motor_path=''):
         # print('Mass of Rotor.....................',  prob.get_val('DESIGN.rot_mass', units='kg'))
         # print('Mass of Magnets...................',  prob.get_val('DESIGN.mag_mass', units='kg')) 
         # print('Mass of Windings..................',  prob.get_val('DESIGN.wire_mass', units='kg'))
-        # print('Mass of Motor.....................',  prob.get_val('DESIGN.motor_mass'))
+        print('Mass of Motor.....................',  prob.get_val('DESIGN.motor_mass'))
         # print('Motor Specific Heat...............',  prob.get_val('DESIGN.cp_motor'))
 
     print('Iron losses.............',   prob.get_val(f'{motor_path}P_steinmetz') * prob.get_val(f'{motor_path}sta_mass'))
-    # print('DC Winding  Losses......',   prob.get_val(f'{motor_path}P_dc'))
-    # print('AC Winding  Losses......',   prob.get_val(f'{motor_path}P_ac'))
+    print('DC Winding  Losses......',   prob.get_val(f'{motor_path}P_dc'))
+    print('AC Winding  Losses......',   prob.get_val(f'{motor_path}P_ac'))
     # print('TOTAL Winding  Losses...',   prob.get_val(f'{motor_path}P_wire'))
     print('Total Losses Add/Sub....',   prob.get_val(f'{motor_path}Q_total'))
    

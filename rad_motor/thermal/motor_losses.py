@@ -207,7 +207,7 @@ class SteinmetzLossComp(om.ExplicitComponent):
         sta_mass = inputs['sta_mass']
 
         # The 1.20 results from electrical steel material having additional losses of up to 30% from batch to batch
-        outputs['P_steinmetz'] = k_stein * f_e**alpha_stein * B_pk**beta_stein * sta_mass * 1.20
+        outputs['P_steinmetz'] = k_stein * f_e**alpha_stein * B_pk**beta_stein * sta_mass * 1.0
 
     def compute_partials(self, inputs, J):
         f_e = inputs['f_e']
@@ -217,12 +217,12 @@ class SteinmetzLossComp(om.ExplicitComponent):
         k_stein = inputs['k_stein']
         sta_mass = inputs['sta_mass']
 
-        J['P_steinmetz', 'k_stein'] = f_e**alpha_stein * B_pk**beta_stein * sta_mass* 1.20
-        J['P_steinmetz', 'f_e'] = alpha_stein*k_stein * f_e**(alpha_stein-1) * B_pk**beta_stein * sta_mass* 1.20
-        J['P_steinmetz', 'alpha_stein'] = k_stein * f_e**alpha_stein * B_pk**beta_stein * sta_mass * np.log(f_e)* 1.20
-        J['P_steinmetz', 'B_pk'] = k_stein * f_e**alpha_stein * B_pk**(beta_stein-1) * sta_mass*beta_stein* 1.20
-        J['P_steinmetz', 'beta_stein'] = k_stein * f_e**alpha_stein * B_pk**beta_stein * sta_mass * np.log(B_pk)* 1.20
-        J['P_steinmetz', 'sta_mass'] = k_stein * f_e**alpha_stein * B_pk**beta_stein* 1.20
+        J['P_steinmetz', 'k_stein'] = f_e**alpha_stein * B_pk**beta_stein * sta_mass* 1.0
+        J['P_steinmetz', 'f_e'] = alpha_stein*k_stein * f_e**(alpha_stein-1) * B_pk**beta_stein * sta_mass* 1.0
+        J['P_steinmetz', 'alpha_stein'] = k_stein * f_e**alpha_stein * B_pk**beta_stein * sta_mass * np.log(f_e)* 1.0
+        J['P_steinmetz', 'B_pk'] = k_stein * f_e**alpha_stein * B_pk**(beta_stein-1) * sta_mass*beta_stein* 1.0
+        J['P_steinmetz', 'beta_stein'] = k_stein * f_e**alpha_stein * B_pk**beta_stein * sta_mass * np.log(B_pk)* 1.0
+        J['P_steinmetz', 'sta_mass'] = k_stein * f_e**alpha_stein * B_pk**beta_stein* 1.0
         
 
 
