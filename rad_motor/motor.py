@@ -40,7 +40,7 @@ class Motor(om.Group):
                                                                      'mag_mass', 'sta_mass', 'rot_mass', 'wire_mass', 'slot_area', 'w_slot', 'motor_mass', 'cp_motor'])
 
             bal = om.BalanceComp(num_nodes=nn)
-            bal.add_balance('rot_or', val=0.5, units='cm', eq_units='A/mm**2', lower=1e-4)
+            bal.add_balance('rot_or', val=0.068, units='m', eq_units='A/mm**2', lower=1e-4)
             tgt = om.IndepVarComp(name='J_tgt', val=15.6, units='A/mm**2')
 
             self.add_subsystem(name='target', subsys=tgt, promotes_outputs=['J_tgt'])
