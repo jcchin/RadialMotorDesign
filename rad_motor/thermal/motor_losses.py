@@ -193,7 +193,7 @@ class SteinmetzLossComp(om.ExplicitComponent):
         self.add_input('sta_mass', 1, units='kg', desc='total mass of back-iron')
 
         self.add_output('P_steinmetz', 200*np.ones(nn), units='W', desc='Simplified steinmetz losses')
-
+# test
         r = c = np.arange(nn)
         self.declare_partials('P_steinmetz', ['k_stein', 'alpha_stein', 'B_pk', 'beta_stein', 'sta_mass'])
         self.declare_partials('P_steinmetz', 'f_e', rows=r, cols=c)
@@ -206,7 +206,6 @@ class SteinmetzLossComp(om.ExplicitComponent):
         k_stein = inputs['k_stein']
         sta_mass = inputs['sta_mass']
 
-        # The 1.20 results from electrical steel material having additional losses of up to 30% from batch to batch
         outputs['P_steinmetz'] = k_stein * f_e**alpha_stein * B_pk**beta_stein * sta_mass * 1.0
 
     def compute_partials(self, inputs, J):
