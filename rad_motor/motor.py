@@ -18,7 +18,7 @@ class Motor(om.Group):
         self.add_subsystem('thermal_properties', ThermalGroup(num_nodes=nn), promotes_inputs=['B_pk', 'alpha_stein', 'beta_stein', 'k_stein', 'rpm', 'sta_mass', 
                                                                                               'resistivity_wire', 'stack_length', 'n_slots', 'n_strands', 'I_required', 
                                                                                               'n_m', 'mu_o', 'f_e', 'n_turns', 'T_coeff_cu', 'T_windings', 'r_strand', 'mu_r'],
-                                                                            promotes_outputs=['A_cu', 'r_litz', 'P_steinmetz', 'P_dc', 'P_ac', 'P_wire', 'L_wire', 'R_dc',
+                                                                            promotes_outputs=['A_cu', 'r_litz', 'P_steinmetz', 'steinmetz', 'P_dc', 'P_ac', 'P_wire', 'L_wire', 'R_dc',
                                                                                               'skin_depth', 'temp_resistivity', 'f_e', 'Q_total'])
 
 
@@ -83,9 +83,9 @@ def print_motor(prob, motor_path=''):
         print('Rotor Outer Radius................',     prob.get_val('DESIGN.rot_or', units='mm'))
         print('Rotor Inner Radius................',     prob.get_val('DESIGN.rot_ir', units='mm'))
     
-        print('Slot Depth........................',  prob.get_val('DESIGN.s_d', units='mm'))
+        
         print('Stator Yoke Thickness.............',  prob.get_val('DESIGN.w_sy', units='mm'))
-        print('Tooth Width.......................',  prob.get_val('DESIGN.w_t', units='mm'))
+        
         # print('Radius of litz wire ..............', prob.get_val('DESIGN.r_litz', units='m'))
         # print('Length of Windings................',  prob.get_val('DESIGN.L_wire', units='m'))
         print('Slot Area.........................', prob.get_val('DESIGN.slot_area', units='m**2'))
@@ -101,11 +101,20 @@ def print_motor(prob, motor_path=''):
         print('Mass of Motor.....................',  prob.get_val('DESIGN.motor_mass'))
         print('Motor Specific Heat...............',  prob.get_val('DESIGN.cp_motor'))
 
+        print('#---------------MOTOR CAD INPUTS -----------------#')
+        print('Stator Lam Diameter...............',  prob.get_val('DESIGN.geometry.mass.radius_motor', units='mm')*2)
+        print('Stator Bore.......................',  prob.get_val('DESIGN.sta_ir', units='mm')*2)
+        print('Tooth Width.......................',  prob.get_val('DESIGN.w_t', units='mm'))
+        print('Slot Depth........................',  prob.get_val('DESIGN.s_d', units='mm'))
+        print('Shaft Diameter....................',  prob.get_val('DESIGN.rot_ir', units='mm'))
+
     print('Iron losses.............',   prob.get_val(f'{motor_path}P_steinmetz') * prob.get_val(f'{motor_path}sta_mass'))
     print('DC Winding  Losses......',   prob.get_val(f'{motor_path}P_dc'))
     print('AC Winding  Losses......',   prob.get_val(f'{motor_path}P_ac'))
     # print('TOTAL Winding  Losses...',   prob.get_val(f'{motor_path}P_wire'))
     print('Total Losses Add/Sub....',   prob.get_val(f'{motor_path}Q_total'))
+    print('Steinmetz value.........',   prob.get_val(f'{motor_path}steinmetz'))
+    print('Electrical Frequency..............',  prob.get_val(f'{motor_path}f_e'))
    
     print('Overall Efficiency......',   prob.get_val(f'{motor_path}Eff'))
 
@@ -114,7 +123,7 @@ def print_motor(prob, motor_path=''):
 
     print('Power Required...........',  prob.get_val(f'{motor_path}P_in'))
     # print('Power out  .......................',  prob.get_val(f'{motor_path}P_shaft'))
-    # print('Electrical Frequency..............',  prob.get_val(f'{motor_path}f_e'))
+    
     print('Torque............................',  prob.get_val(f'{motor_path}Tq_shaft'))
     print('Required Current..................',  prob.get_val(f'{motor_path}I_required'))
 

@@ -79,7 +79,7 @@ class WindingLossComp(om.ExplicitComponent):
         n_strands = inputs['n_strands']
         AC_pf = inputs['AC_power_factor']
 
-        outputs['f_e']              = n_m*rpm/(2*60)  #n_m / 2 * rpm / 60                                            # Eqn 1.5 "Brushless PM Motor Design" by D. Hansleman                                       
+        outputs['f_e']              = n_m*rpm/(2*60)                                                # Eqn 1.7 "Brushless PM Motor Design" by D. Hansleman                                       
         outputs['r_litz']           = (np.sqrt(n_strands) * 1.154 * r_strand*2)/2                   # New England Wire
         outputs['L_wire']           = (n_slots/3 * n_turns) * (stack_length*2 + .017*2)              
         outputs['temp_resistivity'] = (resistivity_wire * (1 + T_coeff_cu*(T_windings-20)))         # Eqn 4.14 "Brushless PM Motor Design" by D. Hansleman
@@ -193,10 +193,14 @@ class SteinmetzLossComp(om.ExplicitComponent):
         self.add_input('sta_mass', 1, units='kg', desc='total mass of back-iron')
 
         self.add_output('P_steinmetz', 200*np.ones(nn), units='W', desc='Simplified steinmetz losses')
-# test
+        self.add_output('steinmetz', 200*np.ones(nn), units='W', desc='Simplified steinmetz losses')
+
         r = c = np.arange(nn)
         self.declare_partials('P_steinmetz', ['k_stein', 'alpha_stein', 'B_pk', 'beta_stein', 'sta_mass'])
         self.declare_partials('P_steinmetz', 'f_e', rows=r, cols=c)
+
+        self.declare_partials('steinmetz', ['k_stein', 'alpha_stein', 'B_pk', 'beta_stein'])
+        self.declare_partials('steinmetz', 'f_e', rows=r, cols=c)
 
     def compute(self, inputs, outputs):
         f_e = inputs['f_e']
@@ -206,6 +210,7 @@ class SteinmetzLossComp(om.ExplicitComponent):
         k_stein = inputs['k_stein']
         sta_mass = inputs['sta_mass']
 
+        outputs['steinmetz'] = k_stein * f_e**alpha_stein * B_pk**beta_stein
         outputs['P_steinmetz'] = k_stein * f_e**alpha_stein * B_pk**beta_stein * sta_mass * 1.0
 
     def compute_partials(self, inputs, J):
@@ -222,6 +227,12 @@ class SteinmetzLossComp(om.ExplicitComponent):
         J['P_steinmetz', 'B_pk'] = k_stein * f_e**alpha_stein * B_pk**(beta_stein-1) * sta_mass*beta_stein* 1.0
         J['P_steinmetz', 'beta_stein'] = k_stein * f_e**alpha_stein * B_pk**beta_stein * sta_mass * np.log(B_pk)* 1.0
         J['P_steinmetz', 'sta_mass'] = k_stein * f_e**alpha_stein * B_pk**beta_stein* 1.0
+
+        J['steinmetz', 'k_stein'] = f_e**alpha_stein * B_pk**beta_stein *  1.0
+        J['steinmetz', 'f_e'] = alpha_stein*k_stein * f_e**(alpha_stein-1) * B_pk**beta_stein *  1.0
+        J['steinmetz', 'alpha_stein'] = k_stein * f_e**alpha_stein * B_pk**beta_stein * np.log(f_e)* 1.0
+        J['steinmetz', 'B_pk'] = k_stein * f_e**alpha_stein * B_pk**(beta_stein-1) * beta_stein* 1.0
+        J['steinmetz', 'beta_stein'] = k_stein * f_e**alpha_stein * B_pk**beta_stein *  np.log(B_pk)* 1.0
         
 
 
