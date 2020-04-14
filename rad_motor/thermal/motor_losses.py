@@ -18,7 +18,7 @@ class WindingLossComp(om.ExplicitComponent):
         self.add_input('n_m', 20, desc='Number of magnets')
         self.add_input('mu_o', 1.2566e-6, units='H/m', desc='permeability of free space')    
         self.add_input('mu_r', 1.0, units='H/m', desc='relative magnetic permeability of ferromagnetic materials') 
-        self.add_input('r_strand', 0.0001605, units='m', desc='radius of one strand of litz wire')
+        self.add_input('r_strand', 0.000254, units='m', desc='radius of one strand of litz wire')
         self.add_input('T_windings', 150, units='C', desc='operating temperature of windings')
         self.add_input('T_coeff_cu', 0.00393, desc='temperature coefficient for copper')
         self.add_input('resistivity_wire', 1.724e-8, units='ohm*m', desc='resisitivity of Cu at 20 degC')
@@ -48,7 +48,6 @@ class WindingLossComp(om.ExplicitComponent):
         self.declare_partials('L_wire', ['n_slots', 'n_turns', 'stack_length'])
         self.declare_partials('temp_resistivity', ['resistivity_wire', 'T_coeff_cu', 'T_windings'])
         self.declare_partials('R_dc', ['resistivity_wire', 'T_coeff_cu', 'T_windings', 'n_slots', 'n_turns', 'stack_length', 'r_strand'])
-        # self.declare_partials('skin_depth', ['resistivity_wire', 'T_coeff_cu', 'T_windings', 'n_m', 'rpm', 'mu_r', 'mu_o'], rows=r, cols=c)
         self.declare_partials('skin_depth', ['resistivity_wire', 'T_coeff_cu', 'T_windings', 'n_m', 'mu_r', 'mu_o'])
         self.declare_partials('skin_depth', 'rpm', rows=r, cols=c)
         self.declare_partials('A_cu', ['n_turns', 'n_strands', 'r_strand'])
@@ -81,10 +80,10 @@ class WindingLossComp(om.ExplicitComponent):
 
         outputs['f_e']              = n_m*rpm/(2*60)                                                # Eqn 1.7 "Brushless PM Motor Design" by D. Hansleman                                       
         outputs['r_litz']           = (np.sqrt(n_strands) * 1.154 * r_strand*2)/2                   # New England Wire
-        outputs['L_wire']           = (n_slots/3 * n_turns) * (stack_length*2 + .017*2)              
+        outputs['L_wire']           = (n_slots/3 * n_turns) * (stack_length*2 + .017*2)  + 3            
         outputs['temp_resistivity'] = (resistivity_wire * (1 + T_coeff_cu*(T_windings-20)))         # Eqn 4.14 "Brushless PM Motor Design" by D. Hansleman
         outputs['A_cu']             = n_turns * n_strands * 2 * np.pi * r_strand**2
-        outputs['R_dc']             = outputs['temp_resistivity'] * outputs['L_wire'] / ((np.pi*(r_strand)**2)*41)
+        outputs['R_dc']             = (outputs['temp_resistivity'] * outputs['L_wire']) / ((np.pi*(r_strand)**2)*n_strands)
         outputs['skin_depth']       = np.sqrt( outputs['temp_resistivity'] / (np.pi * outputs['f_e'] * mu_r * mu_o) )
         outputs['P_dc']             = (I*np.sqrt(2))**2 * (outputs['R_dc']) *3/2
         outputs['P_ac']             = AC_pf * outputs['P_dc']
