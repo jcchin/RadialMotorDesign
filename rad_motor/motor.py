@@ -49,20 +49,20 @@ class Motor(om.Group):
             self.connect('J_tgt', 'balance.rhs:rot_or')
             self.connect('J', 'balance.lhs:rot_or')
 
-            self.linear_solver = om.DirectSolver()
-    
-            newton = self.nonlinear_solver = om.NewtonSolver()
-            newton.options['maxiter'] = 100
-            newton.options['iprint'] = 2
-            newton.options['solve_subsystems'] = True
-    
-            # ls = newton.linesearch = om.ArmijoGoldsteinLS()
-            # ls.options['maxiter'] = 3
-            # ls.options['iprint'] = 2
-            # ls.options['print_bound_enforce'] = True
-    
-            ls = newton.linesearch = om.BoundsEnforceLS()
-            ls.options['print_bound_enforce'] = True
+        self.linear_solver = om.DirectSolver()
+
+        newton = self.nonlinear_solver = om.NewtonSolver()
+        newton.options['maxiter'] = 100
+        newton.options['iprint'] = 2
+        newton.options['solve_subsystems'] = True
+
+        # ls = newton.linesearch = om.ArmijoGoldsteinLS()
+        # ls.options['maxiter'] = 3
+        # ls.options['iprint'] = 2
+        # ls.options['print_bound_enforce'] = True
+
+        ls = newton.linesearch = om.BoundsEnforceLS()
+        ls.options['print_bound_enforce'] = True
 
 
 def print_motor(prob, motor_path=''): 
