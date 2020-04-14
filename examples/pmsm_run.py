@@ -45,8 +45,10 @@ if __name__ == "__main__":
     ind.add_output('n_m', 20, desc='Number of magnets')
 
     ind.add_output('t_mag', .0045, units='m', desc='Radial magnet thickness')               # Ref motor = 0.0044
-    ind.add_output('r_strand', 0.00016, units='m', desc='29 AWG radius of one strand of litz wire')
-    ind.add_output('n_strands', 41, desc='number of strands in hand for litz wire')
+
+    #AWG30=0.000127m, AWG28=0.000160
+    ind.add_output('r_strand', 0.000127, units='m', desc='29 AWG radius of one strand of litz wire')
+    ind.add_output('n_strands', 35, desc='number of strands in hand for litz wire')
   
     ind.add_output('T_windings', 150, units='C', desc='operating temperature of windings')
     ind.add_output('T_mag', 100, units='C', desc='operating temperature of the magnets')
