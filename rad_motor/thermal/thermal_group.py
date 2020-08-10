@@ -4,7 +4,7 @@ from math import pi
 
 import openmdao.api as om
 
-from thermal.motor_losses import WindingLossComp, SteinmetzLossComp
+from rad_motor.thermal.motor_losses import WindingLossComp, SteinmetzLossComp
 
 motor_loss_data = np.array([
 # I:   10          14.4          18.9        23.3          27.8        32.2          36.7        41.1          45.6        50
@@ -24,8 +24,6 @@ motor_loss_data = np.array([
   [6.14424586,  3.044548373, 1.859187116, 1.282938888, 0.959527238, 0.759635469, 0.627167766, 0.534597704, 0.467133872, 0.416252825]]  #    = 5400
 )
 
-
-
 class ThermalGroup(om.Group):
     def initialize(self):
         self.options.declare('num_nodes', types=int)
@@ -33,23 +31,26 @@ class ThermalGroup(om.Group):
     def setup(self):
         nn = self.options['num_nodes']
 
-        self.add_subsystem('comp', om.ExecComp('I_peak= I*2**0.5', I={'value': np.ones(nn), 'units':'A'}), promotes_inputs=['I'], promotes_outputs=['I_peak'])
+        self.add_subsystem('comp', om.ExecComp('I_peak= I_required*2**0.5', 
+                                                I_peak={'value': np.ones(nn), 'units':'A'},
+                                                I_required={'value': np.ones(nn), 'units':'A'},  units='A'), 
+                                                promotes_inputs=['I_required'], promotes_outputs=['I_peak'])
 
 
-        motor_interp = om.MetaModelStructuredComp(method='scipy_slinear', extrapolate=True)
+        motor_interp = om.MetaModelStructuredComp(method='scipy_slinear', extrapolate=True, vec_size=nn)
     
         rpm_data = np.array([200, 600, 1000, 1800, 2200, 3000, 3400, 4200, 5000, 5400])  #  1400, 2600,  3800, 4600
         current_data = np.array([10, 14.4, 18.9, 23.3, 27.8, 32.2, 36.7, 41.1, 45.6, 50])
         
-        motor_interp.add_input('rpm', 5400*np.ones(nn), training_data= rpm_data, units='rpm' )
-        motor_interp.add_input('I_peak', 50, training_data=current_data, units='A')
-        motor_interp.add_output('AC_power_factor', 0.5, training_data=motor_loss_data)
+        motor_interp.add_input('rpm', val=5000*np.ones(nn), training_data= rpm_data, units='rpm' )
+        motor_interp.add_input('I_peak', val=50*np.ones(nn), training_data=current_data, units='A')
+        motor_interp.add_output('AC_power_factor', val=0.5*np.ones(nn), training_data=motor_loss_data)
         self.add_subsystem('ac_power_factor_interp', motor_interp, 
                             promotes_inputs=['rpm', 'I_peak'], promotes_outputs=['AC_power_factor'])
 
         self.add_subsystem(name='copperloss', 
                            subsys=WindingLossComp(num_nodes=nn),
-                           promotes_inputs=['resistivity_wire', 'stack_length', 'n_slots', 'n_turns', 'T_coeff_cu', 'I',
+                           promotes_inputs=['resistivity_wire', 'stack_length', 'n_slots', 'n_turns', 'T_coeff_cu', 'I_required',
                                              'T_windings', 'r_strand', 'n_m', 'mu_o', 'mu_r', 'n_strands', 'rpm', 'AC_power_factor'],
                            promotes_outputs=['A_cu', 'f_e', 'r_litz', 'P_dc', 'P_ac', 'P_wire', 'L_wire', 'R_dc', 'skin_depth', 'temp_resistivity'])
 
@@ -57,5 +58,11 @@ class ThermalGroup(om.Group):
         self.add_subsystem(name = 'steinmetzloss',
                            subsys = SteinmetzLossComp(num_nodes=nn),
                            promotes_inputs=['alpha_stein', 'B_pk', 'f_e', 'beta_stein', 'k_stein', 'sta_mass'],
-                           promotes_outputs = ['P_steinmetz'])
+                           promotes_outputs = ['P_steinmetz', 'steinmetz'])
 
+        adder = om.AddSubtractComp(num_nodes=nn)
+        adder.add_equation('Q_total', input_names=['P_steinmetz', 'P_wire'], units='W', vec_size=nn)
+        self.add_subsystem(name='totallossescomp', subsys=adder, promotes_outputs=['Q_total'])
+
+        self.connect('P_steinmetz', 'totallossescomp.P_steinmetz')
+        self.connect('P_wire', 'totallossescomp.P_wire')

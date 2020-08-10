@@ -3,7 +3,7 @@ import numpy as np
 from openmdao.api import Problem, Group, IndepVarComp, ExecComp, ScipyOptimizeDriver
 from openmdao.utils.assert_utils import assert_rel_error, assert_check_partials
 
-from motor import Motor
+from rad_motor.motor import Motor
 # from motor_spec_connect import motor_spec_connect
 
 class TestMotorGroup(unittest.TestCase):
@@ -119,35 +119,37 @@ class TestMotorGroup(unittest.TestCase):
         p['DESIGN.rot_or'] = 6.8    # initial guess
 
         # p.run_model()
-
         # make new lines for each component
 
-        data = p.check_partials(method='cs', compact_print=True, show_only_incorrect = True)#, includes='DESIGN.geometry.size')
 
-        # can look at one component at a time with assert_check_partials
-        assert_check_partials(data_size, atol=1e-6, rtol=1e-6)
+        # data = p.check_partials(method='cs', compact_print=True, show_only_incorrect = True, includes='DESIGN.geometry.size')
+        # assert_check_partials(data, atol=1e-6, rtol=1e-6)
 
         data = p.check_partials(method='cs', compact_print=True, show_only_incorrect = True, includes='DESIGN.em_properties.carters')
         # can look at one component at a time with assert_check_partials
         assert_check_partials(data, atol=1e-6, rtol=1e-6)
 
-        data = p.check_partials(method='cs', compact_print=True, show_only_incorrect = True, includes='DESIGN.em_properties.equivalent_gap')
-        # can look at one component at a time with assert_check_partials
-        assert_check_partials(data, atol=1e-6, rtol=1e-6)
+        # data = p.check_partials(method='cs', compact_print=True, show_only_incorrect = True, includes='DESIGN.em_properties.equivalent_gap')
+        # # can look at one component at a time with assert_check_partials
+        # assert_check_partials(data, atol=1e-6, rtol=1e-6)
 
-        data = p.check_partials(method='cs', compact_print=True, show_only_incorrect = True, includes='DESIGN.em_properties.gap_fields')
-        # can look at one component at a time with assert_check_partials
-        assert_check_partials(data, atol=1e-6, rtol=1e-6) 
+        # data = p.check_partials(method='cs', compact_print=True, show_only_incorrect = True, includes='DESIGN.em_properties.gap_fields')
+        # # can look at one component at a time with assert_check_partials
+        # assert_check_partials(data, atol=1e-6, rtol=1e-6) 
 
-        data = p.check_partials(method='cs', compact_print=True, show_only_incorrect = True, includes='DESIGN.em_properties.torque')
-        # can look at one component at a time with assert_check_partials
-        assert_check_partials(data, atol=1e-6, rtol=1e-6)
+        # data = p.check_partials(method='cs', compact_print=True, show_only_incorrect = True, includes='DESIGN.em_properties.torque')
+        # # can look at one component at a time with assert_check_partials
+        # assert_check_partials(data, atol=1e-6, rtol=1e-6)
 
-        data = p.check_partials(method='cs', compact_print=True, show_only_incorrect = True, includes='DESIGN.em_properties.motor_efficiency')
-        # can look at one component at a time with assert_check_partials
-        assert_check_partials(data, atol=1e-6, rtol=1e-6)
+        # data = p.check_partials(method='cs', compact_print=True, show_only_incorrect = True, includes='DESIGN.em_properties.motor_efficiency')
+        # # can look at one component at a time with assert_check_partials
+        # assert_check_partials(data, atol=1e-6, rtol=1e-6)
 
         # data = p.check_partials(method='cs', compact_print=True, show_only_incorrect = True, includes='DESIGN.thermal_properties.copperloss')
+        # # can look at one component at a time with assert_check_partials
+        # assert_check_partials(data, atol=1e-6, rtol=1e-6)
+
+        # data = p.check_partials(method='cs', compact_print=True, show_only_incorrect = True, includes='DESIGN.thermal_properties.steinmetzloss')
         # # can look at one component at a time with assert_check_partials
         # assert_check_partials(data, atol=1e-6, rtol=1e-6)
 
